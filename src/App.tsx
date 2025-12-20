@@ -23,7 +23,7 @@ import {
 
 // Program ID deployed on devnet
 const PRIVACY_POOL_PROGRAM_ID = new PublicKey(
-  "3Y3JFTEbFoYmgYxLvxNymQeB1RUXfPtWU3JNdocFC2xA"
+  "9uHaXDntTPSN1jBhHZwvPT2PFrQzsb4JbmNyVLJHVc6D"
 );
 
 // Devnet RPC endpoint
