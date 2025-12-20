@@ -1,5 +1,5 @@
 {
-  "address": "3Y3JFTEbFoYmgYxLvxNymQeB1RUXfPtWU3JNdocFC2xA",
+  "address": "9uHaXDntTPSN1jBhHZwvPT2PFrQzsb4JbmNyVLJHVc6D",
   "metadata": {
     "name": "privacy_pool",
     "version": "0.1.0",
@@ -9,7 +9,16 @@
   "instructions": [
     {
       "name": "add_relayer",
-      "discriminator": [184, 240, 94, 199, 19, 71, 21, 192],
+      "discriminator": [
+        184,
+        240,
+        94,
+        199,
+        19,
+        71,
+        21,
+        192
+      ],
       "accounts": [
         {
           "name": "config",
@@ -19,8 +28,12 @@
               {
                 "kind": "const",
                 "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
-                  103, 95, 118, 49
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
                 ]
               }
             ]
@@ -30,7 +43,9 @@
           "name": "admin",
           "writable": true,
           "signer": true,
-          "relations": ["config"]
+          "relations": [
+            "config"
+          ]
         }
       ],
       "args": [
@@ -42,7 +57,16 @@
     },
     {
       "name": "deposit_fixed",
-      "discriminator": [12, 95, 36, 107, 155, 234, 116, 195],
+      "discriminator": [
+        12,
+        95,
+        36,
+        107,
+        155,
+        234,
+        116,
+        195
+      ],
       "accounts": [
         {
           "name": "config",
@@ -52,8 +76,12 @@
               {
                 "kind": "const",
                 "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
-                  103, 95, 118, 49
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
                 ]
               }
             ]
@@ -67,8 +95,11 @@
               {
                 "kind": "const",
                 "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 118, 97, 117, 108, 116,
-                  95, 118, 49
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
                 ]
               }
             ]
@@ -82,8 +113,15 @@
               {
                 "kind": "const",
                 "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
-                  116, 114, 101, 101, 95, 118, 49
+                  110,
+                  111,
+                  116,
+                  101,
+                  95,
+                  116,
+                  114,
+                  101,
+                  101
                 ]
               }
             ]
@@ -107,20 +145,35 @@
         {
           "name": "_commitment",
           "type": {
-            "array": ["u8", 32]
+            "array": [
+              "u8",
+              32
+            ]
           }
         },
         {
           "name": "new_root",
           "type": {
-            "array": ["u8", 32]
+            "array": [
+              "u8",
+              32
+            ]
           }
         }
       ]
     },
     {
       "name": "initialize",
-      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
       "accounts": [
         {
           "name": "config",
@@ -130,8 +183,12 @@
               {
                 "kind": "const",
                 "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
-                  103, 95, 118, 49
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
                 ]
               }
             ]
@@ -145,8 +202,11 @@
               {
                 "kind": "const",
                 "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 118, 97, 117, 108, 116,
-                  95, 118, 49
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
                 ]
               }
             ]
@@ -160,8 +220,15 @@
               {
                 "kind": "const",
                 "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
-                  116, 114, 101, 101, 95, 118, 49
+                  110,
+                  111,
+                  116,
+                  101,
+                  95,
+                  116,
+                  114,
+                  101,
+                  101
                 ]
               }
             ]
@@ -175,8 +242,16 @@
               {
                 "kind": "const",
                 "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 110, 117, 108, 108, 105,
-                  102, 105, 101, 114, 115, 95, 118, 49
+                  110,
+                  117,
+                  108,
+                  108,
+                  105,
+                  102,
+                  105,
+                  101,
+                  114,
+                  115
                 ]
               }
             ]
@@ -207,7 +282,16 @@
     },
     {
       "name": "set_paused",
-      "discriminator": [91, 60, 125, 192, 176, 225, 166, 218],
+      "discriminator": [
+        91,
+        60,
+        125,
+        192,
+        176,
+        225,
+        166,
+        218
+      ],
       "accounts": [
         {
           "name": "config",
@@ -217,8 +301,12 @@
               {
                 "kind": "const",
                 "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
-                  103, 95, 118, 49
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
                 ]
               }
             ]
@@ -228,7 +316,9 @@
           "name": "admin",
           "writable": true,
           "signer": true,
-          "relations": ["config"]
+          "relations": [
+            "config"
+          ]
         }
       ],
       "args": [
@@ -240,7 +330,16 @@
     },
     {
       "name": "withdraw",
-      "discriminator": [183, 18, 70, 156, 148, 109, 161, 34],
+      "discriminator": [
+        183,
+        18,
+        70,
+        156,
+        148,
+        109,
+        161,
+        34
+      ],
       "accounts": [
         {
           "name": "config",
@@ -250,8 +349,12 @@
               {
                 "kind": "const",
                 "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
-                  103, 95, 118, 49
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
                 ]
               }
             ]
@@ -265,8 +368,11 @@
               {
                 "kind": "const",
                 "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 118, 97, 117, 108, 116,
-                  95, 118, 49
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
                 ]
               }
             ]
@@ -280,8 +386,15 @@
               {
                 "kind": "const",
                 "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
-                  116, 114, 101, 101, 95, 118, 49
+                  110,
+                  111,
+                  116,
+                  101,
+                  95,
+                  116,
+                  114,
+                  101,
+                  101
                 ]
               }
             ]
@@ -295,8 +408,16 @@
               {
                 "kind": "const",
                 "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 110, 117, 108, 108, 105,
-                  102, 105, 101, 114, 115, 95, 118, 49
+                  110,
+                  117,
+                  108,
+                  108,
+                  105,
+                  102,
+                  105,
+                  101,
+                  114,
+                  115
                 ]
               }
             ]
@@ -320,13 +441,19 @@
         {
           "name": "root",
           "type": {
-            "array": ["u8", 32]
+            "array": [
+              "u8",
+              32
+            ]
           }
         },
         {
           "name": "nullifier",
           "type": {
-            "array": ["u8", 32]
+            "array": [
+              "u8",
+              32
+            ]
           }
         },
         {
@@ -347,19 +474,55 @@
   "accounts": [
     {
       "name": "NoteTree",
-      "discriminator": [163, 196, 164, 169, 176, 98, 32, 121]
+      "discriminator": [
+        163,
+        196,
+        164,
+        169,
+        176,
+        98,
+        32,
+        121
+      ]
     },
     {
       "name": "NullifierSet",
-      "discriminator": [251, 219, 17, 100, 208, 102, 127, 25]
+      "discriminator": [
+        251,
+        219,
+        17,
+        100,
+        208,
+        102,
+        127,
+        25
+      ]
     },
     {
       "name": "PrivacyConfig",
-      "discriminator": [165, 149, 218, 209, 148, 237, 242, 159]
+      "discriminator": [
+        165,
+        149,
+        218,
+        209,
+        148,
+        237,
+        242,
+        159
+      ]
     },
     {
       "name": "Vault",
-      "discriminator": [211, 8, 232, 43, 2, 152, 117, 119]
+      "discriminator": [
+        211,
+        8,
+        232,
+        43,
+        2,
+        152,
+        117,
+        119
+      ]
     }
   ],
   "errors": [
@@ -446,7 +609,10 @@
           {
             "name": "last_root",
             "type": {
-              "array": ["u8", 32]
+              "array": [
+                "u8",
+                32
+              ]
             }
           }
         ]
@@ -454,7 +620,9 @@
     },
     {
       "name": "NullifierSet",
-      "docs": ["Simplified nullifier set: only stores the *last* nullifier."],
+      "docs": [
+        "Simplified nullifier set: only stores the *last* nullifier."
+      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -469,7 +637,10 @@
           {
             "name": "last",
             "type": {
-              "array": ["u8", 32]
+              "array": [
+                "u8",
+                32
+              ]
             }
           }
         ]
@@ -482,57 +653,84 @@
         "fields": [
           {
             "name": "bump",
-            "docs": ["PDA bump for this config"],
+            "docs": [
+              "PDA bump for this config"
+            ],
             "type": "u8"
           },
           {
             "name": "vault_bump",
-            "docs": ["PDA bump for vault"],
+            "docs": [
+              "PDA bump for vault"
+            ],
             "type": "u8"
           },
           {
             "name": "admin",
-            "docs": ["Admin who can configure pool and relayers"],
+            "docs": [
+              "Admin who can configure pool and relayers"
+            ],
             "type": "pubkey"
           },
           {
             "name": "paused",
-            "docs": ["Is pool paused?"],
+            "docs": [
+              "Is pool paused?"
+            ],
             "type": "bool"
           },
           {
             "name": "fee_bps",
-            "docs": ["Fee in basis points (0–10_000)"],
+            "docs": [
+              "Fee in basis points (0–10_000)"
+            ],
             "type": "u16"
           },
           {
             "name": "num_denoms",
-            "docs": ["Number of active denominations"],
+            "docs": [
+              "Number of active denominations"
+            ],
             "type": "u8"
           },
           {
             "name": "denoms",
-            "docs": ["Supported fixed denominations (in lamports)"],
+            "docs": [
+              "Supported fixed denominations (in lamports)"
+            ],
             "type": {
-              "array": ["u64", 4]
+              "array": [
+                "u64",
+                4
+              ]
             }
           },
           {
             "name": "tvl",
-            "docs": ["Total value locked per denom index"],
+            "docs": [
+              "Total value locked per denom index"
+            ],
             "type": {
-              "array": ["u64", 4]
+              "array": [
+                "u64",
+                4
+              ]
             }
           },
           {
             "name": "num_relayers",
-            "docs": ["Relayer registry"],
+            "docs": [
+              "Relayer registry"
+            ],
             "type": "u8"
           },
           {
             "name": "relayers",
             "type": {
-              "array": ["pubkey", 16]
+              "array": [
+                "pubkey",
+                16
+              ]
             }
           }
         ]
@@ -545,7 +743,9 @@
         "fields": [
           {
             "name": "bump",
-            "docs": ["PDA bump for this vault"],
+            "docs": [
+              "PDA bump for this vault"
+            ],
             "type": "u8"
           }
         ]
