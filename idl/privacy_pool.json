@@ -1,0 +1,555 @@
+{
+  "address": "3Y3JFTEbFoYmgYxLvxNymQeB1RUXfPtWU3JNdocFC2xA",
+  "metadata": {
+    "name": "privacy_pool",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "add_relayer",
+      "discriminator": [184, 240, 94, 199, 19, 71, 21, 192],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
+                  103, 95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": ["config"]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_relayer",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "deposit_fixed",
+      "discriminator": [12, 95, 36, 107, 155, 234, 116, 195],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
+                  103, 95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 118, 97, 117, 108, 116,
+                  95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "note_tree",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
+                  116, 114, 101, 101, 95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "depositor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "denom_index",
+          "type": "u8"
+        },
+        {
+          "name": "_commitment",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "new_root",
+          "type": {
+            "array": ["u8", 32]
+          }
+        }
+      ]
+    },
+    {
+      "name": "initialize",
+      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
+                  103, 95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 118, 97, 117, 108, 116,
+                  95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "note_tree",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
+                  116, 114, 101, 101, 95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "nullifiers",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 117, 108, 108, 105,
+                  102, 105, 101, 114, 115, 95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "denoms",
+          "type": {
+            "vec": "u64"
+          }
+        },
+        {
+          "name": "fee_bps",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "set_paused",
+      "discriminator": [91, 60, 125, 192, 176, 225, 166, 218],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
+                  103, 95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": ["config"]
+        }
+      ],
+      "args": [
+        {
+          "name": "paused",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "withdraw",
+      "discriminator": [183, 18, 70, 156, 148, 109, 161, 34],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
+                  103, 95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 118, 97, 117, 108, 116,
+                  95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "note_tree",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
+                  116, 114, 101, 101, 95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "nullifiers",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 117, 108, 108, 105,
+                  102, 105, 101, 114, 115, 95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "relayer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "recipient",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "root",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "nullifier",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "denom_index",
+          "type": "u8"
+        },
+        {
+          "name": "recipient_pk",
+          "type": "pubkey"
+        },
+        {
+          "name": "proof",
+          "type": "bytes"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "NoteTree",
+      "discriminator": [163, 196, 164, 169, 176, 98, 32, 121]
+    },
+    {
+      "name": "NullifierSet",
+      "discriminator": [251, 219, 17, 100, 208, 102, 127, 25]
+    },
+    {
+      "name": "PrivacyConfig",
+      "discriminator": [165, 149, 218, 209, 148, 237, 242, 159]
+    },
+    {
+      "name": "Vault",
+      "discriminator": [211, 8, 232, 43, 2, 152, 117, 119]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Paused",
+      "msg": "Pool is paused"
+    },
+    {
+      "code": 6001,
+      "name": "NoDenoms",
+      "msg": "No denominations configured"
+    },
+    {
+      "code": 6002,
+      "name": "TooManyDenoms",
+      "msg": "Too many denominations"
+    },
+    {
+      "code": 6003,
+      "name": "BadDenomIndex",
+      "msg": "Bad denomination index"
+    },
+    {
+      "code": 6004,
+      "name": "MathOverflow",
+      "msg": "Math overflow"
+    },
+    {
+      "code": 6005,
+      "name": "NullifierAlreadyUsed",
+      "msg": "Nullifier already used"
+    },
+    {
+      "code": 6006,
+      "name": "NullifierTableFull",
+      "msg": "Nullifier table is full"
+    },
+    {
+      "code": 6007,
+      "name": "UnknownRoot",
+      "msg": "Unknown root"
+    },
+    {
+      "code": 6008,
+      "name": "RelayerNotAllowed",
+      "msg": "Relayer not allowed"
+    },
+    {
+      "code": 6009,
+      "name": "InsufficientVaultBalance",
+      "msg": "Vault balance too low"
+    },
+    {
+      "code": 6010,
+      "name": "TooManyRelayers",
+      "msg": "Too many relayers"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidProof",
+      "msg": "Invalid proof encoding"
+    },
+    {
+      "code": 6012,
+      "name": "VerifyFailed",
+      "msg": "Groth16 verification failed"
+    }
+  ],
+  "types": [
+    {
+      "name": "NoteTree",
+      "docs": [
+        "Simplified note tree: only stores the *last* Merkle root.",
+        "This is enough for the current tests (one deposit / one withdraw)."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "last_root",
+            "type": {
+              "array": ["u8", 32]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "NullifierSet",
+      "docs": ["Simplified nullifier set: only stores the *last* nullifier."],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "count",
+            "type": "u32"
+          },
+          {
+            "name": "last",
+            "type": {
+              "array": ["u8", 32]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PrivacyConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "docs": ["PDA bump for this config"],
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "docs": ["PDA bump for vault"],
+            "type": "u8"
+          },
+          {
+            "name": "admin",
+            "docs": ["Admin who can configure pool and relayers"],
+            "type": "pubkey"
+          },
+          {
+            "name": "paused",
+            "docs": ["Is pool paused?"],
+            "type": "bool"
+          },
+          {
+            "name": "fee_bps",
+            "docs": ["Fee in basis points (0–10_000)"],
+            "type": "u16"
+          },
+          {
+            "name": "num_denoms",
+            "docs": ["Number of active denominations"],
+            "type": "u8"
+          },
+          {
+            "name": "denoms",
+            "docs": ["Supported fixed denominations (in lamports)"],
+            "type": {
+              "array": ["u64", 4]
+            }
+          },
+          {
+            "name": "tvl",
+            "docs": ["Total value locked per denom index"],
+            "type": {
+              "array": ["u64", 4]
+            }
+          },
+          {
+            "name": "num_relayers",
+            "docs": ["Relayer registry"],
+            "type": "u8"
+          },
+          {
+            "name": "relayers",
+            "type": {
+              "array": ["pubkey", 16]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Vault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "docs": ["PDA bump for this vault"],
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

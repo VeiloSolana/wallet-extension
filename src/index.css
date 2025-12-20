@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+@layer base {
+  * {
+    border-color: rgb(255 255 255 / 0.1);
+  }
+
+  body {
+    @apply bg-black text-white font-sans m-0;
+    min-width: 380px;
+    width: 380px;
+    min-height: 600px;
+  }
+
+  html,
+  body,
+  #root {
+    @apply m-0 p-0;
+  }
+}
+
+@layer utilities {
+  .bg-grid {
+    background-size: 50px 50px;
+    background-image: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.05) 1px,
+        transparent 1px
+      ),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  }
+
+  .text-shadow-neon {
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+  }
+
+  .border-neon {
+    border-color: #00ff00;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  }
+}
