@@ -23,7 +23,7 @@ export default defineConfig({
     alias: {
       "@zkprivacysol/sdk-core": path.resolve(
         __dirname,
-        "./node_modules/@zkprivacysol/sdk-core/dist/src/index.js"
+        "./node_modules/@zkprivacysol/sdk-core/dist/index.js"
       ),
     },
   },

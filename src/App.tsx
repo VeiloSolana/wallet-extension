@@ -15,15 +15,15 @@ import privacyPoolIdl from "../idl/privacy_pool.json";
 import "./App.css";
 import {
   buildDummyProof,
-  createNoteAndDeposit,
   createNoteWithCommitment,
   getPoolPdas,
   sol,
 } from "./sdk/client";
+import { createNoteAndDeposit } from "@zkprivacysol/sdk-core";
 
 // Program ID deployed on devnet
 const PRIVACY_POOL_PROGRAM_ID = new PublicKey(
-  "9uHaXDntTPSN1jBhHZwvPT2PFrQzsb4JbmNyVLJHVc6D"
+  "Bo2en1LKZL7JFXsag7KAb5ZQiqFg5j22dJYCLZmoek1Q"
 );
 
 // Devnet RPC endpoint
@@ -218,20 +218,25 @@ function App() {
       // const root = merkleRootFromLeaves([leaf]);
       // console.log("Computed Merkle root:", root);
 
+      const dummyRoot = new Uint8Array(32).fill(2);
+
       // console.log("Note created with commitment:", commitment);
 
       console.log("Depositing to privacy pool...");
-      const dummyRoot = new Uint8Array(32).fill(6);
       const depositResult = await createNoteAndDeposit({
         program,
         depositor: wallet,
         denomIndex: 0,
         valueLamports: amountLamports,
-        newRoot: dummyRoot,
+        // newRoot: dummyRoot,
       });
       console.log("✅ Deposit successful:", depositResult);
 
-      return { commitment, depositResult, root: dummyRoot };
+      return {
+        commitment,
+        depositResult,
+        root: dummyRoot,
+      };
     } catch (error) {
       console.error("❌ Deposit failed:", error);
       throw error;
@@ -255,23 +260,24 @@ function App() {
       const sdkProof = await buildDummyProof();
       console.log("SDK Proof generated:", sdkProof);
 
-      const proof = {
-        pi_a: ["0", "0", "1"],
+      const proofBytes = {
+        pi_a: ["1", "2", "1"],
         pi_b: [
-          ["0", "0"],
-          ["0", "0"],
-          ["1", "0"],
+          ["3", "4"],
+          ["5", "6"],
+          ["1", "1"],
         ],
-        pi_c: ["0", "0", "1"],
+        pi_c: ["7", "8", "1"],
         protocol: "groth16",
         curve: "bn128",
-      };
-      console.log("Using proof:", proof);
+      } as any;
+
+      console.log("Using proof:", proofBytes);
 
       const nullifier = new Uint8Array(32);
       crypto.getRandomValues(nullifier);
 
-      const root = merkleRoot || new Uint8Array(32).fill(21);
+      const root = merkleRoot || new Uint8Array(32).fill(2);
 
       console.log("Submitting withdrawal to relayer...");
       const withdrawRequest = {
@@ -279,13 +285,7 @@ function App() {
         nullifier: Buffer.from(nullifier).toString("hex"),
         denomIndex: 0,
         recipient: recipient,
-        proof: {
-          pi_a: proof.pi_a,
-          pi_b: proof.pi_b,
-          pi_c: proof.pi_c,
-          protocol: proof.protocol,
-          curve: proof.curve,
-        },
+        proof: proofBytes,
       };
 
       console.log("Sending withdrawal request to relayer:", withdrawRequest);

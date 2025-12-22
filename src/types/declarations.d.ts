@@ -68,7 +68,7 @@ declare module "@zkprivacysol/sdk-core" {
     depositor: Wallet;
     denomIndex: number;
     valueLamports: number;
-    newRoot: Uint8Array;
+    // newRoot: Uint8Array;
   }): Promise<string>;
 
   export function withdrawViaRelayer(params: any): Promise<string>;
