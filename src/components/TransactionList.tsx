@@ -11,9 +11,11 @@ interface Transaction {
 
 interface TransactionListProps {
   transactions: Transaction[];
+  onViewAll?: () => void;
+  onSelectTransaction?: (tx: Transaction) => void;
 }
 
-export const TransactionList = ({ transactions }: TransactionListProps) => {
+export const TransactionList = ({ transactions, onViewAll, onSelectTransaction }: TransactionListProps) => {
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -63,18 +65,22 @@ export const TransactionList = ({ transactions }: TransactionListProps) => {
         <span className="text-xs text-zinc-400 font-mono tracking-widest">
           RECENT ACTIVITY
         </span>
-        <button className="text-xs text-neon-green hover:text-neon-green/80 font-mono">
+        <button 
+            onClick={onViewAll}
+            className="text-xs text-neon-green hover:text-neon-green/80 font-mono"
+        >
           VIEW ALL
         </button>
       </div>
 
       <div className="space-y-2">
-        {transactions.map((tx, index) => (
+        {transactions.slice(0, 3).map((tx, index) => (
           <motion.div
             key={tx.id}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
+            onClick={() => onSelectTransaction && onSelectTransaction(tx)}
             className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/30 transition-all cursor-pointer group"
           >
             <div className="flex items-center gap-3">

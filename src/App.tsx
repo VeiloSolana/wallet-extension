@@ -8,11 +8,18 @@ import { WalletHeader } from "./components/WalletHeader";
 import { BalanceDisplay } from "./components/BalanceDisplay";
 import { ActionButtons } from "./components/ActionButtons";
 import { TransactionList } from "./components/TransactionList";
+import { ActivityPage } from "./components/ActivityPage";
+import { TransactionDetailsPage } from "./components/TransactionDetailsPage";
 import { SendModal } from "./components/SendModal";
 import { ReceiveModal } from "./components/ReceiveModal";
+import { DepositModal } from "./components/DepositModal";
+import { WithdrawModal } from "./components/WithdrawModal";
+import { SwapModal } from "./components/SwapModal";
+import { SettingsModal } from "./components/SettingsModal";
 import { Wallet } from "./utils/wallet";
 import privacyPoolIdl from "../idl/privacy_pool.json";
 import "./App.css";
+import { AnimatePresence } from "framer-motion";
 import { createNoteWithCommitment, getPoolPdas, sol } from "./sdk/client";
 import {
   createNoteDepositWithMerkle,
@@ -38,17 +45,45 @@ interface Transaction {
   address: string;
 }
 
+// Simple interface for a stored note
+interface StoredNote {
+  commitment: string; // hex string
+  amount: number;
+  root: string; // hex string (dummy for now)
+  timestamp: number;
+}
+
 function App() {
   const [balance, setBalance] = useState(0);
+  const [shieldedBalance, setShieldedBalance] = useState(0);
   const [address, setAddress] = useState("");
+
+  // Navigation State
+  const [view, setView] = useState<"dashboard" | "activity" | "details">(
+    "dashboard"
+  );
+  const [lastView, setLastView] = useState<"dashboard" | "activity">(
+    "dashboard"
+  );
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaction | null>(null);
+
+  // Modal states
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+  const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   // SDK state
   const [connection, setConnection] = useState<Connection | undefined>();
   const [wallet, setWallet] = useState<Wallet | undefined>();
   const [program, setProgram] = useState<Program<any> | undefined>();
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Notes state
+  const [storedNotes, setStoredNotes] = useState<StoredNote[]>([]);
 
   const [transactions] = useState<Transaction[]>([
     {
@@ -78,6 +113,30 @@ function App() {
   ]);
 
   useEffect(() => {
+    // Load stored notes
+    const loadNotes = () => {
+      const notesStr = localStorage.getItem("shielded_notes");
+      if (notesStr) {
+        try {
+          const notes: StoredNote[] = JSON.parse(notesStr);
+          setStoredNotes(notes);
+          const totalShielded = notes.reduce(
+            (acc, note) => acc + note.amount,
+            0
+          );
+          setShieldedBalance(totalShielded);
+          console.log(
+            "Loaded shielded notes:",
+            notes.length,
+            "Total:",
+            totalShielded
+          );
+        } catch (e) {
+          console.error("Failed to load notes", e);
+        }
+      }
+    };
+
     const initializeSDK = async () => {
       try {
         console.log("Initializing SDK...");
@@ -151,6 +210,8 @@ function App() {
 
         setIsInitialized(true);
         console.log("✅ SDK fully initialized and ready");
+
+        loadNotes();
 
         if (walletBalance < 1e9) {
           console.log("Balance low, requesting airdrop...");
@@ -306,6 +367,91 @@ function App() {
     }
   };
 
+  // --- Handlers ---
+
+  const handleShieldFunds = async (amount: number) => {
+    try {
+      // 1. Perform Deposit
+      const result = await deposit(amount);
+
+      // 2. Refresh Main Balance
+      if (connection && wallet) {
+        const newBal = await connection.getBalance(wallet.publicKey);
+        setBalance(newBal / 1e9);
+      }
+
+      // 3. Store Note locally to track shielded balance
+      const newNote: StoredNote = {
+        commitment: Buffer.from(result.commitment).toString("hex"),
+        amount: amount,
+        root: Buffer.from(result.root).toString("hex"),
+        timestamp: Date.now(),
+      };
+      const updatedNotes = [...storedNotes, newNote];
+      setStoredNotes(updatedNotes);
+      localStorage.setItem("shielded_notes", JSON.stringify(updatedNotes));
+
+      // 4. Update Shielded Balance State
+      const totalShielded = updatedNotes.reduce(
+        (acc, note) => acc + note.amount,
+        0
+      );
+      setShieldedBalance(totalShielded);
+    } catch (e) {
+      console.error("Shielding error:", e);
+      throw e;
+    }
+  };
+
+  // Withdraws from the shielded pool
+  const handleUnshieldFunds = async (recipient: string, amount: number) => {
+    // Logic: Find notes that sum up to amount (simplification: assume we can withdraw partial or full)
+    // Since the current mock relayer/SDK just needs a valid root and proof, we will use the stored root
+    // In a real ZK app, we would enable spending specific notes.
+    // Here we just check balance sufficient and use the first available note's root (or dummy).
+
+    try {
+      // 1. Check Shielded Balance
+      if (amount > shieldedBalance)
+        throw new Error("Insufficient shielded funds");
+
+      // 2. Perform Withdrawal
+      // We pick a root from our notes if available, or fall back (SDK handles dummy root)
+      const noteToSpend = storedNotes[0];
+      const root = noteToSpend
+        ? new Uint8Array(Buffer.from(noteToSpend.root, "hex"))
+        : undefined;
+
+      await withdraw(recipient, amount, root);
+
+      // 3. Update Stored Notes (Simplification: just reduce the shielded amount tracking)
+      // In reality, we would mark specific notes as spent (nullified)
+      // For this demo, we will just remove the equivalent value from our "local tracker" roughly
+      // by removing notes or updating a "spent" counter.
+      // Let's just remove the first note(s) that sum up to 'amount' or reduce the total.
+      // Simplest: Just reduce the displayed balance by removing 'amount' worth of notes or partial.
+      // Since we can't 'partial spend' a note easily without change output logic in ZK,
+      // we will just DECREMENT the tracked total visually by updating state,
+      // and dirty-remove the first note for logic correctness if needed.
+
+      const newTotal = Math.max(0, shieldedBalance - amount);
+      setShieldedBalance(newTotal);
+
+      // Update local storage (approximation for demo)
+      // If we had a real note manager, we'd update specific UTXOs.
+      const updatedNotes = [...storedNotes];
+      if (updatedNotes.length > 0) {
+        updatedNotes[0].amount -= amount; // partial spend simulation
+        if (updatedNotes[0].amount <= 0) updatedNotes.shift(); // remove if empty
+      }
+      setStoredNotes(updatedNotes);
+      localStorage.setItem("shielded_notes", JSON.stringify(updatedNotes));
+    } catch (e) {
+      console.error("Unshielding error:", e);
+      throw e;
+    }
+  };
+
   const handleSend = async (recipient: string, amount: number) => {
     try {
       console.log(`Starting send operation: ${amount} SOL to ${recipient}`);
@@ -322,22 +468,35 @@ function App() {
       );
 
       console.log(`✅ Successfully sent ${amount} SOL to ${recipient}`);
+
+      // Refresh balance
+      if (connection && wallet) {
+        const newBal = await connection.getBalance(wallet.publicKey);
+        setBalance(newBal / 1e9);
+      }
     } catch (error) {
       console.error("❌ Send failed:", error);
       throw error;
     }
   };
 
-  const handleSwap = () => {
-    console.log("Opening swap interface");
-    // TODO: Implement swap functionality
-  };
-
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div
+        className="w-full max-w-md relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10"
+        style={{ minHeight: "600px" }}
+      >
         <WalletHeader />
         <BalanceDisplay balance={balance} address={address} />
+
+        <div className="px-4 pb-2">
+          <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-zinc-500 font-mono border-b border-white/5 pb-1">
+            <span>Shielded Balance</span>
+            <span className="text-neon-green">
+              {shieldedBalance.toFixed(4)} SOL
+            </span>
+          </div>
+        </div>
 
         {!isInitialized && (
           <div className="px-4 py-3 mx-4 mt-4 border border-neon-green/30 bg-neon-green/10">
@@ -350,9 +509,40 @@ function App() {
         <ActionButtons
           onSend={() => setIsSendModalOpen(true)}
           onReceive={() => setIsReceiveModalOpen(true)}
-          onSwap={handleSwap}
+          onSwap={() => setIsSwapModalOpen(true)}
+          onDeposit={() => setIsDepositModalOpen(true)}
+          onWithdraw={() => setIsWithdrawModalOpen(true)}
+          onSettings={() => setIsSettingsModalOpen(true)}
         />
-        <TransactionList transactions={transactions} />
+        <TransactionList
+          transactions={transactions}
+          onViewAll={() => setView("activity")}
+          onSelectTransaction={(tx) => {
+            setSelectedTransaction(tx);
+            setLastView("dashboard");
+            setView("details");
+          }}
+        />
+
+        <AnimatePresence>
+          {view === "activity" && (
+            <ActivityPage
+              onBack={() => setView("dashboard")}
+              transactions={transactions}
+              onSelectTransaction={(tx) => {
+                setSelectedTransaction(tx);
+                setLastView("activity");
+                setView("details");
+              }}
+            />
+          )}
+          {view === "details" && selectedTransaction && (
+            <TransactionDetailsPage
+              onBack={() => setView(lastView)}
+              transaction={selectedTransaction}
+            />
+          )}
+        </AnimatePresence>
 
         <SendModal
           isOpen={isSendModalOpen}
@@ -363,6 +553,30 @@ function App() {
         <ReceiveModal
           isOpen={isReceiveModalOpen}
           onClose={() => setIsReceiveModalOpen(false)}
+          address={address}
+        />
+
+        <DepositModal
+          isOpen={isDepositModalOpen}
+          onClose={() => setIsDepositModalOpen(false)}
+          onDeposit={handleShieldFunds}
+        />
+
+        <WithdrawModal
+          isOpen={isWithdrawModalOpen}
+          onClose={() => setIsWithdrawModalOpen(false)}
+          onWithdraw={handleUnshieldFunds}
+          shieldedBalance={shieldedBalance}
+        />
+
+        <SwapModal
+          isOpen={isSwapModalOpen}
+          onClose={() => setIsSwapModalOpen(false)}
+        />
+
+        <SettingsModal
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
           address={address}
         />
       </div>
