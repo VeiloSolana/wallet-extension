@@ -1,5 +1,5 @@
 {
-  "address": "Bo2en1LKZL7JFXsag7KAb5ZQiqFg5j22dJYCLZmoek1Q",
+  "address": "AAiFgdAYeo8UXtZkZrN2frmRsS6hDrkstsTmeiPddLA8",
   "metadata": {
     "name": "privacy_pool",
     "version": "0.1.0",
@@ -90,6 +90,25 @@
           }
         },
         {
+          "name": "note_hint",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
+                  104, 105, 110, 116, 95, 118, 51
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "commitment"
+              }
+            ]
+          }
+        },
+        {
           "name": "depositor",
           "writable": true,
           "signer": true
@@ -109,6 +128,16 @@
           "type": {
             "array": ["u8", 32]
           }
+        },
+        {
+          "name": "owner_hint",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "encrypted_note",
+          "type": "bytes"
         }
       ]
     },
@@ -196,6 +225,94 @@
         {
           "name": "fee_bps",
           "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "private_transfer",
+      "discriminator": [107, 20, 177, 94, 33, 119, 16, 110],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
+                  103, 95, 118, 51
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "note_tree",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
+                  116, 114, 101, 101, 95, 118, 51
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "nullifiers",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 117, 108, 108, 105,
+                  102, 105, 101, 114, 115, 95, 118, 51
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "sender",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "old_root",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "old_nullifier",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "new_commitment",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "denom_index",
+          "type": "u8"
+        },
+        {
+          "name": "proof",
+          "type": "bytes"
         }
       ]
     },
@@ -333,15 +450,23 @@
         },
         {
           "name": "proof",
-          "type": "bytes"
+          "type": {
+            "defined": {
+              "name": "WithdrawProof"
+            }
+          }
         }
       ]
     }
   ],
   "accounts": [
     {
-      "name": "NoteTree",
-      "discriminator": [163, 196, 164, 169, 176, 98, 32, 121]
+      "name": "MerkleTreeAccount",
+      "discriminator": [147, 200, 34, 248, 131, 187, 248, 253]
+    },
+    {
+      "name": "NoteHint",
+      "discriminator": [66, 70, 53, 214, 233, 249, 229, 117]
     },
     {
       "name": "NullifierSet",
@@ -421,19 +546,90 @@
       "code": 6012,
       "name": "VerifyFailed",
       "msg": "Groth16 verification failed"
+    },
+    {
+      "code": 6013,
+      "name": "MerkleTreeFull",
+      "msg": "Merkle tree is full"
+    },
+    {
+      "code": 6014,
+      "name": "MerkleHashFailed",
+      "msg": "Merkle hash failed"
     }
   ],
   "types": [
     {
-      "name": "NoteTree",
-      "docs": [
-        "Minimal on-chain Merkle state:",
-        "- we track the next leaf index",
-        "- we track a single \"current root\"",
-        "",
-        "The full Merkle tree (leaves + paths) lives off-chain in your relayer / SDK.",
-        "On-chain we only check that a provided root matches this current_root."
-      ],
+      "name": "MerkleTreeAccount",
+      "serialization": "bytemuckunsafe",
+      "repr": {
+        "kind": "rust",
+        "packed": true
+      },
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "docs": ["Authority allowed to manage the tree (config admin)"],
+            "type": "pubkey"
+          },
+          {
+            "name": "height",
+            "docs": ["Tree height (number of levels)"],
+            "type": "u8"
+          },
+          {
+            "name": "root_history_size",
+            "docs": ["How many roots we track"],
+            "type": "u16"
+          },
+          {
+            "name": "next_index",
+            "docs": ["Next leaf index"],
+            "type": "u64"
+          },
+          {
+            "name": "root_index",
+            "docs": ["Index into root_history for the current root"],
+            "type": "u64"
+          },
+          {
+            "name": "root",
+            "docs": ["Current root"],
+            "type": {
+              "array": ["u8", 32]
+            }
+          },
+          {
+            "name": "subtrees",
+            "docs": ["Cached subtree values for each level"],
+            "type": {
+              "array": [
+                {
+                  "array": ["u8", 32]
+                },
+                16
+              ]
+            }
+          },
+          {
+            "name": "root_history",
+            "docs": ["Circular buffer of recent roots"],
+            "type": {
+              "array": [
+                {
+                  "array": ["u8", 32]
+                },
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "NoteHint",
       "type": {
         "kind": "struct",
         "fields": [
@@ -442,28 +638,31 @@
             "type": "u8"
           },
           {
-            "name": "next_index",
-            "docs": ["Next leaf index to insert (0-based)"],
-            "type": "u32"
-          },
-          {
-            "name": "current_root",
-            "docs": [
-              "Current Merkle root (or a placeholder until first deposit)"
-            ],
+            "name": "commitment",
             "type": {
               "array": ["u8", 32]
             }
+          },
+          {
+            "name": "owner_hint",
+            "type": {
+              "array": ["u8", 32]
+            }
+          },
+          {
+            "name": "encrypted_note",
+            "type": "bytes"
+          },
+          {
+            "name": "leaf_index",
+            "type": "u64"
           }
         ]
       }
     },
     {
       "name": "NullifierSet",
-      "docs": [
-        "Simplified nullifier set: only stores the *last* nullifier.",
-        "This is intentionally tiny & demo-only. Real-world would need a full set."
-      ],
+      "docs": ["Tiny nullifier set (demo only)."],
       "type": {
         "kind": "struct",
         "fields": [
@@ -556,6 +755,33 @@
             "name": "bump",
             "docs": ["PDA bump for this vault"],
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WithdrawProof",
+      "docs": ["Proof broken into (a, b, c) parts."],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "proof_a",
+            "type": {
+              "array": ["u8", 64]
+            }
+          },
+          {
+            "name": "proof_b",
+            "type": {
+              "array": ["u8", 128]
+            }
+          },
+          {
+            "name": "proof_c",
+            "type": {
+              "array": ["u8", 64]
+            }
           }
         ]
       }

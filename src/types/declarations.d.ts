@@ -3,7 +3,7 @@ declare module "process" {
   export = process;
 }
 
-declare module "@zkprivacysol/sdk-core" {
+declare module "veilo-sdk-core" {
   import type {
     PublicKey,
     Connection,

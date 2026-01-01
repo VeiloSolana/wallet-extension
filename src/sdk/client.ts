@@ -28,7 +28,7 @@ export {
   merkleRootFromLeaves,
   // Proof helpers
   buildDummyProof,
-} from "@zkprivacysol/sdk-core";
+} from "veilo-sdk-core";
 
 // Re-export types
 export type {
@@ -36,4 +36,4 @@ export type {
   WithdrawCircuitInputs,
   ProofBuilder,
   MerklePath,
-} from "@zkprivacysol/sdk-core";
+} from "veilo-sdk-core";

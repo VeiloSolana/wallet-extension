@@ -13,17 +13,17 @@ import { ReceiveModal } from "./components/ReceiveModal";
 import { Wallet } from "./utils/wallet";
 import privacyPoolIdl from "../idl/privacy_pool.json";
 import "./App.css";
+import { createNoteWithCommitment, getPoolPdas, sol } from "./sdk/client";
 import {
-  buildDummyProof,
-  createNoteWithCommitment,
-  getPoolPdas,
-  sol,
-} from "./sdk/client";
-import { createNoteAndDeposit } from "@zkprivacysol/sdk-core";
+  createNoteDepositWithMerkle,
+  MerkleTree,
+  deriveNullifier,
+  initPoseidon,
+} from "veilo-sdk-core";
 
 // Program ID deployed on devnet
 const PRIVACY_POOL_PROGRAM_ID = new PublicKey(
-  "Bo2en1LKZL7JFXsag7KAb5ZQiqFg5j22dJYCLZmoek1Q"
+  "AAiFgdAYeo8UXtZkZrN2frmRsS6hDrkstsTmeiPddLA8"
 );
 
 // Devnet RPC endpoint
@@ -186,24 +186,11 @@ function App() {
     }
 
     try {
+      await initPoseidon();
       console.log(`Starting deposit: ${amount} SOL`);
 
       const { config } = getPoolPdas(program.programId);
       console.log("Expected config PDA:", config.toBase58());
-
-      // let poolInitialized = false;
-      // try {
-      //   const configAccount = await program.account.config.fetch(config);
-      //   poolInitialized = true;
-      //   console.log("Pool already initialized", configAccount);
-      // } catch (error) {
-      //   console.log("Pool not initialized or cannot deserialize");
-      //   throw new Error(
-      //     "Pool must be initialized by the program admin. " +
-      //       "The client cannot initialize the pool due to PDA seed constraints. " +
-      //       "Please contact the program deployers or check if pool is already initialized with different parameters."
-      //   );
-      // }
 
       console.log("Creating privacy note...");
       const amountLamports = sol(amount);
@@ -211,31 +198,33 @@ function App() {
         value: amountLamports,
         owner: wallet.publicKey,
       });
-      // const leaf = merkleLeafFromCommitment(commitment);
-      // console.log("Note commitment and leaf:", { commitment, leaf });
-
-      // // Compute root from an array of leaves, padded up to next power-of-two
-      // const root = merkleRootFromLeaves([leaf]);
-      // console.log("Computed Merkle root:", root);
-
-      const dummyRoot = new Uint8Array(32).fill(2);
-
-      // console.log("Note created with commitment:", commitment);
+      console.log(
+        "✓ Note created with commitment:",
+        Buffer.from(commitment).toString("hex")
+      );
 
       console.log("Depositing to privacy pool...");
-      const depositResult = await createNoteAndDeposit({
-        program,
+      const offchainTree = new MerkleTree(16);
+      const result = await createNoteDepositWithMerkle({
+        program: program as any,
         depositor: wallet,
         denomIndex: 0,
         valueLamports: amountLamports,
-        // newRoot: dummyRoot,
+        tree: offchainTree,
       });
-      console.log("✅ Deposit successful:", depositResult);
+
+      const depositNote = result.note;
+      const depositRoot = result.root;
+      const depositMerklePath = result.merklePath;
+      const depositNullifier = deriveNullifier(depositNote);
+      // console.log("✅ Deposit successful:", depositResult);
 
       return {
         commitment,
-        depositResult,
-        root: dummyRoot,
+        result,
+        root: depositRoot,
+        depositMerklePath,
+        depositNullifier,
       };
     } catch (error) {
       console.error("❌ Deposit failed:", error);
@@ -246,7 +235,10 @@ function App() {
   const withdraw = async (
     recipient: string,
     amount: number,
-    merkleRoot?: Uint8Array
+    merkleRoot?: Uint8Array,
+    depositNote?: any,
+    depositMerklePath?: any,
+    depositNullifier?: any
   ) => {
     if (!connection || !wallet || !program) {
       console.error("SDK not initialized");
@@ -257,41 +249,38 @@ function App() {
       console.log(`Starting withdrawal: ${amount} SOL to ${recipient}`);
 
       console.log("Generating zero-knowledge proof...");
-      const sdkProof = await buildDummyProof();
-      console.log("SDK Proof generated:", sdkProof);
 
-      const proofBytes = {
-        pi_a: ["1", "2", "1"],
-        pi_b: [
-          ["3", "4"],
-          ["5", "6"],
-          ["1", "1"],
-        ],
-        pi_c: ["7", "8", "1"],
-        protocol: "groth16",
-        curve: "bn128",
-      } as any;
-
-      console.log("Using proof:", proofBytes);
-
-      const nullifier = new Uint8Array(32);
-      crypto.getRandomValues(nullifier);
+      const nullifier = depositNullifier || new Uint8Array(32);
+      if (!depositNullifier) {
+        crypto.getRandomValues(nullifier);
+      }
 
       const root = merkleRoot || new Uint8Array(32).fill(2);
 
       console.log("Submitting withdrawal to relayer...");
+
+      // Convert BigInt values to strings for JSON serialization
+      const serializableNote = depositNote
+        ? {
+            ...depositNote,
+            value: depositNote.value?.toString(),
+          }
+        : null;
+
       const withdrawRequest = {
         root: Buffer.from(root).toString("hex"),
         nullifier: Buffer.from(nullifier).toString("hex"),
         denomIndex: 0,
         recipient: recipient,
-        proof: proofBytes,
+        note: serializableNote,
+        merklePath: depositMerklePath || null,
       };
 
       console.log("Sending withdrawal request to relayer:", withdrawRequest);
 
       const response = await fetch(
-        "https://relayer-uh9k.onrender.com/withdraw",
+        "http://localhost:8080",
+        // "https://relayer-uh9k.onrender.com/withdraw",
         {
           method: "POST",
           headers: {
@@ -321,8 +310,16 @@ function App() {
     try {
       console.log(`Starting send operation: ${amount} SOL to ${recipient}`);
 
-      const { root } = await deposit(amount);
-      await withdraw(recipient, amount, root);
+      const { root, depositMerklePath, depositNullifier, result } =
+        await deposit(amount);
+      await withdraw(
+        recipient,
+        amount,
+        root,
+        result.note,
+        depositMerklePath,
+        depositNullifier
+      );
 
       console.log(`✅ Successfully sent ${amount} SOL to ${recipient}`);
     } catch (error) {
