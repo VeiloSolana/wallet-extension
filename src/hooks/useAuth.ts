@@ -24,12 +24,13 @@ export const useAuth = () => {
   useEffect(() => {
     const checkAuth = () => {
       const storedUser = localStorage.getItem("veilo_user_exists");
+      const storedUsername = localStorage.getItem("veilo_username");
       const sessionAuth = sessionStorage.getItem("veilo_session");
       
       setAuthState({
         isNewUser: !storedUser,
         isLoggedIn: !!sessionAuth,
-        username: storedUser ? "User" : null,
+        username: storedUsername || (storedUser ? "User" : null),
       });
       setIsLoading(false);
     };
@@ -38,10 +39,11 @@ export const useAuth = () => {
   }, []);
 
   // Create new account
-  const createAccount = (password: string): string[] => {
+  const createAccount = (password: string, username: string): string[] => {
     // Store that user now exists (static, no real encryption for now)
     localStorage.setItem("veilo_user_exists", "true");
     localStorage.setItem("veilo_password", password); // In production, this would be hashed
+    localStorage.setItem("veilo_username", username);
     
     // Set session as logged in
     sessionStorage.setItem("veilo_session", "active");
@@ -49,7 +51,7 @@ export const useAuth = () => {
     setAuthState({
       isNewUser: false,
       isLoggedIn: true,
-      username: "User",
+      username: username,
     });
 
     // Return the phrase for display
