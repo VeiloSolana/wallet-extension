@@ -481,7 +481,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+    <div className="min-h-screen bg-black flex">
       <div
         className="w-full max-w-md relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10"
         style={{ minHeight: "600px" }}

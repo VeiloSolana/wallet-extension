@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { TransactionList } from "./TransactionList";
 
 interface Transaction {
     id: string;
@@ -50,7 +49,7 @@ export const ActivityPage = ({ onBack, transactions, onSelectTransaction }: Acti
                         NO TRANSACTIONS YET
                     </div>
                  ) : (
-                     transactions.map((tx, index) => (
+                     transactions.map((tx) => (
                         <div
                             key={tx.id}
                             onClick={() => onSelectTransaction(tx)}
