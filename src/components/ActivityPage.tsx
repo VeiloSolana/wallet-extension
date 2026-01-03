@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { TransactionList } from "./TransactionList";
 
 interface Transaction {
     id: string;
@@ -37,7 +36,7 @@ export const ActivityPage = ({ onBack, transactions, onSelectTransaction }: Acti
             <h2 className="text-lg font-bold tracking-tight">ACTIVITY</h2>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
             {/* Reusing TransactionList but without the header/View All button logic inside it? 
                 Actually TransactionList has "Recent Activity" header inside. 
                 Ideally we refactor TransactionList to be pure list, or we just map lightly here.
@@ -50,7 +49,7 @@ export const ActivityPage = ({ onBack, transactions, onSelectTransaction }: Acti
                         NO TRANSACTIONS YET
                     </div>
                  ) : (
-                     transactions.map((tx, index) => (
+                     transactions.map((tx) => (
                         <div
                             key={tx.id}
                             onClick={() => onSelectTransaction(tx)}

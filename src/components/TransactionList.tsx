@@ -35,32 +35,41 @@ export const TransactionList = ({ transactions, onViewAll, onSelectTransaction }
 
   if (transactions.length === 0) {
     return (
-      <div className="p-8 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-900/60 border border-white/10 flex items-center justify-center">
-          <svg
-            className="w-8 h-8 text-zinc-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
+      <div className="flex-1 flex flex-col p-4">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs text-zinc-400 font-mono tracking-widest">
+            RECENT ACTIVITY
+          </span>
         </div>
-        <p className="text-zinc-500 font-mono text-sm">NO TRANSACTIONS YET</p>
-        <p className="text-zinc-600 text-xs mt-2">
-          Your transaction history will appear here
-        </p>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-zinc-900/60 border border-white/10 flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-zinc-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <p className="text-zinc-500 font-mono text-xs">NO TRANSACTIONS YET</p>
+            <p className="text-zinc-600 text-[10px] mt-1">
+              Your activity will appear here
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4">
+    <div className="flex-1 flex flex-col p-4 min-h-0 overflow-hidden">
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs text-zinc-400 font-mono tracking-widest">
           RECENT ACTIVITY
@@ -73,8 +82,9 @@ export const TransactionList = ({ transactions, onViewAll, onSelectTransaction }
         </button>
       </div>
 
-      <div className="space-y-2">
-        {transactions.slice(0, 3).map((tx, index) => (
+      {/* Scrollable transaction list */}
+      <div className="flex-1 overflow-y-auto space-y-2 scrollbar-thin">
+        {transactions.map((tx, index) => (
           <motion.div
             key={tx.id}
             initial={{ opacity: 0, x: -20 }}
@@ -86,7 +96,7 @@ export const TransactionList = ({ transactions, onViewAll, onSelectTransaction }
             <div className="flex items-center gap-3">
               <div
                 className={`
-                w-8 h-8 rounded-full flex items-center justify-center
+                w-7 h-7 rounded-full flex items-center justify-center
                 ${
                   tx.type === "send"
                     ? "bg-red-500/10 border border-red-500/30"
@@ -96,7 +106,7 @@ export const TransactionList = ({ transactions, onViewAll, onSelectTransaction }
               >
                 {tx.type === "send" ? (
                   <svg
-                    className="w-4 h-4 text-red-500"
+                    className="w-3.5 h-3.5 text-red-500"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -110,7 +120,7 @@ export const TransactionList = ({ transactions, onViewAll, onSelectTransaction }
                   </svg>
                 ) : (
                   <svg
-                    className="w-4 h-4 text-neon-green"
+                    className="w-3.5 h-3.5 text-neon-green"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -125,7 +135,7 @@ export const TransactionList = ({ transactions, onViewAll, onSelectTransaction }
                 )}
               </div>
 
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">
                     {tx.type === "send" ? "Sent" : "Received"}
@@ -139,17 +149,17 @@ export const TransactionList = ({ transactions, onViewAll, onSelectTransaction }
                     {tx.amount} SOL
                   </span>
                 </div>
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs text-zinc-500 font-mono">
+                <div className="flex items-center justify-between mt-0.5">
+                  <span className="text-[10px] text-zinc-500 font-mono">
                     {shortenAddress(tx.address)}
                   </span>
                   <div className="flex items-center gap-2">
                     {tx.status === "pending" && (
-                      <span className="text-xs text-yellow-500 font-mono">
+                      <span className="text-[10px] text-yellow-500 font-mono">
                         PENDING
                       </span>
                     )}
-                    <span className="text-xs text-zinc-600">
+                    <span className="text-[10px] text-zinc-600">
                       {formatTime(tx.timestamp)}
                     </span>
                   </div>
