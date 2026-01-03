@@ -4,10 +4,13 @@ import { useState, useEffect } from "react";
 interface BalanceDisplayProps {
   balance: number;
   address: string;
+  onSend?: () => void;
+  onReceive?: () => void;
 }
 
-export const BalanceDisplay = ({ balance, address }: BalanceDisplayProps) => {
+export const BalanceDisplay = ({ balance, address, onSend, onReceive }: BalanceDisplayProps) => {
   const [displayBalance, setDisplayBalance] = useState(0);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -16,59 +19,57 @@ export const BalanceDisplay = ({ balance, address }: BalanceDisplayProps) => {
     return () => clearTimeout(timer);
   }, [balance]);
 
-  const shortenAddress = (addr: string) => {
-    return `${addr.slice(0, 4)}...${addr.slice(-4)}`;
+  const handleCopyAddress = () => {
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
 
   return (
-    <div className="p-6 bg-black/40 border-b border-white/10">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-zinc-400 font-mono tracking-widest">
-          BALANCE
-        </span>
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-neon-green animate-pulse" />
-          <span className="text-xs text-zinc-400 font-mono">SOL</span>
-        </div>
-      </div>
+    <div className="px-4 py-3 bg-black/40 border-b border-white/10">
+      {/* Privacy Wallet Label - Copiable */}
+  
 
+      {/* Balance and Send/Receive Row */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="mb-4"
+        className="flex items-center justify-between"
       >
-        <div className="text-4xl font-light tracking-tight mb-1">
-          {displayBalance.toFixed(4)}
-          <span className="text-neon-green ml-2 text-2xl">SOL</span>
+        {/* Balance */}
+        <div>
+          <div className="text-3xl font-light tracking-tight">
+            {displayBalance.toFixed(4)}
+            <span className="text-neon-green ml-1 text-xl">SOL</span>
+          </div>
+          <div className="text-xs text-zinc-500">
+            ≈ ${(displayBalance * 100).toFixed(2)} USD
+          </div>
         </div>
-        <div className="text-sm text-zinc-400">
-          ≈ ${(displayBalance * 100).toFixed(2)} USD
+
+        {/* Send/Receive Buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onSend}
+            className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900/60 border border-white/10 hover:border-neon-green/50 transition-all rounded group"
+          >
+            <svg className="w-4 h-4 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+            {/* <span className="text-[10px] font-mono text-zinc-400 group-hover:text-white transition-colors">SEND</span> */}
+          </button>
+          <button
+            onClick={onReceive}
+            className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900/60 border border-white/10 hover:border-neon-green/50 transition-all rounded group"
+          >
+            <svg className="w-4 h-4 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+            {/* <span className="text-[10px] font-mono text-zinc-400 group-hover:text-white transition-colors">RECEIVE</span> */}
+          </button>
         </div>
       </motion.div>
-
-      <div className="flex items-center gap-2 px-3 py-2 bg-zinc-900/60 border border-white/10 rounded">
-        <span className="text-xs font-mono text-zinc-400 flex-1">
-          {shortenAddress(address)}
-        </span>
-        <button
-          className="text-zinc-500 hover:text-white transition-colors"
-          onClick={() => {
-            navigator.clipboard.writeText(address);
-            const btn = document.getElementById("copy-feedback");
-            if(btn) {
-               btn.style.opacity = "1";
-               setTimeout(() => btn.style.opacity = "0", 1500);
-            }
-          }}
-          title="Copy Address"
-        >
-           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-           </svg>
-           <span id="copy-feedback" className="absolute -top-8 right-0 bg-neon-green text-black text-[10px] px-2 py-1 rounded opacity-0 transition-opacity pointer-events-none font-bold">COPIED!</span>
-        </button>
-      </div>
     </div>
   );
 };

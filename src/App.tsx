@@ -16,6 +16,12 @@ import { DepositModal } from "./components/DepositModal";
 import { WithdrawModal } from "./components/WithdrawModal";
 import { SwapModal } from "./components/SwapModal";
 import { SettingsModal } from "./components/SettingsModal";
+import { WelcomePage } from "./components/WelcomePage";
+import { CreatePasswordPage } from "./components/CreatePasswordPage";
+import { SecretPhrasePage } from "./components/SecretPhrasePage";
+import { LoginPage } from "./components/LoginPage";
+import { OnboardingWalkthrough } from "./components/OnboardingWalkthrough";
+import { useAuth } from "./hooks/useAuth";
 import { Wallet } from "./utils/wallet";
 import privacyPoolIdl from "../idl/privacy_pool.json";
 import "./App.css";
@@ -54,6 +60,20 @@ interface StoredNote {
 }
 
 function App() {
+  // Auth state
+  const {
+    isNewUser,
+    isLoggedIn,
+    isLoading: authLoading,
+    createAccount,
+    login,
+    secretPhrase,
+  } = useAuth();
+  const [onboardingStep, setOnboardingStep] = useState<
+    "welcome" | "password" | "phrase" | "walkthrough" | "done"
+  >("welcome");
+  const [generatedPhrase, setGeneratedPhrase] = useState<string[]>([]);
+
   const [balance, setBalance] = useState(0);
   const [shieldedBalance, setShieldedBalance] = useState(0);
   const [address, setAddress] = useState("");
@@ -480,40 +500,140 @@ function App() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-black flex">
-      <div
-        className="w-full max-w-md relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10"
-        style={{ minHeight: "600px" }}
-      >
-        <WalletHeader />
-        <BalanceDisplay balance={balance} address={address} />
+  console.log({ onboardingStep });
 
-        <div className="px-4 pb-2">
-          <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-zinc-500 font-mono border-b border-white/5 pb-1">
+  // Handle password submission for new users
+  const handleCreatePassword = (password: string) => {
+    const phrase = createAccount(password);
+    setGeneratedPhrase(phrase);
+    setOnboardingStep("phrase");
+  };
+
+  // Handle continuing after viewing phrase
+  const handlePhraseConfirm = () => {
+    setOnboardingStep("walkthrough");
+  };
+
+  // Handle walkthrough completion
+  const handleWalkthroughComplete = () => {
+    setOnboardingStep("done");
+  };
+
+  // Handle login for returning users
+  const handleLogin = (password: string) => {
+    login(password);
+  };
+
+  // Loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="w-full max-w-md h-[600px] flex flex-col items-center justify-center bg-black/90 border border-white/10">
+          <div className="w-12 h-12 border-2 border-neon-green/30 border-t-neon-green rounded-full animate-spin" />
+          <p className="mt-4 text-zinc-500 font-mono text-sm">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Determine if we should show onboarding
+  // Show if:
+  // 1. It's a new user (isNewUser = true)
+  // 2. OR we are in the middle of onboarding (step is not welcome and not done)
+  //    This handles the case where createAccount() makes isNewUser false but we still need to show Phrase/Walkthrough
+  const showOnboarding =
+    isNewUser || (onboardingStep !== "welcome" && onboardingStep !== "done");
+
+  // New user onboarding flow
+  if (showOnboarding) {
+    return (
+      <div className="h-full  bg-black flex items-center justify-center p-4">
+        <div className="w-full max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
+          <AnimatePresence mode="wait">
+            {onboardingStep === "welcome" && (
+              <WelcomePage
+                key="welcome"
+                onGetStarted={() => setOnboardingStep("password")}
+              />
+            )}
+            {onboardingStep === "password" && (
+              <CreatePasswordPage
+                key="password"
+                onSubmit={handleCreatePassword}
+                onBack={() => setOnboardingStep("welcome")}
+              />
+            )}
+            {onboardingStep === "phrase" && (
+              <SecretPhrasePage
+                key="phrase"
+                phrase={
+                  generatedPhrase.length > 0 ? generatedPhrase : secretPhrase
+                }
+                onContinue={handlePhraseConfirm}
+              />
+            )}
+            {onboardingStep === "walkthrough" && (
+              <OnboardingWalkthrough
+                key="walkthrough"
+                onComplete={handleWalkthroughComplete}
+                onClose={handleWalkthroughComplete}
+              />
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    );
+  }
+
+  // Returning user login
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="w-full max-w-md h-[900px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
+          <LoginPage onLogin={handleLogin} />
+        </div>
+      </div>
+    );
+  }
+
+  // Dashboard (logged in)
+  return (
+    <div className="h-full  bg-black flex items-center justify-center p-4">
+      <div className="w-full max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
+        <WalletHeader
+          address={address}
+          onSettings={() => setIsSettingsModalOpen(true)}
+        />
+        <BalanceDisplay
+          balance={balance}
+          address={address}
+          onSend={() => setIsSendModalOpen(true)}
+          onReceive={() => setIsReceiveModalOpen(true)}
+        />
+
+        {/* Shielded Balance + Action Buttons */}
+        <div className="px-4 py-2 border-b border-white/10">
+          <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-zinc-500 font-mono mb-2">
             <span>Shielded Balance</span>
             <span className="text-neon-green">
               {shieldedBalance.toFixed(4)} SOL
             </span>
           </div>
+          {!isInitialized && (
+            <div className="py-2 px-3 mb-2 border border-neon-green/30 bg-neon-green/10">
+              <p className="text-[10px] font-mono text-center">
+                Initializing connection to devnet...
+              </p>
+            </div>
+          )}
         </div>
 
-        {!isInitialized && (
-          <div className="px-4 py-3 mx-4 mt-4 border border-neon-green/30 bg-neon-green/10">
-            <p className="text-xs font-mono text-center">
-              Initializing connection to devnet...
-            </p>
-          </div>
-        )}
-
         <ActionButtons
-          onSend={() => setIsSendModalOpen(true)}
-          onReceive={() => setIsReceiveModalOpen(true)}
           onSwap={() => setIsSwapModalOpen(true)}
           onDeposit={() => setIsDepositModalOpen(true)}
           onWithdraw={() => setIsWithdrawModalOpen(true)}
-          onSettings={() => setIsSettingsModalOpen(true)}
         />
+
         <TransactionList
           transactions={transactions}
           onViewAll={() => setView("activity")}
