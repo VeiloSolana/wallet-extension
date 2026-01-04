@@ -3,14 +3,16 @@ import { useState, useEffect } from "react";
 
 interface BalanceDisplayProps {
   balance: number;
-  address: string;
   onSend?: () => void;
   onReceive?: () => void;
 }
 
-export const BalanceDisplay = ({ balance, address, onSend, onReceive }: BalanceDisplayProps) => {
+export const BalanceDisplay = ({
+  balance,
+  onSend,
+  onReceive,
+}: BalanceDisplayProps) => {
   const [displayBalance, setDisplayBalance] = useState(0);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -19,16 +21,9 @@ export const BalanceDisplay = ({ balance, address, onSend, onReceive }: BalanceD
     return () => clearTimeout(timer);
   }, [balance]);
 
-  const handleCopyAddress = () => {
-    navigator.clipboard.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-
   return (
     <div className="px-4 py-3 bg-black/40 border-b border-white/10">
       {/* Privacy Wallet Label - Copiable */}
-  
 
       {/* Balance and Send/Receive Row */}
       <motion.div
@@ -54,8 +49,18 @@ export const BalanceDisplay = ({ balance, address, onSend, onReceive }: BalanceD
             onClick={onSend}
             className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900/60 border border-white/10 hover:border-neon-green/50 transition-all rounded group"
           >
-            <svg className="w-4 h-4 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            <svg
+              className="w-4 h-4 text-neon-green"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 10l7-7m0 0l7 7m-7-7v18"
+              />
             </svg>
             {/* <span className="text-[10px] font-mono text-zinc-400 group-hover:text-white transition-colors">SEND</span> */}
           </button>
@@ -63,8 +68,18 @@ export const BalanceDisplay = ({ balance, address, onSend, onReceive }: BalanceD
             onClick={onReceive}
             className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900/60 border border-white/10 hover:border-neon-green/50 transition-all rounded group"
           >
-            <svg className="w-4 h-4 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            <svg
+              className="w-4 h-4 text-neon-green"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+              />
             </svg>
             {/* <span className="text-[10px] font-mono text-zinc-400 group-hover:text-white transition-colors">RECEIVE</span> */}
           </button>

@@ -130,6 +130,38 @@ function App() {
       status: "confirmed",
       address: "5xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
     },
+    {
+      id: "22",
+      type: "send",
+      amount: 0.5,
+      timestamp: Date.now() - 7200000,
+      status: "confirmed",
+      address: "3xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+    },
+    {
+      id: "33",
+      type: "receive",
+      amount: 0.8,
+      timestamp: Date.now() - 86400000,
+      status: "confirmed",
+      address: "5xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+    },
+    {
+      id: "21",
+      type: "send",
+      amount: 0.5,
+      timestamp: Date.now() - 7200000,
+      status: "confirmed",
+      address: "3xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+    },
+    {
+      id: "32",
+      type: "receive",
+      amount: 0.8,
+      timestamp: Date.now() - 86400000,
+      status: "confirmed",
+      address: "5xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+    },
   ]);
 
   useEffect(() => {
@@ -547,8 +579,8 @@ function App() {
   // New user onboarding flow
   if (showOnboarding) {
     return (
-      <div className="h-full  bg-black flex items-center justify-center p-4">
-        <div className="w-full max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
+      <div className="h-full  bg-black flex items-center justify-center">
+        <div className="w-full max-w-md h-[600px] flex flex-col relative p-3 overflow-hidden bg-black/90 border border-white/10 shadow-xl shadow-neon-green/10">
           <AnimatePresence mode="wait">
             {onboardingStep === "welcome" && (
               <WelcomePage
@@ -598,15 +630,14 @@ function App() {
 
   // Dashboard (logged in)
   return (
-    <div className="h-full  bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
+    <div className="h-full  bg-black flex items-center justify-center">
+      <div className="w-full max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10 ">
         <WalletHeader
           address={address}
           onSettings={() => setIsSettingsModalOpen(true)}
         />
         <BalanceDisplay
           balance={balance}
-          address={address}
           onSend={() => setIsSendModalOpen(true)}
           onReceive={() => setIsReceiveModalOpen(true)}
         />
