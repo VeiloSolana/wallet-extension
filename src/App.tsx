@@ -20,6 +20,7 @@ import { WelcomePage } from "./components/WelcomePage";
 import { CreatePasswordPage } from "./components/CreatePasswordPage";
 import { SecretPhrasePage } from "./components/SecretPhrasePage";
 import { LoginPage } from "./components/LoginPage";
+import { CreateUsernamePage } from "./components/CreateUsernamePage";
 import { OnboardingWalkthrough } from "./components/OnboardingWalkthrough";
 import { useAuth } from "./hooks/useAuth";
 import { Wallet } from "./utils/wallet";
@@ -70,8 +71,9 @@ function App() {
     secretPhrase,
   } = useAuth();
   const [onboardingStep, setOnboardingStep] = useState<
-    "welcome" | "password" | "phrase" | "walkthrough" | "done"
+    "welcome" | "username" | "password" | "phrase" | "walkthrough" | "done"
   >("welcome");
+  const [username, setUsername] = useState("");
   const [generatedPhrase, setGeneratedPhrase] = useState<string[]>([]);
 
   const [balance, setBalance] = useState(0);
@@ -534,9 +536,15 @@ function App() {
 
   console.log({ onboardingStep });
 
+  // Handle username submission
+  const handleUsernameSubmit = (name: string) => {
+    setUsername(name);
+    setOnboardingStep("password");
+  };
+
   // Handle password submission for new users
   const handleCreatePassword = (password: string) => {
-    const phrase = createAccount(password);
+    const phrase = createAccount(password, username);
     setGeneratedPhrase(phrase);
     setOnboardingStep("phrase");
   };
@@ -585,14 +593,21 @@ function App() {
             {onboardingStep === "welcome" && (
               <WelcomePage
                 key="welcome"
-                onGetStarted={() => setOnboardingStep("password")}
+                onGetStarted={() => setOnboardingStep("username")}
+              />
+            )}
+            {onboardingStep === "username" && (
+              <CreateUsernamePage
+                key="username"
+                onSubmit={handleUsernameSubmit}
+                onBack={() => setOnboardingStep("welcome")}
               />
             )}
             {onboardingStep === "password" && (
               <CreatePasswordPage
                 key="password"
                 onSubmit={handleCreatePassword}
-                onBack={() => setOnboardingStep("welcome")}
+                onBack={() => setOnboardingStep("username")}
               />
             )}
             {onboardingStep === "phrase" && (
@@ -621,7 +636,7 @@ function App() {
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="w-full max-w-md h-[900px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
+        <div className="w-full max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
           <LoginPage onLogin={handleLogin} />
         </div>
       </div>
