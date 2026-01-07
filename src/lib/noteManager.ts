@@ -20,9 +20,14 @@ const isExtension = typeof chrome !== 'undefined' && !!chrome.storage;
 
 export class NoteManager {
   async saveNote(note: Omit<StoredNote, 'id' | 'spent'>): Promise<string> {
+    // Generate ID safely (handle missing crypto.randomUUID)
+    const id = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' 
+      ? crypto.randomUUID() 
+      : Math.random().toString(36).substring(2) + Date.now().toString(36);
+
     const noteWithId: StoredNote = {
       ...note,
-      id: crypto.randomUUID(),
+      id,
       spent: false,
     };
 
