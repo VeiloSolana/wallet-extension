@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useCheckUsername } from "../hooks/queries/useAuthQueries";
 
 interface CreateUsernamePageProps {
   onSubmit: (username: string) => void;
@@ -9,7 +10,8 @@ interface CreateUsernamePageProps {
 export const CreateUsernamePage = ({ onSubmit, onBack }: CreateUsernamePageProps) => {
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
-  const [isChecking, setIsChecking] = useState(false);
+  
+  const { mutate: checkUsername, isPending: isChecking } = useCheckUsername();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,14 +28,18 @@ export const CreateUsernamePage = ({ onSubmit, onBack }: CreateUsernamePageProps
       return;
     }
 
-    setIsChecking(true);
-
-    // Simulate availability check
-    setTimeout(() => {
-      setIsChecking(false);
-      // For demo, all usernames are available
-      onSubmit(username);
-    }, 800);
+    checkUsername(username, {
+      onSuccess: (data) => {
+        if (data.available) {
+             onSubmit(username);
+        } else {
+            setError("Username is already taken");
+        }
+      },
+      onError: () => {
+        setError("Failed to check username availability");
+      }
+    });
   };
 
   return (
@@ -75,7 +81,10 @@ export const CreateUsernamePage = ({ onSubmit, onBack }: CreateUsernamePageProps
               <input
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                onChange={(e) => {
+                    setUsername(e.target.value.toLowerCase());
+                    if (error) setError("");
+                }}
                 placeholder="username"
                 className="w-full bg-zinc-900/60 border border-white/10 rounded-lg pl-8 pr-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-neon-green/50 transition-colors"
                 autoFocus
@@ -91,19 +100,6 @@ export const CreateUsernamePage = ({ onSubmit, onBack }: CreateUsernamePageProps
                 </motion.p>
             )}
           </div>
-
-            {username.length >= 3 && !error && (
-                <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className="flex items-center gap-2 text-neon-green text-xs font-mono bg-neon-green/10 p-3 rounded border border-neon-green/30"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>@{username} is available!</span>
-                </motion.div>
-            )}
 
         </form>
       </div>

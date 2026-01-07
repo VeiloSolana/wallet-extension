@@ -1,5 +1,4 @@
-import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+
 
 interface WalletHeaderProps {
   onSettings?: () => void;
@@ -7,20 +6,11 @@ interface WalletHeaderProps {
 }
 
 export const WalletHeader = ({ onSettings,address }: WalletHeaderProps) => {
-   const [copied, setCopied] = useState(false);
-  
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        setCopied(true);
-      }, 100);
-      return () => clearTimeout(timer);
-    }, [address]);
+  /* Removed unused copied state and effect */
   
     const handleCopyAddress = () => {
       if (address) {
         navigator.clipboard.writeText(address);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
       }
     };
 

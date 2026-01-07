@@ -1,14 +1,16 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { clearWallet } from "../utils/storage";
 
 interface LoginPageProps {
   onLogin: (password: string) => void;
+  error:string
+  setError:React.Dispatch<React.SetStateAction<string>>
 }
 
-export const LoginPage = ({ onLogin }: LoginPageProps) => {
+export const LoginPage = ({ onLogin,error,setError }: LoginPageProps) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,12 +24,19 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
 
     setIsLoading(true);
     
-    // Simulate loading
-    setTimeout(() => {
-      // For now, accept any password for static UI
-      onLogin(password);
-      setIsLoading(false);
-    }, 500);
+    // Call the parent handler, which might throw or return
+    // We should ideally wrap this in a try/catch if onLogin is async and propagates errors
+    try {
+        await onLogin(password);
+        // If successful, the parent app will likely unmount this component (switch view)
+        // So we don't necessarily need to set isLoading(false) unless it fails without unmounting
+    } catch (e) {
+        // If login failed (thrown error)
+        setIsLoading(false);
+    }
+    // Note: The App.tsx handleLogin currently catches errors and sets error state passed down props.
+    // So 'onLogin' likely finishes. If it failed, we want to stop loading.
+    setIsLoading(false); 
   };
 
   return (
@@ -120,7 +129,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-4 bg-neon-green text-black font-bold text-lg tracking-wide rounded-lg hover:bg-neon-green/90 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-4 bg-white text-black font-bold text-lg tracking-wide rounded-lg hover:bg-neon-green/90 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -134,6 +143,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
         </motion.form>
 
         {/* Forgot Password */}
+        {/* Forgot Password */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -144,8 +154,22 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
             Forgot password?
           </p>
           <p className="text-zinc-500 text-xs mt-1">
-            Sorry, there is no recovery option.
+             Sorry, there is no recovery option.
           </p>
+
+
+          <button
+            onClick={async () => {
+              if(window.confirm("Are you sure you want to reset everything? This will delete your wallet.")) {
+                await clearWallet();
+                localStorage.clear();
+                window.location.reload();
+              }
+            }}
+            className="mt-8 text-red-500 text-xs hover:text-red-400 transition-colors underline block w-full"
+          >
+            [DEV] Reset Wallet
+          </button>
         </motion.div>
       </div>
 

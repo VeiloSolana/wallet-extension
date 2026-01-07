@@ -8,9 +8,8 @@ interface BalanceDisplayProps {
   onReceive?: () => void;
 }
 
-export const BalanceDisplay = ({ balance, address, onSend, onReceive }: BalanceDisplayProps) => {
+export const BalanceDisplay = ({ balance, address: _address, onSend, onReceive }: BalanceDisplayProps) => {
   const [displayBalance, setDisplayBalance] = useState(0);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -18,12 +17,6 @@ export const BalanceDisplay = ({ balance, address, onSend, onReceive }: BalanceD
     }, 100);
     return () => clearTimeout(timer);
   }, [balance]);
-
-  const handleCopyAddress = () => {
-    navigator.clipboard.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
 
   return (
     <div className="px-4 py-3 bg-black/40 border-b border-white/10">
