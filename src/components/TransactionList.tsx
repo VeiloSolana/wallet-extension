@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useSolPrice } from "../hooks/useSolPrice";
 
 interface Transaction {
   id: string;
@@ -28,6 +29,8 @@ export const TransactionList = ({
   isLoadingNotes = false,
 }: TransactionListProps) => {
   const [activeTab, setActiveTab] = useState<TabType>("history");
+    const { price: solPrice, isLoading: isPriceLoading } = useSolPrice();
+  
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -150,7 +153,11 @@ export const TransactionList = ({
                   {solBalance.toFixed(4)}
                 </p>
                 <p className="text-[10px] text-zinc-400 font-mono">
-                  ≈ ${(solBalance * 200).toFixed(2)}
+                 {isPriceLoading ? (
+                      <span>--</span>
+                    ) : (
+                      <span>≈ ${(solBalance * solPrice).toFixed(2)}</span>
+                    )}
                 </p>
               </div>
             </div>
