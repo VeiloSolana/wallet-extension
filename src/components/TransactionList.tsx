@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useSolPrice } from "../hooks/useSolPrice";
+import { useCryptoPrices } from "../hooks/useSolPrice";
 
 interface Transaction {
   id: string;
@@ -29,7 +29,7 @@ export const TransactionList = ({
   isLoadingNotes = false,
 }: TransactionListProps) => {
   const [activeTab, setActiveTab] = useState<TabType>("history");
-    const { price: solPrice, isLoading: isPriceLoading } = useSolPrice();
+  const { sol, usdc, usdt, isLoading: isPriceLoading } = useCryptoPrices();
   
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -156,7 +156,7 @@ export const TransactionList = ({
                  {isPriceLoading ? (
                       <span>--</span>
                     ) : (
-                      <span>≈ ${(solBalance * solPrice).toFixed(2)}</span>
+                      <span>≈ ${(solBalance * sol.price).toFixed(2)}</span>
                     )}
                 </p>
               </div>
@@ -227,7 +227,9 @@ export const TransactionList = ({
               </div>
               <div className="text-right">
                 <p className="text-sm font-mono font-light text-white">0.00</p>
-                <p className="text-[10px] text-zinc-400 font-mono">≈ $0.00</p>
+                <p className="text-[10px] text-zinc-400 font-mono">
+                  {isPriceLoading ? "--" : `≈ $${(0 * usdc.price).toFixed(2)}`}
+                </p>
               </div>
             </div>
           </div>
@@ -296,7 +298,9 @@ export const TransactionList = ({
               </div>
               <div className="text-right">
                 <p className="text-sm font-mono font-light text-white">0.00</p>
-                <p className="text-[10px] text-zinc-400 font-mono">≈ $0.00</p>
+                <p className="text-[10px] text-zinc-400 font-mono">
+                  {isPriceLoading ? "--" : `≈ $${(0 * usdt.price).toFixed(2)}`}
+                </p>
               </div>
             </div>
           </div>
