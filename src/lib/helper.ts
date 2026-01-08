@@ -33,12 +33,9 @@ export function decryptAES(
   return Buffer.concat([decipher.update(encrypted), decipher.final()]);
 }
 
-
-
 // Ensure sodium is ready before using
-let sodiumReady = false;
 _sodium.ready.then(() => {
-  sodiumReady = true;
+  // Sodium initialization complete
 });
 
 /**

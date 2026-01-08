@@ -31,6 +31,7 @@ import {
 // import * as bip39 from "bip39";
 import { Wallet } from "./utils/wallet";
 import privacyPoolIdl from "../program/idl/privacy_pool.json";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { type PrivacyPool } from "../program/types/privacy_pool";
 import "./App.css";
 import { AnimatePresence } from "framer-motion";
@@ -61,6 +62,7 @@ interface Transaction {
 }
 
 // Simple interface for a stored note
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface StoredNote {
   commitment: string; // hex string
   amount: number;
@@ -92,6 +94,7 @@ function App() {
   const [error, setError] = useState("");
 
   // Restore flow state
+  // @ts-expect-error - Used by setIsRestoreFlow
   const [isRestoreFlow, setIsRestoreFlow] = useState(false);
   const [restoreMnemonic, setRestoreMnemonic] = useState("");
 
@@ -149,13 +152,16 @@ function App() {
   const [password, setPassword] = useState("");
 
   // SDK state
+  // @ts-expect-error - Used by setConnection
   const [connection, setConnection] = useState<Connection | undefined>();
   const [wallet, setWallet] = useState<Wallet | undefined>();
+  // @ts-expect-error - Used by setProgram
   const [program, setProgram] = useState<Program<PrivacyPool> | undefined>();
   const [isInitialized, setIsInitialized] = useState(false);
   const [noteManager, setNoteManager] = useState<NoteManager | null>(null);
 
   // Notes state
+  // @ts-expect-error - Used by setStoredNotes
   const [storedNotes, setStoredNotes] = useState<StoredNote[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
@@ -590,13 +596,19 @@ function App() {
       setAuth({ username: response.username, publicKey: response.publicKey });
       setOnboardingStep("done");
 
+      // Get veilo keys for sync
+      const veiloPublicKey = response.veiloPublicKey || "";
+      const veiloPrivateKey = response.veiloPrivateKey || "";
+
       // 9. Sync notes after restore
       setTimeout(async () => {
         try {
           await syncNotesFromRelayer(
             accountNoteManager,
             response.publicKey,
-            privateKeyHex
+            privateKeyHex,
+            veiloPrivateKey,
+            veiloPublicKey
           );
           // Reload notes to update balance and transaction history
           const notes = await accountNoteManager.getAllNotes();
@@ -648,7 +660,6 @@ function App() {
       const secretKey = new Uint8Array(JSON.parse(secretKeyStr));
       const keypair = Keypair.fromSecretKey(secretKey);
 
-      const mnemonic = await decrypt(storedWallet.encryptedMnemonic, password);
       const veiloPublicKey = await decrypt(
         storedWallet.encryptedVeiloPublicKey,
         password

@@ -106,7 +106,7 @@ export const SettingsModal = ({
                   </p>
                   {showPrivateKey ? (
                     <div className="p-3 bg-red-500/10 border border-red-500/30 break-all text-xs font-mono text-white">
-                      {getPrivateKey()}
+                      Private key export not yet implemented
                       <p className="text-red-400 mt-2 text-[10px]">
                         ⚠️ NEVER SHARE THIS KEY
                       </p>

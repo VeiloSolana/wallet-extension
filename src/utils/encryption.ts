@@ -70,8 +70,8 @@ export const encrypt = async (
 
   return {
     cipherText: ab2str(encryptedContent),
-    iv: ab2str(iv),
-    salt: ab2str(salt),
+    iv: ab2str(iv.buffer),
+    salt: ab2str(salt.buffer),
   };
 };
 

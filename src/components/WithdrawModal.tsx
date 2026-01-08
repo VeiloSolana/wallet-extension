@@ -5,7 +5,17 @@ import { CyberButton } from "./CyberButton";
 interface WithdrawModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onWithdraw: (recipient: string, amount: number) => Promise<void>;
+  onWithdraw: (
+    recipient: string,
+    amount: number
+  ) => Promise<{
+    success: boolean;
+    withdrawAmount: number;
+    changeAmount: number;
+    recipient: string;
+    spentNoteIds: string[];
+    txSignature: string | undefined;
+  }>;
   privateBalance: number;
 }
 
@@ -174,7 +184,7 @@ export const WithdrawModal = ({
                     AVAILABLE SHIELDED
                   </p>
                   <p className="text-lg font-mono text-neon-green">
-                    {shieldedBalance.toFixed(4)} SOL
+                    {privateBalance.toFixed(4)} SOL
                   </p>
                 </div>
 
