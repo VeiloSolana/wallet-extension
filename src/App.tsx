@@ -22,9 +22,10 @@ import { SecretPhrasePage } from "./components/SecretPhrasePage";
 import { LoginPage } from "./components/LoginPage";
 import { CreateUsernamePage } from "./components/CreateUsernamePage";
 import { OnboardingWalkthrough } from "./components/OnboardingWalkthrough";
+import { RestoreSeedphrasePage } from "./components/RestoreSeedphrasePage";
 import { useAuthStore } from "./store/useAuthStore";
-import { useRegisterUser } from "./hooks/queries/useAuthQueries";
-// import * as bip39 from "bip39";
+import { useRegisterUser, useRestoreAccount } from "./hooks/queries/useAuthQueries";
+import * as bip39 from "bip39";
 import { Wallet } from "./utils/wallet";
 import privacyPoolIdl from "../program/idl/privacy_pool.json";
 import { type PrivacyPool } from "../program/types/privacy_pool";
@@ -38,7 +39,7 @@ import {
 } from "./sdk/client";
 import { createNoteAndDeposit } from "@zkprivacysol/sdk-core";
 import { encrypt, decrypt } from "./utils/encryption";
-import { saveWallet, loadWallet } from "./utils/storage";
+import { saveWallet, loadWallet, saveSession, loadSession, clearSession, isSessionValid } from "./utils/storage";
 import { NoteManager } from "./lib/noteManager";
 import { syncNotesFromRelayer } from "./lib/noteSync";
 
@@ -67,29 +68,57 @@ function App() {
   const { isAuthenticated, setAuth, user } = useAuthStore();
   const { mutateAsync: registerUser, isPending: isRegistering } =
     useRegisterUser();
+  const { mutateAsync: restoreAccountApi, isPending: isRestoring } =
+    useRestoreAccount();
 
   const [onboardingStep, setOnboardingStep] = useState<
-    "welcome" | "username" | "password" | "phrase" | "walkthrough" | "done"
+    | "welcome"
+    | "username"
+    | "password"
+    | "phrase"
+    | "walkthrough"
+    | "done"
+    | "restore-seedphrase"
+    | "restore-password"
   >("welcome");
   const [username, setUsername] = useState("");
   const [generatedPhrase, setGeneratedPhrase] = useState<string[]>([]);
   const [hasWallet, setHasWallet] = useState(false);
   const [error, setError] = useState("");
+  
+  // Restore flow state
+  const [isRestoreFlow, setIsRestoreFlow] = useState(false);
+  const [restoreMnemonic, setRestoreMnemonic] = useState("");
 
-  // Check for existing wallet on mount
-  // Check for existing wallet on mount
+  // Check for existing wallet and session on mount
   useEffect(() => {
-    const checkWallet = async () => {
+    const checkWalletAndSession = async () => {
       const encryptedWallet = await loadWallet();
       if (encryptedWallet) {
-        console.log("Encrypted wallet found, waiting for login");
+        console.log("Encrypted wallet found, checking session...");
         setHasWallet(true);
+        
+        // Check if there's a valid session (within 1 minute)
+        const session = await loadSession();
+        if (session && isSessionValid(session)) {
+          console.log("Valid session found, auto-logging in...");
+          // Auto-login with stored password
+          try {
+            await handleLogin(session.encryptedPassword);
+          } catch (e) {
+            console.error("Auto-login failed, clearing session", e);
+            await clearSession();
+          }
+        } else if (session) {
+          console.log("Session expired, clearing...");
+          await clearSession();
+        }
       } else {
         console.log("No wallet found, starting onboarding");
       }
       setIsInitialized(true);
     };
-    checkWallet();
+    checkWalletAndSession();
   }, []);
 
   const [balance, setBalance] = useState(0);
@@ -440,6 +469,133 @@ function App() {
     setOnboardingStep("done");
   };
 
+  // --- Restore Flow Handlers ---
+
+  // Navigate to restore seedphrase step
+  const handleStartRestore = () => {
+    setIsRestoreFlow(true);
+    setOnboardingStep("restore-seedphrase");
+  };
+
+  // Handle seedphrase submission for restore
+  const handleSeedphraseSubmit = (seedphrase: string) => {
+    setRestoreMnemonic(seedphrase);
+    setOnboardingStep("restore-password");
+  };
+
+  // Handle password creation for restore flow
+  const handleRestorePassword = async (password: string) => {
+    try {
+      // 1. Restore account from backend using mnemonic
+      const response = await restoreAccountApi(restoreMnemonic);
+
+      // 2. Derive wallet from returned private key
+      const privateKeyHex = response.privateKey;
+      if (!privateKeyHex) throw new Error("No private key returned");
+
+      const privateKeyBytes = Buffer.from(privateKeyHex, "hex");
+      const keypair = Keypair.fromSecretKey(privateKeyBytes);
+
+      // 3. Encrypt all sensitive data (same as create flow)
+      const secretKeyStr = JSON.stringify(Array.from(keypair.secretKey));
+      const encryptedSecretKey = await encrypt(secretKeyStr, password);
+      const encryptedMnemonic = await encrypt(restoreMnemonic, password);
+      const encryptedVeiloPublicKey = await encrypt(
+        response.veiloPublicKey || "",
+        password
+      );
+      const encryptedVeiloPrivateKey = await encrypt(
+        response.veiloPrivateKey || "",
+        password
+      );
+
+      // 4. Store all encrypted data
+      await saveWallet(
+        {
+          encryptedSecretKey,
+          encryptedMnemonic,
+          encryptedVeiloPublicKey,
+          encryptedVeiloPrivateKey,
+          publicKey: response.publicKey,
+          username: response.username,
+        },
+        response.token
+      );
+
+      // 5. Store password in state for session use
+      setPassword(password);
+
+      // 6. Initialize NoteManager with account context
+      const accountNoteManager = new NoteManager(
+        response.publicKey,
+        privateKeyHex
+      );
+      setNoteManager(accountNoteManager);
+
+      // 7. Initialize session immediately
+      const walletInstance = new Wallet(keypair);
+      setWallet(walletInstance);
+      setAddress(keypair.publicKey.toString());
+
+      // Setup Provider
+      const conn = new Connection(DEVNET_RPC_URL, "confirmed");
+      setConnection(conn);
+      const provider = new anchor.AnchorProvider(conn, walletInstance, {
+        commitment: "confirmed",
+        preflightCommitment: "confirmed",
+      });
+      anchor.setProvider(provider);
+      const programInstance = new anchor.Program(
+        privacyPoolIdl as Idl,
+        provider
+      ) as Program<any>;
+      setProgram(programInstance);
+
+      // 8. Set auth and skip to done (no phrase display or walkthrough for restore)
+      setAuth({ username: response.username, publicKey: response.publicKey });
+      setOnboardingStep("done");
+
+      // 9. Sync notes after restore
+      setTimeout(async () => {
+        try {
+          await syncNotesFromRelayer(
+            accountNoteManager,
+            response.publicKey,
+            privateKeyHex
+          );
+          // Reload notes to update balance and transaction history
+          const notes = await accountNoteManager.getAllNotes();
+          const balanceBigInt = await accountNoteManager.getBalance();
+          setBalance(Number(balanceBigInt) / 1e9);
+
+          // Update transaction history
+          const uiNotes = notes.map((n) => ({
+            commitment: n.commitment,
+            amount: Number(n.amount) / 1e9,
+            root: "dummy",
+            timestamp: n.timestamp,
+          }));
+          setStoredNotes(uiNotes);
+
+          const noteTxs: Transaction[] = notes.map((n) => ({
+            id: n.id || n.commitment.slice(0, 8),
+            type: "receive",
+            amount: Number(n.amount) / 1e9,
+            timestamp: n.timestamp,
+            status: "confirmed",
+            address: "Shielded Pool",
+          }));
+          setTransactions(noteTxs);
+        } catch (e) {
+          console.error("Initial sync after restore failed:", e);
+        }
+      }, 500);
+    } catch (e: any) {
+      console.error("Restore failed", e);
+      setError(e?.message || "Failed to restore account");
+    }
+  };
+
   // Handle login for returning users
   const handleLogin = async (password: string) => {
     try {
@@ -497,11 +653,16 @@ function App() {
       ) as Program<any>;
       setProgram(programInstance);
 
-      setAuth({
-        username: storedWallet.username || "User",
-        publicKey: keypair.publicKey.toString(),
-      });
+      setAuth({ username: storedWallet.username || "User", publicKey: keypair.publicKey.toString() });
       setPassword(password);
+      
+      // Save session for auto-login within timeout window
+      await saveSession({
+        encryptedPassword: password, // Store password for session (in memory only, cleared on timeout)
+        timestamp: Date.now(),
+        publicKey: keypair.publicKey.toString(),
+        username: storedWallet.username || "User",
+      });
 
       // Load notes from storage immediately, then sync with relayer
       setIsLoadingNotes(true);
@@ -580,13 +741,13 @@ function App() {
   };
 
   // Loading state
-  if (isRegistering) {
+  if (isRegistering || isRestoring) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="w-full max-w-md h-[600px]  flex flex-col items-center justify-center bg-black/90 border border-white/10">
           <div className="w-12 h-12 border-2 border-neon-green/30 border-t-neon-green rounded-full animate-spin" />
           <p className="mt-4 text-zinc-500 font-mono text-sm">
-            Create account...
+            {isRestoring ? "Restoring account..." : "Creating account..."}
           </p>
         </div>
       </div>
@@ -611,6 +772,7 @@ function App() {
               <WelcomePage
                 key="welcome"
                 onGetStarted={() => setOnboardingStep("username")}
+                onRestore={handleStartRestore}
               />
             )}
             {onboardingStep === "username" && (
@@ -639,6 +801,25 @@ function App() {
                 key="walkthrough"
                 onComplete={handleWalkthroughComplete}
                 onClose={handleWalkthroughComplete}
+              />
+            )}
+            {/* Restore Flow Components */}
+            {onboardingStep === "restore-seedphrase" && (
+              <RestoreSeedphrasePage
+                key="restore-seedphrase"
+                onSubmit={handleSeedphraseSubmit}
+                onBack={() => {
+                  setIsRestoreFlow(false);
+                  setOnboardingStep("welcome");
+                }}
+                error={error}
+              />
+            )}
+            {onboardingStep === "restore-password" && (
+              <CreatePasswordPage
+                key="restore-password"
+                onSubmit={handleRestorePassword}
+                onBack={() => setOnboardingStep("restore-seedphrase")}
               />
             )}
           </AnimatePresence>

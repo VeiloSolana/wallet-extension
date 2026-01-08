@@ -1,5 +1,7 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import crypto from "crypto";
+import { Keypair } from "@solana/web3.js";
+import _sodium from "libsodium-wrappers";
 
 export function encryptAES(
   plaintext: string,
@@ -31,8 +33,7 @@ export function decryptAES(
   return Buffer.concat([decipher.update(encrypted), decipher.final()]);
 }
 
-import { Keypair } from "@solana/web3.js";
-import _sodium from "libsodium-wrappers";
+
 
 // Ensure sodium is ready before using
 let sodiumReady = false;

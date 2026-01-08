@@ -2,9 +2,10 @@ import { motion } from "framer-motion";
 
 interface WelcomePageProps {
   onGetStarted: () => void;
+  onRestore: () => void;
 }
 
-export const WelcomePage = ({ onGetStarted }: WelcomePageProps) => {
+export const WelcomePage = ({ onGetStarted, onRestore }: WelcomePageProps) => {
   return (
     <div className="h-full w-full flex flex-col bg-black relative overflow-hidden">
       {/* Animated background grid */}
@@ -98,20 +99,28 @@ export const WelcomePage = ({ onGetStarted }: WelcomePageProps) => {
           Your Privacy-First Solana Wallet
         </motion.p>
 
-        {/* Get Started Button */}
+        {/* Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9 }}
-          className="p-6 w-full"
+          className="p-6 w-full space-y-3"
         >
           <button
             onClick={onGetStarted}
             className="relative overflow-hidden group w-full py-3 bg-white text-black font-bold text-sm tracking-wide rounded-lg transition-all shadow-neon hover:shadow-[0_0_30px_rgba(0,255,0,0.5)] active:scale-[0.98]"
           >
             <div className="absolute inset-0 bg-neon-green/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-            <span className="relative z-10">GET STARTED</span>
+            <span className="relative z-10">CREATE ACCOUNT</span>
           </button>
+          
+          <button
+            onClick={onRestore}
+            className="relative overflow-hidden group w-full py-3 bg-transparent border border-white/20 text-white font-bold text-sm tracking-wide rounded-lg transition-all hover:border-neon-green/50 hover:bg-white/5 active:scale-[0.98]"
+          >
+            <span className="relative z-10">RESTORE ACCOUNT</span>
+          </button>
+          
           <p className="text-center text-zinc-600 text-[10px] mt-2 font-mono tracking-widest uppercase">
             Powered by Zero-Knowledge Technology
           </p>
