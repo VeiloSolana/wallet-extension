@@ -1,9 +1,16 @@
 interface WalletHeaderProps {
   onSettings?: () => void;
   address?: string;
+  username?: string;
 }
 
-export const WalletHeader = ({ onSettings, address }: WalletHeaderProps) => {
+export const WalletHeader = ({
+  onSettings,
+  address,
+  username,
+}: WalletHeaderProps) => {
+  /* Removed unused copied state and effect */
+
   const handleCopyAddress = () => {
     if (address) {
       navigator.clipboard.writeText(address);
@@ -27,13 +34,17 @@ export const WalletHeader = ({ onSettings, address }: WalletHeaderProps) => {
             />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight">VEILO</h1>
+            {username && (
+              <h1 className="text-base font-bold tracking-tight">
+                @{username}
+              </h1>
+            )}
             <div
               onClick={handleCopyAddress}
               className="flex items-center gap-2   rounded-full hover:border-neon-green/50 transition-all group relative"
               title="Click to copy wallet address"
             >
-              <span className="text-xs font-mono text-zinc-400 group-hover:text-white transition-colors">
+              <span className="text-[10px] font-mono text-zinc-400 group-hover:text-white transition-colors">
                 {shortenAddress(address || "")}
               </span>
               <svg

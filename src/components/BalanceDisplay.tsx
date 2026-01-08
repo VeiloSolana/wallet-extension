@@ -5,12 +5,17 @@ interface BalanceDisplayProps {
   balance: number;
   onSend?: () => void;
   onReceive?: () => void;
+  onSync?: () => void;
+  isSyncing?: boolean;
 }
 
 export const BalanceDisplay = ({
   balance,
+  address: _address,
   onSend,
   onReceive,
+  onSync,
+  isSyncing,
 }: BalanceDisplayProps) => {
   const [displayBalance, setDisplayBalance] = useState(0);
 
@@ -21,11 +26,15 @@ export const BalanceDisplay = ({
     return () => clearTimeout(timer);
   }, [balance]);
 
-  return (
-    <div className="px-4 py-3 bg-black/40 border-b border-white/10">
-      {/* Privacy Wallet Label - Copiable */}
+  // Mock percentage change - in production this would be calculated from historical data
+  const percentChange = 0.0;
+  const isPositive = percentChange >= 0;
 
-      {/* Balance and Send/Receive Row */}
+  // Convert SOL to USD (mock rate: 1 SOL = $100)
+  const usdBalance = displayBalance * 140;
+
+  return (
+    <div className="px-4 py-4 bg-black/40 border-b border-white/10">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -34,16 +43,21 @@ export const BalanceDisplay = ({
       >
         {/* Balance */}
         <div>
-          <div className="text-3xl font-light tracking-tight">
-            {displayBalance.toFixed(4)}
-            <span className="text-neon-green ml-1 text-xl">SOL</span>
+          <div className="text-3xl font-light tracking-tight mb-1">
+            ${usdBalance.toFixed(2)}
+            {/* <span className="text-neon-green ml-1.5 text-2xl">USD</span> */}
           </div>
-          <div className="text-xs text-zinc-500">
-            ≈ ${(displayBalance * 100).toFixed(2)} USD
+          <div
+            className={`text-xs font-medium ${
+              isPositive ? "text-green-500" : "text-red-500"
+            }`}
+          >
+            {isPositive ? "+" : ""}
+            {percentChange.toFixed(2)}%
           </div>
         </div>
 
-        {/* Send/Receive Buttons */}
+        {/* Send/Receive/Sync Buttons */}
         <div className="flex items-center gap-2">
           <button
             onClick={onSend}
@@ -62,7 +76,6 @@ export const BalanceDisplay = ({
                 d="M5 10l7-7m0 0l7 7m-7-7v18"
               />
             </svg>
-            {/* <span className="text-[10px] font-mono text-zinc-400 group-hover:text-white transition-colors">SEND</span> */}
           </button>
           <button
             onClick={onReceive}
@@ -81,8 +94,33 @@ export const BalanceDisplay = ({
                 d="M19 14l-7 7m0 0l-7-7m7 7V3"
               />
             </svg>
-            {/* <span className="text-[10px] font-mono text-zinc-400 group-hover:text-white transition-colors">RECEIVE</span> */}
           </button>
+          {onSync && (
+            <button
+              onClick={onSync}
+              disabled={isSyncing}
+              className={`flex items-center gap-1.5 px-3 py-2 bg-zinc-900/60 border border-white/10 hover:border-neon-green/50 transition-all rounded group ${
+                isSyncing ? "opacity-50" : ""
+              }`}
+              title="Sync Notes"
+            >
+              <svg
+                className={`w-4 h-4 text-neon-green ${
+                  isSyncing ? "animate-spin" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
+          )}
         </div>
       </motion.div>
     </div>

@@ -8,15 +8,12 @@ interface SettingsModalProps {
   address: string;
 }
 
-export const SettingsModal = ({ isOpen, onClose, address }: SettingsModalProps) => {
+export const SettingsModal = ({
+  isOpen,
+  onClose,
+  address,
+}: SettingsModalProps) => {
   const [showPrivateKey, setShowPrivateKey] = useState(false);
-
-  const getPrivateKey = () => {
-    const key = localStorage.getItem("wallet_private_key");
-    if (!key) return "No key found";
-    // Just showing a masked version for safety in this UI demo
-    return JSON.stringify(JSON.parse(key).slice(0, 5)) + "...";
-  };
 
   return (
     <AnimatePresence>
@@ -36,8 +33,8 @@ export const SettingsModal = ({ isOpen, onClose, address }: SettingsModalProps) 
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/20 z-50 max-w-md mx-auto"
           >
-             {/* Corner brackets */}
-             <svg
+            {/* Corner brackets */}
+            <svg
               className="absolute top-0 left-0 w-6 h-6 text-neon-green"
               viewBox="0 0 24 24"
             >
@@ -84,9 +81,10 @@ export const SettingsModal = ({ isOpen, onClose, address }: SettingsModalProps) 
               </div>
 
               <div className="space-y-6">
-                
                 <div className="space-y-2">
-                  <p className="text-xs text-zinc-400 font-mono tracking-widest">NETWORK</p>
+                  <p className="text-xs text-zinc-400 font-mono tracking-widest">
+                    NETWORK
+                  </p>
                   <div className="flex items-center justify-between p-3 bg-zinc-900/60 border border-white/10">
                     <span className="text-sm">Solana Devnet</span>
                     <span className="w-2 h-2 rounded-full bg-neon-green shadow-neon-sm"></span>
@@ -94,35 +92,42 @@ export const SettingsModal = ({ isOpen, onClose, address }: SettingsModalProps) 
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-xs text-zinc-400 font-mono tracking-widest">WALLET ADDRESS</p>
+                  <p className="text-xs text-zinc-400 font-mono tracking-widest">
+                    WALLET ADDRESS
+                  </p>
                   <div className="p-3 bg-zinc-900/60 border border-white/10 break-all text-xs font-mono text-zinc-300">
                     {address}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-xs text-zinc-400 font-mono tracking-widest">PRIVATE KEY</p>
+                  <p className="text-xs text-zinc-400 font-mono tracking-widest">
+                    PRIVATE KEY
+                  </p>
                   {showPrivateKey ? (
-                     <div className="p-3 bg-red-500/10 border border-red-500/30 break-all text-xs font-mono text-white">
-                        {getPrivateKey()}
-                        <p className="text-red-400 mt-2 text-[10px]">⚠️ NEVER SHARE THIS KEY</p>
-                     </div>
+                    <div className="p-3 bg-red-500/10 border border-red-500/30 break-all text-xs font-mono text-white">
+                      {getPrivateKey()}
+                      <p className="text-red-400 mt-2 text-[10px]">
+                        ⚠️ NEVER SHARE THIS KEY
+                      </p>
+                    </div>
                   ) : (
-                    <CyberButton 
-                        onClick={() => setShowPrivateKey(true)} 
-                        variant="secondary" 
-                        fullWidth 
-                        className="text-xs py-2"
+                    <CyberButton
+                      onClick={() => setShowPrivateKey(true)}
+                      variant="secondary"
+                      fullWidth
+                      className="text-xs py-2"
                     >
-                        REVEAL PRIVATE KEY
+                      REVEAL PRIVATE KEY
                     </CyberButton>
                   )}
                 </div>
 
                 <div className="pt-2">
-                   <p className="text-xs text-zinc-500 text-center">Version 0.1.0 Beta</p>
+                  <p className="text-xs text-zinc-500 text-center">
+                    Version 0.1.0 Beta
+                  </p>
                 </div>
-
               </div>
             </div>
           </motion.div>
