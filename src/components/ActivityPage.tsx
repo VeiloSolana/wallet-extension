@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useSolPrice } from "../hooks/useSolPrice";
+import { useCryptoPrices } from "../hooks/useSolPrice";
 
 interface Transaction {
   id: string;
@@ -27,7 +27,7 @@ export const ActivityPage = ({
   solBalance,
 }: ActivityPageProps) => {
   const [activeTab, setActiveTab] = useState<TabType>("balances");
-  const { price: solPrice, isLoading: isPriceLoading } = useSolPrice();
+  const { sol, usdc, usdt, isLoading: isPriceLoading } = useCryptoPrices();
 
   return (
     <motion.div
@@ -168,7 +168,7 @@ export const ActivityPage = ({
                     {isPriceLoading ? (
                       <span>--</span>
                     ) : (
-                      <span>≈ ${(solBalance * solPrice).toFixed(2)}</span>
+                      <span>≈ ${(solBalance * sol.price).toFixed(2)}</span>
                     )}
                   </p>
                 </div>
@@ -237,7 +237,9 @@ export const ActivityPage = ({
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-mono font-bold text-white">0.00</p>
-                  <p className="text-xs text-zinc-500 font-mono">≈ $0.00</p>
+                  <p className="text-xs text-zinc-500 font-mono">
+                    {isPriceLoading ? "--" : `≈ $${(0 * usdc.price).toFixed(2)}`}
+                  </p>
                 </div>
               </div>
             </div>
@@ -304,7 +306,9 @@ export const ActivityPage = ({
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-mono font-bold text-white">0.00</p>
-                  <p className="text-xs text-zinc-500 font-mono">≈ $0.00</p>
+                  <p className="text-xs text-zinc-500 font-mono">
+                    {isPriceLoading ? "--" : `≈ $${(0 * usdt.price).toFixed(2)}`}
+                  </p>
                 </div>
               </div>
             </div>

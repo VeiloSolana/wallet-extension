@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { CyberButton } from "./CyberButton";
+import { useSolPrice } from "../hooks/useSolPrice";
 
 interface Transaction {
     id: string;
@@ -16,6 +17,8 @@ interface TransactionDetailsPageProps {
 }
 
 export const TransactionDetailsPage = ({ onBack, transaction }: TransactionDetailsPageProps) => {
+  const { price: solPrice, isLoading: isPriceLoading } = useSolPrice();
+  
   return (
     <motion.div
         initial={{ x: "100%" }}
@@ -58,6 +61,9 @@ export const TransactionDetailsPage = ({ onBack, transaction }: TransactionDetai
                 <h3 className={`text-3xl font-light font-mono mb-1 ${transaction.type === "send" ? "text-red-500" : "text-neon-green"}`}>
                     {transaction.type === "send" ? "-" : "+"}{transaction.amount} SOL
                 </h3>
+                <p className="text-sm text-zinc-500 font-mono mb-2">
+                    {isPriceLoading ? "--" : `≈ $${(transaction.amount * solPrice).toFixed(2)}`}
+                </p>
                 <span className={`text-xs px-2 py-1 rounded border ${
                     transaction.status === "confirmed" 
                     ? "bg-neon-green/10 border-neon-green/30 text-neon-green" 
