@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useSolPrice } from "../hooks/useSolPrice";
 
 interface BalanceDisplayProps {
   balance: number;
@@ -18,6 +19,7 @@ export const BalanceDisplay = ({
   isSyncing,
 }: BalanceDisplayProps) => {
   const [displayBalance, setDisplayBalance] = useState(0);
+  const { price: solPrice, priceChange24h, isLoading: isPriceLoading } = useSolPrice();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -26,12 +28,11 @@ export const BalanceDisplay = ({
     return () => clearTimeout(timer);
   }, [balance]);
 
-  // Mock percentage change - in production this would be calculated from historical data
-  const percentChange = 0.0;
-  const isPositive = percentChange >= 0;
-
-  // Convert SOL to USD (mock rate: 1 SOL = $100)
-  const usdBalance = displayBalance * 140;
+  // Calculate USD balance from live SOL price
+  const usdBalance = displayBalance * solPrice;
+  
+  // Use actual 24h price change from API
+  const isPositive = priceChange24h >= 0;
 
   return (
     <div className="px-4 py-4 bg-black/40 border-b border-white/10">
@@ -44,16 +45,26 @@ export const BalanceDisplay = ({
         {/* Balance */}
         <div>
           <div className="text-3xl font-light tracking-tight mb-1">
-            ${usdBalance.toFixed(2)}
-            {/* <span className="text-neon-green ml-1.5 text-2xl">USD</span> */}
+            {isPriceLoading ? (
+              <span className="text-zinc-500">Loading...</span>
+            ) : (
+              <>${usdBalance.toFixed(2)}</>
+            )}
           </div>
           <div
-            className={`text-xs font-medium ${
+            className={`text-xs font-medium flex items-center gap-1 ${
               isPositive ? "text-green-500" : "text-red-500"
             }`}
           >
-            {isPositive ? "+" : ""}
-            {percentChange.toFixed(2)}%
+            {isPriceLoading ? (
+              <span className="text-zinc-500">--</span>
+            ) : (
+              <>
+                {isPositive ? "+" : ""}
+                {priceChange24h.toFixed(2)}%
+                <span className="text-zinc-500 text-[10px]">24h</span>
+              </>
+            )}
           </div>
         </div>
 
