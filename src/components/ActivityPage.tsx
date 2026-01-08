@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useSolPrice } from "../hooks/useSolPrice";
 
 interface Transaction {
   id: string;
@@ -26,6 +27,7 @@ export const ActivityPage = ({
   solBalance,
 }: ActivityPageProps) => {
   const [activeTab, setActiveTab] = useState<TabType>("balances");
+  const { price: solPrice, isLoading: isPriceLoading } = useSolPrice();
 
   return (
     <motion.div
@@ -163,7 +165,11 @@ export const ActivityPage = ({
                     {solBalance.toFixed(4)}
                   </p>
                   <p className="text-xs text-zinc-500 font-mono">
-                    ≈ ${(solBalance * 200).toFixed(2)}
+                    {isPriceLoading ? (
+                      <span>--</span>
+                    ) : (
+                      <span>≈ ${(solBalance * solPrice).toFixed(2)}</span>
+                    )}
                   </p>
                 </div>
               </div>
