@@ -15,6 +15,7 @@ interface TransactionListProps {
   onViewAll?: () => void;
   onSelectTransaction?: (tx: Transaction) => void;
   solBalance: number;
+  isLoadingNotes?: boolean;
 }
 
 type TabType = "balances" | "history";
@@ -24,6 +25,7 @@ export const TransactionList = ({
   onViewAll,
   onSelectTransaction,
   solBalance,
+  isLoadingNotes = false,
 }: TransactionListProps) => {
   const [activeTab, setActiveTab] = useState<TabType>("history");
   const formatTime = (timestamp: number) => {
@@ -290,6 +292,36 @@ export const TransactionList = ({
                 <p className="text-[10px] text-zinc-400 font-mono">≈ $0.00</p>
               </div>
             </div>
+          </div>
+        </div>
+      ) : isLoadingNotes ? (
+        <div className="flex-1 flex flex-col p-4 min-h-0 overflow-hidden">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs text-zinc-400 font-mono tracking-widest uppercase">
+              RECENT ACTIVITY
+            </span>
+          </div>
+
+          {/* Skeleton Loader */}
+          <div className="flex-1 overflow-y-auto space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="p-2.5 bg-zinc-900/40 border border-white/10 animate-pulse"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-full bg-zinc-800"></div>
+                  <div className="flex-1">
+                    <div className="h-3 bg-zinc-800 rounded w-20 mb-1"></div>
+                    <div className="h-2 bg-zinc-800 rounded w-24"></div>
+                  </div>
+                  <div className="text-right">
+                    <div className="h-3 bg-zinc-800 rounded w-16 mb-1"></div>
+                    <div className="h-2 bg-zinc-800 rounded w-12"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       ) : transactions.length === 0 ? (

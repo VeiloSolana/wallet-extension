@@ -1,17 +1,7 @@
-
-/*
- * Encryption utility using Web Crypto API
- * Algorithm: AES-GCM
- * Key Derivation: PBKDF2
- */
-
-// Salts and IVs should be unique per encryption, but here we generate them.
-// We return the salt and IV alongside the ciphertext.
-
 export interface EncryptedData {
-  cipherText: string; // Base64
-  iv: string; // Base64
-  salt: string; // Base64
+  cipherText: string;
+  iv: string;
+  salt: string;
 }
 
 const ITERATIONS = 100000;
@@ -20,7 +10,6 @@ const ENCRYPT_ALGO = "AES-GCM";
 const SALT_LEN = 16;
 const IV_LEN = 12;
 
-// Helpers for ArrayBuffer <-> Base64
 const ab2str = (buf: ArrayBuffer): string => {
   return btoa(String.fromCharCode(...new Uint8Array(buf)));
 };
@@ -34,8 +23,10 @@ const str2ab = (str: string): ArrayBuffer => {
   return bytes.buffer as ArrayBuffer;
 };
 
-// Derive a key from password and salt
-const deriveKey = async (password: string, salt: Uint8Array): Promise<CryptoKey> => {
+const deriveKey = async (
+  password: string,
+  salt: Uint8Array
+): Promise<CryptoKey> => {
   const enc = new TextEncoder();
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
@@ -59,7 +50,10 @@ const deriveKey = async (password: string, salt: Uint8Array): Promise<CryptoKey>
   );
 };
 
-export const encrypt = async (data: string, password: string): Promise<EncryptedData> => {
+export const encrypt = async (
+  data: string,
+  password: string
+): Promise<EncryptedData> => {
   const salt = window.crypto.getRandomValues(new Uint8Array(SALT_LEN));
   const iv = window.crypto.getRandomValues(new Uint8Array(IV_LEN));
   const key = await deriveKey(password, salt);
@@ -81,7 +75,10 @@ export const encrypt = async (data: string, password: string): Promise<Encrypted
   };
 };
 
-export const decrypt = async (encryptedData: EncryptedData, password: string): Promise<string> => {
+export const decrypt = async (
+  encryptedData: EncryptedData,
+  password: string
+): Promise<string> => {
   const salt = new Uint8Array(str2ab(encryptedData.salt));
   const iv = new Uint8Array(str2ab(encryptedData.iv));
   const cipherText = str2ab(encryptedData.cipherText);

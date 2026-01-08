@@ -1,17 +1,44 @@
-import { queryEncryptedNotes } from "./relayerApi";
+import { queryEncryptedNotes, getMerkleTree } from "./relayerApi";
 import { decryptNoteBlob } from "./helper";
 import { NoteManager } from "./noteManager";
-import { loadToken } from "../utils/storage";
+import { buildPoseidon } from "circomlibjs";
+import { buildMerkleTree } from "./merkleTree";
+
+function bytesToBigIntBE(bytes: Uint8Array): bigint {
+  return BigInt("0x" + Buffer.from(bytes).toString("hex"));
+}
+
+function computeNullifier(
+  poseidon: any,
+  commitment: Uint8Array,
+  leafIndex: number,
+  privateKey: Uint8Array
+): Uint8Array {
+  const commitmentField = poseidon.F.e(bytesToBigIntBE(commitment));
+  const indexField = poseidon.F.e(BigInt(leafIndex));
+  const keyField = poseidon.F.e(bytesToBigIntBE(privateKey));
+
+  // Step 1: Compute signature
+  const signature = poseidon([keyField, commitmentField, indexField]);
+
+  // Step 2: Compute nullifier
+  const nullifierHash = poseidon([commitmentField, indexField, signature]);
+  const hashBytes = poseidon.F.toString(nullifierHash, 16).padStart(64, "0");
+  return Uint8Array.from(Buffer.from(hashBytes, "hex"));
+}
 
 export async function syncNotesFromRelayer(
   noteManager: NoteManager,
   publicKey: string,
-  privateKey: string
+  privateKey: string,
+  veiloPrivateKey: string,
+  veiloPublicKey: string
 ) {
+  const poseidon = await buildPoseidon();
   try {
     const lastSyncTimestamp = await getLastSyncTimestamp();
 
-    console.log("📡 Syncing notes from relayer...");
+    console.log("📡 Syncing notes from relayer...", publicKey);
 
     // 1. Query new notes
     // We fetch notes slightly overlapping with last sync to be safe
@@ -29,9 +56,16 @@ export async function syncNotesFromRelayer(
 
     console.log(`📬 Found ${response.notes.length} candidate notes.`);
 
+    // 2. Fetch and build merkle tree
+    const merkleTreeResponse = await getMerkleTree();
+    const offchainTree = buildMerkleTree(merkleTreeResponse.data, poseidon);
+    console.log(
+      `🌲 Merkle tree built with ${merkleTreeResponse.data.totalCommitments} commitments`
+    );
+
     let decryptedCount = 0;
 
-    // 2. Try to decrypt each note
+    // 3. Try to decrypt each note
     for (const encryptedNote of response.notes) {
       try {
         // Check if we already have this note
@@ -58,23 +92,52 @@ export async function syncNotesFromRelayer(
           encryptedNote.encryptedBlob
         );
 
-        // 3. Save to storage
-        await noteManager.saveNote({
+        // Get merkle proof for this note's leaf index
+        const merklePath = offchainTree.getMerkleProof(decrypted.leafIndex);
+
+        const veiloPrivKeyBuffer = Buffer.from(veiloPrivateKey, "hex");
+        const nullifier = computeNullifier(
+          poseidon,
+          decrypted.commitment,
+          decrypted.leafIndex,
+          veiloPrivKeyBuffer
+        );
+        console.log({
           amount: decrypted.amount.toString(),
-          commitment: encryptedNote.commitment,
-          root: "dummy_root_from_sync", // Real impl would fetch root for blockHeight
-          nullifier: Buffer.alloc(0).toString("hex"),
+          commitment: Buffer.from(decrypted.commitment).toString("hex"),
+          root: Buffer.from(offchainTree.getRoot()).toString("hex"),
+          nullifier: Buffer.from(nullifier).toString("hex"),
           blinding: Buffer.from(decrypted.blinding).toString("hex"),
-          privateKey: privateKey,
-          publicKey: publicKey,
+          privateKey: veiloPrivateKey,
+          publicKey: veiloPublicKey,
+          merklePath: merklePath,
           leafIndex: decrypted.leafIndex,
           timestamp: encryptedNote.timestamp,
           txSignature: encryptedNote.txSignature,
         });
+        // 4. Save to storage
+        await noteManager.saveNote({
+          amount: decrypted.amount.toString(),
+          commitment: Buffer.from(decrypted.commitment).toString("hex"),
+          root: Buffer.from(offchainTree.getRoot()).toString("hex"),
+          nullifier: Buffer.from(nullifier).toString("hex"),
+          blinding: Buffer.from(decrypted.blinding).toString("hex"),
+          privateKey: veiloPrivateKey,
+          publicKey: veiloPublicKey,
+          merklePath: merklePath,
+          leafIndex: decrypted.leafIndex,
+          timestamp: encryptedNote.timestamp,
+          txSignature: encryptedNote.txSignature,
+        });
+        console.log("made it here");
 
         decryptedCount++;
       } catch (error) {
         // Decryption failed = not our note. Ignore.
+        console.log(
+          "Note decryption failed (likely not our note):",
+          (error as Error).message
+        );
       }
     }
 

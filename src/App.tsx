@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import * as anchor from "@coral-xyz/anchor";
 import type { Program, Idl } from "@coral-xyz/anchor";
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import { Connection, Keypair } from "@solana/web3.js";
 import { Buffer } from "buffer";
 import { WalletHeader } from "./components/WalletHeader";
 import { BalanceDisplay } from "./components/BalanceDisplay";
@@ -27,7 +27,8 @@ import { useAuthStore } from "./store/useAuthStore";
 import { useRegisterUser, useRestoreAccount } from "./hooks/queries/useAuthQueries";
 import * as bip39 from "bip39";
 import { Wallet } from "./utils/wallet";
-import privacyPoolIdl from "../idl/privacy_pool.json";
+import privacyPoolIdl from "../program/idl/privacy_pool.json";
+import { type PrivacyPool } from "../program/types/privacy_pool";
 import "./App.css";
 import { AnimatePresence } from "framer-motion";
 import {
@@ -41,16 +42,6 @@ import { encrypt, decrypt } from "./utils/encryption";
 import { saveWallet, loadWallet, saveSession, loadSession, clearSession, isSessionValid } from "./utils/storage";
 import { NoteManager } from "./lib/noteManager";
 import { syncNotesFromRelayer } from "./lib/noteSync";
-import { saveEncryptedNote } from "./lib/relayerApi";
-import {
-  encryptNote,
-  derivePrivacyKeyFromSignatureKey,
-} from "./lib/noteDecryption";
-
-// Program ID deployed on devnet
-const PRIVACY_POOL_PROGRAM_ID = new PublicKey(
-  "Bo2en1LKZL7JFXsag7KAb5ZQiqFg5j22dJYCLZmoek1Q"
-);
 
 // Devnet RPC endpoint
 const DEVNET_RPC_URL = "https://api.devnet.solana.com";
@@ -155,13 +146,14 @@ function App() {
   // SDK state
   const [connection, setConnection] = useState<Connection | undefined>();
   const [wallet, setWallet] = useState<Wallet | undefined>();
-  const [program, setProgram] = useState<Program<any> | undefined>();
+  const [program, setProgram] = useState<Program<PrivacyPool> | undefined>();
   const [isInitialized, setIsInitialized] = useState(false);
   const [noteManager, setNoteManager] = useState<NoteManager | null>(null);
 
   // Notes state
   const [storedNotes, setStoredNotes] = useState<StoredNote[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isLoadingNotes, setIsLoadingNotes] = useState(false);
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
@@ -207,11 +199,12 @@ function App() {
         address: "Shielded Pool",
       }));
 
-      // Merge with dummy for demo feeling
-      setTransactions((prev) => [
-        ...prev.filter((t) => t.address !== "Shielded Pool"),
-        ...noteTxs,
-      ]);
+      // Merge with dummy for demo feeling and sort by timestamp (most recent first)
+      setTransactions((prev) =>
+        [...prev.filter((t) => t.address !== "Shielded Pool"), ...noteTxs].sort(
+          (a, b) => b.timestamp - a.timestamp
+        )
+      );
     } catch (e) {
       console.error("Failed to load notes", e);
     }
@@ -239,6 +232,7 @@ function App() {
           storedWallet.encryptedSecretKey,
           password
         );
+
         const secretKey = new Uint8Array(JSON.parse(secretKeyStr));
         const keypair = Keypair.fromSecretKey(secretKey);
 
@@ -254,10 +248,21 @@ function App() {
           "hex"
         );
 
+        const veiloPrivateKeyStr = await decrypt(
+          storedWallet.encryptedVeiloPrivateKey,
+          password
+        );
+        const veiloPublicKeyStr = await decrypt(
+          storedWallet.encryptedVeiloPublicKey,
+          password
+        );
+
         const count = await syncNotesFromRelayer(
           noteManager,
           walletInstance.payer.publicKey.toString(),
-          privKeyHex
+          privKeyHex,
+          veiloPrivateKeyStr,
+          veiloPublicKeyStr
         );
         console.log(`Synced ${count} new notes`);
         await loadNotes();
@@ -272,44 +277,7 @@ function App() {
   };
 
   const deposit = async (amount: number) => {
-    if (!connection || !wallet || !program) {
-      console.error("SDK not initialized");
-      throw new Error("SDK not initialized");
-    }
-
-    try {
-      console.log(`Starting deposit: ${amount} SOL`);
-
-      const { config } = getPoolPdas(program.programId);
-      console.log("Expected config PDA:", config.toBase58());
-
-      console.log("Creating privacy note...");
-      const amountLamports = sol(amount);
-      const { commitment } = createNoteWithCommitment({
-        value: amountLamports,
-        owner: wallet.publicKey,
-      });
-
-      const dummyRoot = new Uint8Array(32).fill(2);
-
-      console.log("Depositing to privacy pool...");
-      const depositResult = await createNoteAndDeposit({
-        program,
-        depositor: wallet,
-        denomIndex: 0,
-        valueLamports: amountLamports,
-      });
-      console.log("✅ Deposit successful:", depositResult);
-
-      return {
-        commitment,
-        depositResult,
-        root: dummyRoot,
-      };
-    } catch (error) {
-      console.error("❌ Deposit failed:", error);
-      throw error;
-    }
+    console.log(`Starting deposit of ${amount} SOL to shielded pool`);
   };
 
   const withdraw = async (
@@ -317,216 +285,15 @@ function App() {
     amount: number,
     merkleRoot?: Uint8Array
   ) => {
-    if (!connection || !wallet || !program) {
-      console.error("SDK not initialized");
-      throw new Error("SDK not initialized");
-    }
-
-    try {
-      console.log(`Starting withdrawal: ${amount} SOL to ${recipient}`);
-
-      console.log("Generating zero-knowledge proof...");
-      const sdkProof = await buildDummyProof();
-      console.log("SDK Proof generated:", sdkProof);
-
-      const proofBytes = {
-        pi_a: ["1", "2", "1"],
-        pi_b: [
-          ["3", "4"],
-          ["5", "6"],
-          ["1", "1"],
-        ],
-        pi_c: ["7", "8", "1"],
-        protocol: "groth16",
-        curve: "bn128",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
-
-      console.log("Using proof:", proofBytes);
-
-      const nullifier = new Uint8Array(32);
-      crypto.getRandomValues(nullifier);
-
-      const root = merkleRoot || new Uint8Array(32).fill(2);
-
-      console.log("Submitting withdrawal to relayer...");
-      const withdrawRequest = {
-        root: Buffer.from(root).toString("hex"),
-        nullifier: Buffer.from(nullifier).toString("hex"),
-        denomIndex: 0,
-        recipient: recipient,
-        proof: proofBytes,
-      };
-
-      console.log("Sending withdrawal request to relayer:", withdrawRequest);
-
-      const response = await fetch(
-        "https://relayer-uh9k.onrender.com/withdraw",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(withdrawRequest),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Withdrawal failed");
-      }
-
-      const result = await response.json();
-      console.log("✅ Withdrawal successful:", result);
-      console.log(`✓ Successfully withdrew ${amount} SOL to ${recipient}`);
-
-      return result;
-    } catch (error) {
-      console.error("❌ Withdrawal failed:", error);
-      throw error;
-    }
-  };
-
-  // --- Handlers ---
-
-  const handleShieldFunds = async (amount: number) => {
-    try {
-      // 1. Perform Deposit
-      const result = await deposit(amount);
-
-      // 2. Encrypt and Save to Relayer (Blind Mailbox)
-      if (wallet && "payer" in wallet) {
-        const secretKey = (wallet as any).payer.secretKey;
-        const myPubKey = (wallet as any).payer.publicKey.toBytes();
-        const privKeyHex = Buffer.from(secretKey).toString("hex");
-
-        // Derive Privacy Key for SELF (Recipient = Us)
-        const { publicKey: myPrivacyPubKey } =
-          await derivePrivacyKeyFromSignatureKey(secretKey);
-
-        // Encrypt for self
-        const { ephemeralPublicKey, encryptedBlob } = await encryptNote(
-          myPrivacyPubKey, // Use derived BabyJubJub key
-          {
-            amount: BigInt(amount),
-            blinding: new Uint8Array(32),
-            leafIndex: 0,
-            nullifier: new Uint8Array(32),
-            publicKey: myPrivacyPubKey,
-          }
-        );
-
-        await saveEncryptedNote({
-          commitment: Buffer.from(result.commitment).toString("hex"),
-          ephemeralPublicKey,
-          encryptedBlob,
-          timestamp: Date.now(),
-        });
-
-        // 4. Save to Local NoteManager immediately
-        await noteManager.saveNote({
-          commitment: Buffer.from(result.commitment).toString("hex"),
-          amount: amount.toString(),
-          root: Buffer.from(result.root).toString("hex"),
-          timestamp: Date.now(),
-          nullifier: "dummy",
-          blinding: "dummy",
-          privateKey: privKeyHex,
-          publicKey: Buffer.from(myPubKey).toString("hex"),
-          leafIndex: 0,
-        });
-
-        // Refresh UI by reloading notes
-        // Note: We need to define loadNotes outside useEffect to call it here?
-        // Or just update state manually/partially.
-        // Since loadNotes is defined INSIDE useEffect in current structure, we cannot call it here.
-        // Refactoring: Move loadNotes to component scope.
-        // For now, let's update state manually to reflect change or force reload.
-
-        // Ideally refactor loadNotes out.
-        // We'll duplicate the state update for now or just trust the next sync.
-        // But let's copy the state update logic for immediate feedback.
-        const notes = await noteManager.getAllNotes();
-        const uiNotes = notes.map((n) => ({
-          commitment: n.commitment,
-          amount: Number(n.amount) / 1e9, // SOL
-          root: "dummy",
-          timestamp: n.timestamp,
-        }));
-        setStoredNotes(uiNotes);
-        const balanceBigInt = await noteManager.getBalance();
-        setBalance(Number(balanceBigInt) / 1e9); // SOL
-      }
-    } catch (e) {
-      console.error("Shielding error:", e);
-      throw e;
-    }
-  };
-
-  // Withdraws from the shielded pool
-  const handleUnshieldFunds = async (recipient: string, amount: number) => {
-    // Logic: Find notes that sum up to amount (simplification: assume we can withdraw partial or full)
-    // Since the current mock relayer/SDK just needs a valid root and proof, we will use the stored root
-    // In a real ZK app, we would enable spending specific notes.
-    // Here we just check balance sufficient and use the first available note's root (or dummy).
-
-    try {
-      // 1. Check Balance
-      if (amount > balance) throw new Error("Insufficient funds");
-
-      // 2. Perform Withdrawal
-      // We pick a root from our notes if available, or fall back (SDK handles dummy root)
-      const noteToSpend = storedNotes[0];
-      const root = noteToSpend
-        ? new Uint8Array(Buffer.from(noteToSpend.root, "hex"))
-        : undefined;
-
-      await withdraw(recipient, amount, root);
-
-      // 3. Update Stored Notes (Simplification: just reduce the shielded amount tracking)
-      // In reality, we would mark specific notes as spent (nullified)
-      // For this demo, we will just remove the equivalent value from our "local tracker" roughly
-      // by removing notes or updating a "spent" counter.
-      // Let's just remove the first note(s) that sum up to 'amount' or reduce the total.
-      // Simplest: Just reduce the displayed balance by removing 'amount' worth of notes or partial.
-      // Since we can't 'partial spend' a note easily without change output logic in ZK,
-      // we will just DECREMENT the tracked total visually by updating state,
-      // and dirty-remove the first note for logic correctness if needed.
-
-      // Update local storage via NoteManager if possible or re-load
-      // Since we haven't implemented explicit spend tracking in NoteManager yet in this detailed way
-      // We will just invoke loadNotes() to refresh from what NoteManager has (which is nothing changed yet)
-      // AND manually update NoteManager to mark as spent (if we implemented markAsSpent).
-      // noteManager.markAsSpent(noteToSpend.id, "txSig");
-
-      // For now, let's just trigger loadNotes() and let the UI refresh.
-      // But since we didn't actually mark spent in NoteManager, balance won't change.
-      // We should manually update local state for the demo feel.
-
-      const newTotal = Math.max(0, balance - amount); // balance is now SOL, amount is SOL
-      setBalance(newTotal);
-
-      // Update local state ONLY (NoteManager remains out of sync until we impl spend logic properly)
-      const updatedNotes = [...storedNotes];
-      if (updatedNotes.length > 0) {
-        updatedNotes[0].amount -= amount;
-        if (updatedNotes[0].amount <= 0) updatedNotes.shift();
-      }
-      setStoredNotes(updatedNotes);
-
-      // TODO: Call noteManager.markAsSpent(...)
-    } catch (e) {
-      console.error("Unshielding error:", e);
-      throw e;
-    }
+    console.log(recipient, amount, merkleRoot);
   };
 
   const handleSend = async (recipient: string, amount: number) => {
     try {
       console.log(`Starting send operation: ${amount} SOL to ${recipient}`);
 
-      const { root } = await deposit(amount);
-      await withdraw(recipient, amount, root);
+      // const { root } = await deposit(amount);
+      // await withdraw(recipient, amount, root);
 
       console.log(`✅ Successfully sent ${amount} SOL to ${recipient}`);
     } catch (error) {
@@ -535,15 +302,11 @@ function App() {
     }
   };
 
-  console.log({ onboardingStep });
-
-  // Handle username submission
   const handleUsernameSubmit = (name: string) => {
     setUsername(name);
     setOnboardingStep("password");
   };
 
-  // Handle password submission for new users
   const handleCreatePassword = async (password: string) => {
     try {
       // 1. Register with backend
@@ -620,27 +383,58 @@ function App() {
 
       setAuth({ username: response.username, publicKey: response.publicKey });
 
-      // Load notes immediately after registration
+      // Load notes from storage immediately, then sync with relayer
+      setIsLoadingNotes(true);
       setTimeout(async () => {
         try {
-          await syncNotesFromRelayer(
-            accountNoteManager,
-            response.publicKey,
-            privateKeyHex
-          );
-          // Reload notes to update balance and transaction history
-          const notes = await accountNoteManager.getAllNotes();
-          const balanceBigInt = await accountNoteManager.getBalance();
-          setBalance(Number(balanceBigInt) / 1e9);
+          // First, load existing notes from storage
+          const existingNotes = await accountNoteManager.getAllNotes();
+          const existingBalance = await accountNoteManager.getBalance();
+          setBalance(Number(existingBalance) / 1e9);
 
-          // Update transaction history
-          const uiNotes = notes.map((n) => ({
+          // Update UI with existing notes
+          const uiNotes = existingNotes.map((n) => ({
             commitment: n.commitment,
             amount: Number(n.amount) / 1e9,
             root: "dummy",
             timestamp: n.timestamp,
           }));
           setStoredNotes(uiNotes);
+
+          const existingTxs: Transaction[] = existingNotes.map((n) => ({
+            id: n.id || n.commitment.slice(0, 8),
+            type: "receive",
+            amount: Number(n.amount) / 1e9,
+            timestamp: n.timestamp,
+            status: "confirmed",
+            address: "Shielded Pool",
+          }));
+          setTransactions(
+            existingTxs.sort((a, b) => b.timestamp - a.timestamp)
+          );
+
+          // Then sync with relayer for new notes
+          await syncNotesFromRelayer(
+            accountNoteManager,
+            response.publicKey,
+            privateKeyHex,
+            veiloPrivateKeyHex,
+            veiloPublicKey
+          );
+
+          // Reload notes after sync to update balance and transaction history
+          const notes = await accountNoteManager.getAllNotes();
+          const balanceBigInt = await accountNoteManager.getBalance();
+          setBalance(Number(balanceBigInt) / 1e9);
+
+          // Update transaction history
+          const updatedUiNotes = notes.map((n) => ({
+            commitment: n.commitment,
+            amount: Number(n.amount) / 1e9,
+            root: "dummy",
+            timestamp: n.timestamp,
+          }));
+          setStoredNotes(updatedUiNotes);
 
           const noteTxs: Transaction[] = notes.map((n) => ({
             id: n.id || n.commitment.slice(0, 8),
@@ -650,9 +444,11 @@ function App() {
             status: "confirmed",
             address: "Shielded Pool",
           }));
-          setTransactions(noteTxs);
+          setTransactions(noteTxs.sort((a, b) => b.timestamp - a.timestamp));
         } catch (e) {
           console.error("Initial sync failed:", e);
+        } finally {
+          setIsLoadingNotes(false);
         }
       }, 500);
     } catch (e) {
@@ -865,28 +661,59 @@ function App() {
         username: storedWallet.username || "User",
       });
 
-      // Load notes immediately after login
+      // Load notes from storage immediately, then sync with relayer
+      setIsLoadingNotes(true);
       setTimeout(async () => {
         try {
-          const privKeyHex = Buffer.from(secretKey).toString("hex");
-          await syncNotesFromRelayer(
-            accountNoteManager,
-            keypair.publicKey.toString(),
-            privKeyHex
-          );
-          // Reload notes to update balance and transaction history
-          const notes = await accountNoteManager.getAllNotes();
-          const balanceBigInt = await accountNoteManager.getBalance();
-          setBalance(Number(balanceBigInt) / 1e9);
+          // First, load existing notes from storage
+          const existingNotes = await accountNoteManager.getAllNotes();
+          const existingBalance = await accountNoteManager.getBalance();
+          setBalance(Number(existingBalance) / 1e9);
 
-          // Update transaction history
-          const uiNotes = notes.map((n) => ({
+          // Update UI with existing notes
+          const uiNotes = existingNotes.map((n) => ({
             commitment: n.commitment,
             amount: Number(n.amount) / 1e9,
             root: "dummy",
             timestamp: n.timestamp,
           }));
           setStoredNotes(uiNotes);
+
+          const existingTxs: Transaction[] = existingNotes.map((n) => ({
+            id: n.id || n.commitment.slice(0, 8),
+            type: "receive",
+            amount: Number(n.amount) / 1e9,
+            timestamp: n.timestamp,
+            status: "confirmed",
+            address: "Shielded Pool",
+          }));
+          setTransactions(
+            existingTxs.sort((a, b) => b.timestamp - a.timestamp)
+          );
+
+          // Then sync with relayer for new notes
+          const privKeyHex = Buffer.from(secretKey).toString("hex");
+          await syncNotesFromRelayer(
+            accountNoteManager,
+            keypair.publicKey.toString(),
+            privKeyHex,
+            veiloPrivateKey,
+            veiloPublicKey
+          );
+
+          // Reload notes after sync to update balance and transaction history
+          const notes = await accountNoteManager.getAllNotes();
+          const balanceBigInt = await accountNoteManager.getBalance();
+          setBalance(Number(balanceBigInt) / 1e9);
+
+          // Update transaction history
+          const updatedUiNotes = notes.map((n) => ({
+            commitment: n.commitment,
+            amount: Number(n.amount) / 1e9,
+            root: "dummy",
+            timestamp: n.timestamp,
+          }));
+          setStoredNotes(updatedUiNotes);
 
           const noteTxs: Transaction[] = notes.map((n) => ({
             id: n.id || n.commitment.slice(0, 8),
@@ -896,9 +723,11 @@ function App() {
             status: "confirmed",
             address: "Shielded Pool",
           }));
-          setTransactions(noteTxs);
+          setTransactions(noteTxs.sort((a, b) => b.timestamp - a.timestamp));
         } catch (e) {
           console.error("Initial sync failed:", e);
+        } finally {
+          setIsLoadingNotes(false);
         }
       }, 500);
     } catch (e) {
@@ -1051,6 +880,7 @@ function App() {
             setView("details");
           }}
           solBalance={balance}
+          isLoadingNotes={isLoadingNotes}
         />
 
         <AnimatePresence>
@@ -1089,13 +919,13 @@ function App() {
         <DepositModal
           isOpen={isDepositModalOpen}
           onClose={() => setIsDepositModalOpen(false)}
-          onDeposit={handleShieldFunds}
+          onDeposit={deposit}
         />
 
         <WithdrawModal
           isOpen={isWithdrawModalOpen}
           onClose={() => setIsWithdrawModalOpen(false)}
-          onWithdraw={handleUnshieldFunds}
+          onWithdraw={withdraw}
           shieldedBalance={balance}
         />
 

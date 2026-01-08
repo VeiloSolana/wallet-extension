@@ -1,0 +1,877 @@
+{
+  "address": "8aeAAnLc9TZE5K5Pye9sS7MxxvgeUa5uWYP3JpM8sgHM",
+  "metadata": {
+    "name": "privacy_pool",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "add_relayer",
+      "discriminator": [184, 240, 94, 199, 19, 71, 21, 192],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
+                  103, 95, 118, 51
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": ["config"]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_relayer",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "initialize",
+      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
+                  103, 95, 118, 51
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 118, 97, 117, 108, 116,
+                  95, 118, 51
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "note_tree",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
+                  116, 114, 101, 101, 95, 118, 51
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "nullifiers",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 117, 108, 108, 105,
+                  102, 105, 101, 114, 115, 95, 118, 51
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "fee_bps",
+          "type": "u16"
+        },
+        {
+          "name": "mint_address",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "set_paused",
+      "discriminator": [91, 60, 125, 192, 176, 225, 166, 218],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
+                  103, 95, 118, 51
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": ["config"]
+        }
+      ],
+      "args": [
+        {
+          "name": "paused",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "transact",
+      "docs": [
+        "Unified UTXO transaction instruction",
+        "Handles deposits (publicAmount < 0), withdrawals (publicAmount > 0), and transfers (publicAmount = 0)"
+      ],
+      "discriminator": [217, 149, 130, 143, 221, 52, 252, 119],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
+                  103, 95, 118, 51
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 118, 97, 117, 108, 116,
+                  95, 118, 51
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "note_tree",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
+                  116, 114, 101, 101, 95, 118, 51
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "nullifiers",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 117, 108, 108, 105,
+                  102, 105, 101, 114, 115, 95, 118, 51
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "nullifier_marker_0",
+          "docs": [
+            "First nullifier marker (must not exist - ensures nullifier is fresh)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  110, 117, 108, 108, 105, 102, 105, 101, 114, 95, 118, 51
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "input_nullifier_0"
+              }
+            ]
+          }
+        },
+        {
+          "name": "nullifier_marker_1",
+          "docs": [
+            "Second nullifier marker (must not exist - ensures nullifier is fresh)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  110, 117, 108, 108, 105, 102, 105, 101, 114, 95, 118, 51
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "input_nullifier_1"
+              }
+            ]
+          }
+        },
+        {
+          "name": "relayer",
+          "docs": ["Relayer who submits transaction (pays rent, receives fee)"],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "recipient",
+          "docs": [
+            "Recipient (receives withdrawal amount if public_amount > 0)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "vault_token_account",
+          "docs": ["Vault's token account (ATA for mint_address)"],
+          "writable": true
+        },
+        {
+          "name": "user_token_account",
+          "docs": ["User's token account (for deposits)"],
+          "writable": true
+        },
+        {
+          "name": "recipient_token_account",
+          "docs": ["Recipient's token account (for withdrawals)"],
+          "writable": true
+        },
+        {
+          "name": "relayer_token_account",
+          "docs": ["Relayer's token account (for fees)"],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "docs": ["SPL Token program"]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "root",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "public_amount",
+          "type": "i64"
+        },
+        {
+          "name": "ext_data_hash",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "mint_address",
+          "type": "pubkey"
+        },
+        {
+          "name": "input_nullifier_0",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "input_nullifier_1",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "output_commitment_0",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "output_commitment_1",
+          "type": {
+            "array": ["u8", 32]
+          }
+        },
+        {
+          "name": "ext_data",
+          "type": {
+            "defined": {
+              "name": "ExtData"
+            }
+          }
+        },
+        {
+          "name": "proof",
+          "type": {
+            "defined": {
+              "name": "TransactionProof"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "MerkleTreeAccount",
+      "discriminator": [147, 200, 34, 248, 131, 187, 248, 253]
+    },
+    {
+      "name": "NullifierMarker",
+      "discriminator": [160, 124, 83, 42, 185, 14, 141, 101]
+    },
+    {
+      "name": "NullifierSet",
+      "discriminator": [251, 219, 17, 100, 208, 102, 127, 25]
+    },
+    {
+      "name": "PrivacyConfig",
+      "discriminator": [165, 149, 218, 209, 148, 237, 242, 159]
+    },
+    {
+      "name": "Vault",
+      "discriminator": [211, 8, 232, 43, 2, 152, 117, 119]
+    }
+  ],
+  "events": [
+    {
+      "name": "CommitmentEvent",
+      "discriminator": [89, 205, 140, 111, 36, 129, 217, 125]
+    },
+    {
+      "name": "NullifierSpent",
+      "discriminator": [166, 111, 130, 54, 212, 115, 152, 215]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Paused",
+      "msg": "Pool is paused"
+    },
+    {
+      "code": 6001,
+      "name": "NoDenoms",
+      "msg": "No denominations configured"
+    },
+    {
+      "code": 6002,
+      "name": "TooManyDenoms",
+      "msg": "Too many denominations"
+    },
+    {
+      "code": 6003,
+      "name": "BadDenomIndex",
+      "msg": "Bad denomination index"
+    },
+    {
+      "code": 6004,
+      "name": "MathOverflow",
+      "msg": "Math overflow"
+    },
+    {
+      "code": 6005,
+      "name": "NullifierAlreadyUsed",
+      "msg": "Nullifier already used"
+    },
+    {
+      "code": 6006,
+      "name": "NullifierTableFull",
+      "msg": "Nullifier table is full"
+    },
+    {
+      "code": 6007,
+      "name": "UnknownRoot",
+      "msg": "Unknown root"
+    },
+    {
+      "code": 6008,
+      "name": "RelayerNotAllowed",
+      "msg": "Relayer not allowed"
+    },
+    {
+      "code": 6009,
+      "name": "InsufficientVaultBalance",
+      "msg": "Vault balance too low"
+    },
+    {
+      "code": 6010,
+      "name": "TooManyRelayers",
+      "msg": "Too many relayers"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidProof",
+      "msg": "Invalid proof encoding"
+    },
+    {
+      "code": 6012,
+      "name": "VerifyFailed",
+      "msg": "Groth16 verification failed"
+    },
+    {
+      "code": 6013,
+      "name": "MerkleTreeFull",
+      "msg": "Merkle tree is full"
+    },
+    {
+      "code": 6014,
+      "name": "MerkleHashFailed",
+      "msg": "Merkle hash failed"
+    },
+    {
+      "code": 6015,
+      "name": "InvalidExtData",
+      "msg": "Invalid external data hash"
+    },
+    {
+      "code": 6016,
+      "name": "RecipientMismatch",
+      "msg": "Recipient mismatch"
+    },
+    {
+      "code": 6017,
+      "name": "InvalidMintAddress",
+      "msg": "Invalid mint address"
+    },
+    {
+      "code": 6018,
+      "name": "ExcessiveFee",
+      "msg": "Excessive fee"
+    },
+    {
+      "code": 6019,
+      "name": "InsufficientFee",
+      "msg": "Fee below minimum required for withdrawal"
+    },
+    {
+      "code": 6020,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow/underflow occurred"
+    },
+    {
+      "code": 6021,
+      "name": "InsufficientFundsForWithdrawal",
+      "msg": "Insufficient funds for withdrawal (including rent exemption)"
+    },
+    {
+      "code": 6022,
+      "name": "InsufficientFundsForFee",
+      "msg": "Insufficient funds for fee payment"
+    },
+    {
+      "code": 6023,
+      "name": "DepositLimitExceeded",
+      "msg": "Deposit limit exceeded"
+    },
+    {
+      "code": 6024,
+      "name": "InvalidPublicAmount",
+      "msg": "Invalid public amount data"
+    },
+    {
+      "code": 6025,
+      "name": "InvalidFeeAmount",
+      "msg": "Invalid fee amount"
+    },
+    {
+      "code": 6026,
+      "name": "DuplicateNullifiers",
+      "msg": "Duplicate nullifiers detected"
+    },
+    {
+      "code": 6027,
+      "name": "DuplicateCommitments",
+      "msg": "Duplicate output commitments detected"
+    },
+    {
+      "code": 6028,
+      "name": "MissingTokenAccount",
+      "msg": "Token account required for SPL token operations"
+    },
+    {
+      "code": 6029,
+      "name": "MissingTokenProgram",
+      "msg": "Token program required for SPL token operations"
+    },
+    {
+      "code": 6030,
+      "name": "InvalidTokenAuthority",
+      "msg": "Invalid token account authority"
+    }
+  ],
+  "types": [
+    {
+      "name": "CommitmentEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "commitment",
+            "type": {
+              "array": ["u8", 32]
+            }
+          },
+          {
+            "name": "leaf_index",
+            "type": "u64"
+          },
+          {
+            "name": "new_root",
+            "type": {
+              "array": ["u8", 32]
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ExtData",
+      "docs": [
+        "External data that gets hashed into ext_data_hash",
+        "These are public parameters that affect financial flows"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "recipient",
+            "docs": ["Who receives withdrawal"],
+            "type": "pubkey"
+          },
+          {
+            "name": "relayer",
+            "docs": ["Who submits tx (gets fee)"],
+            "type": "pubkey"
+          },
+          {
+            "name": "fee",
+            "docs": ["Fee to relayer in lamports"],
+            "type": "u64"
+          },
+          {
+            "name": "refund",
+            "docs": ["Refund to user in lamports"],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MerkleTreeAccount",
+      "serialization": "bytemuckunsafe",
+      "repr": {
+        "kind": "rust",
+        "packed": true
+      },
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "docs": ["Authority allowed to manage the tree (config admin)"],
+            "type": "pubkey"
+          },
+          {
+            "name": "height",
+            "docs": ["Tree height (number of levels)"],
+            "type": "u8"
+          },
+          {
+            "name": "root_history_size",
+            "docs": ["How many roots we track"],
+            "type": "u16"
+          },
+          {
+            "name": "next_index",
+            "docs": ["Next leaf index"],
+            "type": "u64"
+          },
+          {
+            "name": "root_index",
+            "docs": ["Index into root_history for the current root"],
+            "type": "u64"
+          },
+          {
+            "name": "root",
+            "docs": ["Current root"],
+            "type": {
+              "array": ["u8", 32]
+            }
+          },
+          {
+            "name": "subtrees",
+            "docs": ["Cached subtree values for each level"],
+            "type": {
+              "array": [
+                {
+                  "array": ["u8", 32]
+                },
+                16
+              ]
+            }
+          },
+          {
+            "name": "root_history",
+            "docs": ["Circular buffer of recent roots"],
+            "type": {
+              "array": [
+                {
+                  "array": ["u8", 32]
+                },
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "NullifierMarker",
+      "docs": ["Per-nullifier PDA marker (created when nullifier is spent)"],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "nullifier",
+            "docs": ["The nullifier that was spent"],
+            "type": {
+              "array": ["u8", 32]
+            }
+          },
+          {
+            "name": "timestamp",
+            "docs": ["Unix timestamp when spent"],
+            "type": "i64"
+          },
+          {
+            "name": "withdrawal_index",
+            "docs": ["Sequential withdrawal index"],
+            "type": "u32"
+          },
+          {
+            "name": "bump",
+            "docs": ["PDA bump"],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "NullifierSet",
+      "docs": [
+        "Nullifier set metadata (actual nullifiers stored as individual PDAs)."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "count",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "NullifierSpent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "nullifier",
+            "type": {
+              "array": ["u8", 32]
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PrivacyConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "docs": ["PDA bump for this config"],
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "docs": ["PDA bump for vault"],
+            "type": "u8"
+          },
+          {
+            "name": "admin",
+            "docs": ["Admin who can configure pool and relayers"],
+            "type": "pubkey"
+          },
+          {
+            "name": "paused",
+            "docs": ["Is pool paused?"],
+            "type": "bool"
+          },
+          {
+            "name": "fee_bps",
+            "docs": ["Fee in basis points (0–10_000) for withdrawals"],
+            "type": "u16"
+          },
+          {
+            "name": "min_withdrawal_fee",
+            "docs": [
+              "Minimum fee for withdrawals (in lamports) to ensure relayer compensation"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "total_tvl",
+            "docs": ["Total value locked (all deposits combined)"],
+            "type": "u64"
+          },
+          {
+            "name": "mint_address",
+            "docs": [
+              "Token mint address (for now: SOL, future: multi-token support)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "max_deposit_amount",
+            "docs": [
+              "Maximum amount allowed per deposit (in lamports/token units)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "num_relayers",
+            "docs": ["Relayer registry"],
+            "type": "u8"
+          },
+          {
+            "name": "relayers",
+            "type": {
+              "array": ["pubkey", 16]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TransactionProof",
+      "docs": [
+        "Proof for new UTXO transaction circuit (same structure, different VK)"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "proof_a",
+            "type": {
+              "array": ["u8", 64]
+            }
+          },
+          {
+            "name": "proof_b",
+            "type": {
+              "array": ["u8", 128]
+            }
+          },
+          {
+            "name": "proof_c",
+            "type": {
+              "array": ["u8", 64]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Vault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "docs": ["PDA bump for this vault"],
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
