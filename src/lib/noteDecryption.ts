@@ -1,5 +1,6 @@
 
 import { buildPoseidon, buildBabyjub } from 'circomlibjs';
+import { Buffer } from 'buffer';
 
 export interface DecryptedNote {
   amount: bigint;
@@ -144,7 +145,7 @@ export async function decryptNoteBlob(
           throw new Error("Note not yours");
       }
       console.warn("Decryption failed for note:", e);
-      throw new Error("Decryption failed");
+      throw e; // Rethrow to let caller handle logging if needed, or see the cause
   }
 }
 
