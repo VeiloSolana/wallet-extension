@@ -18,7 +18,11 @@ export const BalanceDisplay = ({
   isSyncing,
 }: BalanceDisplayProps) => {
   const [displayBalance, setDisplayBalance] = useState(0);
-  const { price: solPrice, priceChange24h, isLoading: isPriceLoading } = useSolPrice();
+  const {
+    price: solPrice,
+    priceChange24h,
+    isLoading: isPriceLoading,
+  } = useSolPrice();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -29,7 +33,7 @@ export const BalanceDisplay = ({
 
   // Calculate USD balance from live SOL price
   const usdBalance = displayBalance * solPrice;
-  
+
   // Use actual 24h price change from API
   const isPositive = priceChange24h >= 0;
 

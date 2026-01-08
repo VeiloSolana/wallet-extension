@@ -8,7 +8,11 @@ interface DepositModalProps {
   onDeposit: (amount: number) => Promise<void>;
 }
 
-export const DepositModal = ({ isOpen, onClose, onDeposit }: DepositModalProps) => {
+export const DepositModal = ({
+  isOpen,
+  onClose,
+  onDeposit,
+}: DepositModalProps) => {
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState<string>("");
@@ -23,11 +27,11 @@ export const DepositModal = ({ isOpen, onClose, onDeposit }: DepositModalProps) 
     try {
       setIsProcessing(true);
       setError("");
-      setStatus("Initiating shield process...");
+      setStatus("Initiating deposit process...");
 
       await onDeposit(parseFloat(amount));
 
-      setStatus("Funds shielded successfully!");
+      setStatus("Funds deposited successfully!");
 
       // Reset form after delay
       setTimeout(() => {
@@ -39,7 +43,7 @@ export const DepositModal = ({ isOpen, onClose, onDeposit }: DepositModalProps) 
       }, 2000);
     } catch (err) {
       console.error("Deposit failed:", err);
-      setError(err instanceof Error ? err.message : "Shielding failed");
+      setError(err instanceof Error ? err.message : "Deposit failed");
       setIsProcessing(false);
     }
   };
@@ -110,7 +114,9 @@ export const DepositModal = ({ isOpen, onClose, onDeposit }: DepositModalProps) 
 
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold tracking-tight">SHIELD FUNDS</h2>
+                <h2 className="text-xl font-bold tracking-tight">
+                  DEPOSIT FUNDS
+                </h2>
                 <button
                   onClick={onClose}
                   className="text-zinc-400 hover:text-white transition-colors"
@@ -187,7 +193,7 @@ export const DepositModal = ({ isOpen, onClose, onDeposit }: DepositModalProps) 
                     fullWidth
                     disabled={!amount || isProcessing}
                   >
-                    {isProcessing ? "SHIELDING..." : "SHIELD"}
+                    {isProcessing ? "DEPOSITING..." : "DEPOSIT"}
                   </CyberButton>
                 </div>
               </div>

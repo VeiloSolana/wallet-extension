@@ -6,10 +6,15 @@ interface WithdrawModalProps {
   isOpen: boolean;
   onClose: () => void;
   onWithdraw: (recipient: string, amount: number) => Promise<void>;
-  shieldedBalance: number;
+  privateBalance: number;
 }
 
-export const WithdrawModal = ({ isOpen, onClose, onWithdraw, shieldedBalance }: WithdrawModalProps) => {
+export const WithdrawModal = ({
+  isOpen,
+  onClose,
+  onWithdraw,
+  privateBalance,
+}: WithdrawModalProps) => {
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -22,8 +27,8 @@ export const WithdrawModal = ({ isOpen, onClose, onWithdraw, shieldedBalance }: 
       return;
     }
 
-    if (parseFloat(amount) > shieldedBalance) {
-      setError("Insufficient shielded balance");
+    if (parseFloat(amount) > privateBalance) {
+      setError("Insufficient private balance");
       return;
     }
 
@@ -34,7 +39,7 @@ export const WithdrawModal = ({ isOpen, onClose, onWithdraw, shieldedBalance }: 
 
       await onWithdraw(recipient, parseFloat(amount));
 
-      setStatus("Unshielded & Withdrawn successfully!");
+      setStatus("Withdrawn successfully!");
 
       // Reset form after delay
       setTimeout(() => {
@@ -118,7 +123,9 @@ export const WithdrawModal = ({ isOpen, onClose, onWithdraw, shieldedBalance }: 
 
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold tracking-tight">UNSHIELD FUNDS</h2>
+                <h2 className="text-xl font-bold tracking-tight">
+                  UNSHIELD FUNDS
+                </h2>
                 <button
                   onClick={onClose}
                   className="text-zinc-400 hover:text-white transition-colors"

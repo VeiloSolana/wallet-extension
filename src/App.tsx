@@ -14,7 +14,7 @@ import { SendModal } from "./components/SendModal";
 import { ReceiveModal } from "./components/ReceiveModal";
 import { DepositModal } from "./components/DepositModal";
 import { WithdrawModal } from "./components/WithdrawModal";
-import { SwapModal } from "./components/SwapModal";
+import { TransferModal } from "./components/TransferModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { WelcomePage } from "./components/WelcomePage";
 import { CreatePasswordPage } from "./components/CreatePasswordPage";
@@ -24,22 +24,26 @@ import { CreateUsernamePage } from "./components/CreateUsernamePage";
 import { OnboardingWalkthrough } from "./components/OnboardingWalkthrough";
 import { RestoreSeedphrasePage } from "./components/RestoreSeedphrasePage";
 import { useAuthStore } from "./store/useAuthStore";
-import { useRegisterUser, useRestoreAccount } from "./hooks/queries/useAuthQueries";
-import * as bip39 from "bip39";
+import {
+  useRegisterUser,
+  useRestoreAccount,
+} from "./hooks/queries/useAuthQueries";
+// import * as bip39 from "bip39";
 import { Wallet } from "./utils/wallet";
 import privacyPoolIdl from "../program/idl/privacy_pool.json";
 import { type PrivacyPool } from "../program/types/privacy_pool";
 import "./App.css";
 import { AnimatePresence } from "framer-motion";
-import {
-  buildDummyProof,
-  createNoteWithCommitment,
-  getPoolPdas,
-  sol,
-} from "./sdk/client";
-import { createNoteAndDeposit } from "@zkprivacysol/sdk-core";
+
 import { encrypt, decrypt } from "./utils/encryption";
-import { saveWallet, loadWallet, saveSession, loadSession, clearSession, isSessionValid } from "./utils/storage";
+import {
+  saveWallet,
+  loadWallet,
+  saveSession,
+  loadSession,
+  clearSession,
+  isSessionValid,
+} from "./utils/storage";
 import { NoteManager } from "./lib/noteManager";
 import { syncNotesFromRelayer } from "./lib/noteSync";
 
@@ -85,7 +89,7 @@ function App() {
   const [generatedPhrase, setGeneratedPhrase] = useState<string[]>([]);
   const [hasWallet, setHasWallet] = useState(false);
   const [error, setError] = useState("");
-  
+
   // Restore flow state
   const [isRestoreFlow, setIsRestoreFlow] = useState(false);
   const [restoreMnemonic, setRestoreMnemonic] = useState("");
@@ -97,7 +101,7 @@ function App() {
       if (encryptedWallet) {
         console.log("Encrypted wallet found, checking session...");
         setHasWallet(true);
-        
+
         // Check if there's a valid session (within 1 minute)
         const session = await loadSession();
         if (session && isSessionValid(session)) {
@@ -139,7 +143,7 @@ function App() {
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
-  const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [password, setPassword] = useState("");
 
@@ -653,9 +657,12 @@ function App() {
       ) as Program<any>;
       setProgram(programInstance);
 
-      setAuth({ username: storedWallet.username || "User", publicKey: keypair.publicKey.toString() });
+      setAuth({
+        username: storedWallet.username || "User",
+        publicKey: keypair.publicKey.toString(),
+      });
       setPassword(password);
-      
+
       // Save session for auto-login within timeout window
       await saveSession({
         encryptedPassword: password, // Store password for session (in memory only, cleared on timeout)
@@ -850,26 +857,25 @@ function App() {
         />
         <BalanceDisplay
           balance={balance}
-          address={user?.publicKey?.toString() || ""}
+          // address={user?.publicKey?.toString() || ""}
           onSend={() => setIsSendModalOpen(true)}
           onReceive={() => setIsReceiveModalOpen(true)}
           onSync={handleSyncNotes}
           isSyncing={isSyncing}
         />
 
-        {/* Action Buttons */}
-        <div className="px-4 py-2 border-b border-white/10">
-          {!isInitialized && (
+        {!isInitialized && (
+          <div className="px-4 py-2 border-b border-white/10">
             <div className="py-2 px-3 mb-2 border border-neon-green/30 bg-neon-green/10">
               <p className="text-[10px] font-mono text-center">
                 Initializing connection to devnet...
               </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <ActionButtons
-          onSwap={() => setIsSwapModalOpen(true)}
+          onTransfer={() => setIsTransferModalOpen(true)}
           onDeposit={() => setIsDepositModalOpen(true)}
           onWithdraw={() => setIsWithdrawModalOpen(true)}
         />
@@ -929,12 +935,12 @@ function App() {
           isOpen={isWithdrawModalOpen}
           onClose={() => setIsWithdrawModalOpen(false)}
           onWithdraw={withdraw}
-          shieldedBalance={balance}
+          privateBalance={balance}
         />
 
-        <SwapModal
-          isOpen={isSwapModalOpen}
-          onClose={() => setIsSwapModalOpen(false)}
+        <TransferModal
+          isOpen={isTransferModalOpen}
+          onClose={() => setIsTransferModalOpen(false)}
         />
 
         <SettingsModal
