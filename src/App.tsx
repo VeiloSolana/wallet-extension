@@ -24,7 +24,7 @@ import { CreateUsernamePage } from "./components/CreateUsernamePage";
 import { OnboardingWalkthrough } from "./components/OnboardingWalkthrough";
 import { useAuthStore } from "./store/useAuthStore";
 import { useRegisterUser } from "./hooks/queries/useAuthQueries";
-import * as bip39 from "bip39";
+// import * as bip39 from "bip39";
 import { Wallet } from "./utils/wallet";
 import privacyPoolIdl from "../idl/privacy_pool.json";
 import "./App.css";
@@ -40,16 +40,6 @@ import { encrypt, decrypt } from "./utils/encryption";
 import { saveWallet, loadWallet } from "./utils/storage";
 import { NoteManager } from "./lib/noteManager";
 import { syncNotesFromRelayer } from "./lib/noteSync";
-import { saveEncryptedNote } from "./lib/relayerApi";
-import {
-  encryptNote,
-  derivePrivacyKeyFromSignatureKey,
-} from "./lib/noteDecryption";
-
-// Program ID deployed on devnet
-const PRIVACY_POOL_PROGRAM_ID = new PublicKey(
-  "Bo2en1LKZL7JFXsag7KAb5ZQiqFg5j22dJYCLZmoek1Q"
-);
 
 // Devnet RPC endpoint
 const DEVNET_RPC_URL = "https://api.devnet.solana.com";
@@ -210,6 +200,7 @@ function App() {
           storedWallet.encryptedSecretKey,
           password
         );
+
         const secretKey = new Uint8Array(JSON.parse(secretKeyStr));
         const keypair = Keypair.fromSecretKey(secretKey);
 
@@ -223,6 +214,15 @@ function App() {
         );
         const privKeyHex = Buffer.from(walletInstance.payer.secretKey).toString(
           "hex"
+        );
+
+        const veiloPrivateKeyStr = await decrypt(
+          storedWallet.encryptedVeiloPrivateKey,
+          password
+        );
+        const veiloPublicKeyStr = await decrypt(
+          storedWallet.encryptedVeiloPublicKey,
+          password
         );
 
         const count = await syncNotesFromRelayer(
@@ -360,79 +360,7 @@ function App() {
 
   // --- Handlers ---
 
-  const handleShieldFunds = async (amount: number) => {
-    try {
-      // 1. Perform Deposit
-      const result = await deposit(amount);
-
-      // 2. Encrypt and Save to Relayer (Blind Mailbox)
-      if (wallet && "payer" in wallet) {
-        const secretKey = (wallet as any).payer.secretKey;
-        const myPubKey = (wallet as any).payer.publicKey.toBytes();
-        const privKeyHex = Buffer.from(secretKey).toString("hex");
-
-        // Derive Privacy Key for SELF (Recipient = Us)
-        const { publicKey: myPrivacyPubKey } =
-          await derivePrivacyKeyFromSignatureKey(secretKey);
-
-        // Encrypt for self
-        const { ephemeralPublicKey, encryptedBlob } = await encryptNote(
-          myPrivacyPubKey, // Use derived BabyJubJub key
-          {
-            amount: BigInt(amount),
-            blinding: new Uint8Array(32),
-            leafIndex: 0,
-            nullifier: new Uint8Array(32),
-            publicKey: myPrivacyPubKey,
-          }
-        );
-
-        await saveEncryptedNote({
-          commitment: Buffer.from(result.commitment).toString("hex"),
-          ephemeralPublicKey,
-          encryptedBlob,
-          timestamp: Date.now(),
-        });
-
-        // 4. Save to Local NoteManager immediately
-        await noteManager.saveNote({
-          commitment: Buffer.from(result.commitment).toString("hex"),
-          amount: amount.toString(),
-          root: Buffer.from(result.root).toString("hex"),
-          timestamp: Date.now(),
-          nullifier: "dummy",
-          blinding: "dummy",
-          privateKey: privKeyHex,
-          publicKey: Buffer.from(myPubKey).toString("hex"),
-          leafIndex: 0,
-        });
-
-        // Refresh UI by reloading notes
-        // Note: We need to define loadNotes outside useEffect to call it here?
-        // Or just update state manually/partially.
-        // Since loadNotes is defined INSIDE useEffect in current structure, we cannot call it here.
-        // Refactoring: Move loadNotes to component scope.
-        // For now, let's update state manually to reflect change or force reload.
-
-        // Ideally refactor loadNotes out.
-        // We'll duplicate the state update for now or just trust the next sync.
-        // But let's copy the state update logic for immediate feedback.
-        const notes = await noteManager.getAllNotes();
-        const uiNotes = notes.map((n) => ({
-          commitment: n.commitment,
-          amount: Number(n.amount) / 1e9, // SOL
-          root: "dummy",
-          timestamp: n.timestamp,
-        }));
-        setStoredNotes(uiNotes);
-        const balanceBigInt = await noteManager.getBalance();
-        setBalance(Number(balanceBigInt) / 1e9); // SOL
-      }
-    } catch (e) {
-      console.error("Shielding error:", e);
-      throw e;
-    }
-  };
+  const handleShieldFunds = async (amount: number) => {};
 
   // Withdraws from the shielded pool
   const handleUnshieldFunds = async (recipient: string, amount: number) => {

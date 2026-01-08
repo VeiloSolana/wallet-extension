@@ -12,6 +12,10 @@ export interface StoredNote {
   spent: boolean;
   spentAt?: number;
   txSignature?: string;
+  merklePath?: {
+    pathElements: bigint[];
+    pathIndices: number[];
+  };
 }
 
 // Check if chrome.storage is available (prevent crash in dev mode)

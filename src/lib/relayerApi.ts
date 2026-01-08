@@ -1,5 +1,4 @@
-
-const RELAYER_API_URL = 'http://localhost:8080'; // TODO: Load from config/storage
+const RELAYER_API_URL = "http://localhost:8080"; // TODO: Load from config/storage
 
 export interface EncryptedNote {
   noteId: string;
@@ -46,20 +45,20 @@ export async function queryEncryptedNotes(
 ): Promise<QueryNotesResponse> {
   try {
     const response = await fetch(`${RELAYER_API_URL}/api/notes/query`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(params),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to query encrypted notes');
+      throw new Error("Failed to query encrypted notes");
     }
 
     return await response.json();
   } catch (error: any) {
-    console.error('Error querying encrypted notes:', error);
+    console.error("Error querying encrypted notes:", error);
     throw error;
   }
 }
@@ -85,6 +84,68 @@ export async function saveEncryptedNote(
     return result;
   } catch (error: any) {
     console.error("Error saving encrypted note:", error);
+    throw error;
+  }
+}
+
+export interface MerkleRootResponse {
+  success: boolean;
+  data: {
+    root: string;
+    nextIndex: number;
+    treeId: number;
+  };
+}
+
+export interface MerkleTreeResponse {
+  success: boolean;
+  data: {
+    treeId: number;
+    height: number;
+    nextIndex: number;
+    root: string;
+    totalCommitments: number;
+    leaves: Array<{
+      commitment: string;
+      index: number;
+      txSignature: string;
+      slot: number;
+      timestamp: string;
+    }>;
+    reconstructionInfo: {
+      instructions: string;
+      treeHeight: number;
+      hashFunction: string;
+    };
+  };
+}
+
+export async function getMerkleRoot(): Promise<MerkleRootResponse> {
+  try {
+    const response = await fetch(`${RELAYER_API_URL}/api/merkle/root`);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch merkle root");
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error("Error fetching merkle root:", error);
+    throw error;
+  }
+}
+
+export async function getMerkleTree(): Promise<MerkleTreeResponse> {
+  try {
+    const response = await fetch(`${RELAYER_API_URL}/api/merkle/tree`);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch merkle tree");
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error("Error fetching merkle tree:", error);
     throw error;
   }
 }
