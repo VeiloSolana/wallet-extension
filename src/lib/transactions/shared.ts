@@ -1,36 +1,6 @@
-import { BN, Provider, Wallet } from "@coral-xyz/anchor";
-import {
-  Keypair,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Connection,
-  ComputeBudgetProgram,
-  SystemProgram,
-  Transaction,
-  SendTransactionError,
-} from "@solana/web3.js";
-import { buildPoseidon } from "circomlibjs";
-import { getPoolPdas } from "veilo-sdk-core";
-import { getMerkleTree } from "../relayerApi";
-import { buildMerkleTree } from "../merkleTree";
+import { BN } from "@coral-xyz/anchor";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import { groth16 } from "snarkjs";
-
-interface DepositNote {
-  amount: bigint;
-  commitment: Uint8Array;
-  nullifier: Uint8Array;
-  blinding: Uint8Array;
-  privateKey: Uint8Array;
-  publicKey: bigint;
-  leafIndex: number;
-  merklePath: {
-    pathElements: bigint[];
-    pathIndices: number[];
-  };
-  mintAddress?: PublicKey;
-  timestamp?: number;
-  spent?: boolean;
-}
 
 const WASM_PATH = "/zk/circuits/transaction/transaction_js/transaction.wasm";
 const ZKEY_PATH = "/zk/circuits/transaction/transaction_final.zkey";
@@ -77,7 +47,7 @@ function convertProofToBytes(proof: any): {
   return { proofA, proofB, proofC };
 }
 
-async function generateTransactionProof(inputs: {
+export async function generateTransactionProof(inputs: {
   // Public inputs (8 total)
   root: Uint8Array;
   publicAmount: bigint;
@@ -190,7 +160,7 @@ async function generateTransactionProof(inputs: {
 
   return convertProofToBytes(proof);
 }
-const SOL_MINT = PublicKey.default;
+export const SOL_MINT = PublicKey.default;
 
 export function extractRootFromAccount(acc: any): Uint8Array {
   const rootIndex = acc.rootIndex;
