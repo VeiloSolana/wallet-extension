@@ -3,9 +3,8 @@ import { decryptNoteBlob } from "./helper";
 import { NoteManager } from "./noteManager";
 import { loadToken } from "../utils/storage";
 
-const noteManager = new NoteManager();
-
 export async function syncNotesFromRelayer(
+  noteManager: NoteManager,
   publicKey: string,
   privateKey: string
 ) {

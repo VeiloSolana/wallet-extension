@@ -46,9 +46,6 @@ import {
   derivePrivacyKeyFromSignatureKey,
 } from "./lib/noteDecryption";
 
-// Initialize NoteManager
-const noteManager = new NoteManager();
-
 // Program ID deployed on devnet
 const PRIVACY_POOL_PROGRAM_ID = new PublicKey(
   "Bo2en1LKZL7JFXsag7KAb5ZQiqFg5j22dJYCLZmoek1Q"
@@ -105,7 +102,6 @@ function App() {
   }, []);
 
   const [balance, setBalance] = useState(0);
-  const [shieldedBalance, setShieldedBalance] = useState(0);
   const [address, setAddress] = useState("");
 
   // Navigation State
@@ -132,6 +128,7 @@ function App() {
   const [wallet, setWallet] = useState<Wallet | undefined>();
   const [program, setProgram] = useState<Program<any> | undefined>();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [noteManager, setNoteManager] = useState<NoteManager | null>(null);
 
   // Notes state
   const [storedNotes, setStoredNotes] = useState<StoredNote[]>([]);
@@ -139,8 +136,25 @@ function App() {
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
+  // Auto-refresh notes every 30 seconds
+  useEffect(() => {
+    if (!isAuthenticated || !noteManager || !wallet) return;
+
+    const intervalId = setInterval(async () => {
+      console.log("🔄 Auto-refreshing notes...");
+      await handleSyncNotes();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated, noteManager, wallet]);
+
   // Load stored notes from NoteManager
   const loadNotes = async () => {
+    if (!noteManager) {
+      console.log("NoteManager not initialized");
+      return;
+    }
+
     try {
       const notes = await noteManager.getAllNotes();
       const uiNotes = notes.map((n) => ({
@@ -152,7 +166,7 @@ function App() {
       setStoredNotes(uiNotes);
 
       const balanceBigInt = await noteManager.getBalance();
-      setShieldedBalance(Number(balanceBigInt) / 1e9); // Convert Lamports to SOL
+      setBalance(Number(balanceBigInt) / 1e9); // Convert Lamports to SOL
 
       // Map notes to transactions for history
       const noteTxs: Transaction[] = notes.map((n) => ({
@@ -176,17 +190,26 @@ function App() {
 
   const handleSyncNotes = async () => {
     if (isSyncing) return;
+
+    if (!noteManager) {
+      console.error("NoteManager not initialized");
+      return;
+    }
+
     setIsSyncing(true);
     try {
       if (wallet && "payer" in wallet) {
-        const wallet = await loadWallet();
-        if (!wallet) {
+        const storedWallet = await loadWallet();
+        if (!storedWallet) {
           console.error("No wallet found");
           return;
         }
 
-        // Decrypt
-        const secretKeyStr = await decrypt(wallet, password);
+        // Decrypt the wallet private key
+        const secretKeyStr = await decrypt(
+          storedWallet.encryptedSecretKey,
+          password
+        );
         const secretKey = new Uint8Array(JSON.parse(secretKeyStr));
         const keypair = Keypair.fromSecretKey(secretKey);
 
@@ -203,6 +226,7 @@ function App() {
         );
 
         const count = await syncNotesFromRelayer(
+          noteManager,
           walletInstance.payer.publicKey.toString(),
           privKeyHex
         );
@@ -217,106 +241,6 @@ function App() {
       setIsSyncing(false);
     }
   };
-
-  // useEffect(() => {
-  //   // Initialize SDK
-  //   const initializeSDK = async () => {
-  //     try {
-  //       console.log("Initializing SDK...");
-
-  //       const conn = new Connection(DEVNET_RPC_URL, "confirmed");
-  //       setConnection(conn);
-  //       console.log("✓ Connection established to devnet");
-
-  //       let keypair: Keypair;
-  //       const storedPrivateKey = localStorage.getItem("wallet_private_key");
-
-  //       if (storedPrivateKey) {
-  //         try {
-  //           const secretKey = new Uint8Array(JSON.parse(storedPrivateKey));
-  //           keypair = Keypair.fromSecretKey(secretKey);
-  //           console.log(
-  //             "✓ Wallet loaded from storage:",
-  //             keypair.publicKey.toString()
-  //           );
-  //         } catch (error) {
-  //           console.error(
-  //             "Failed to load wallet from storage, generating new one:",
-  //             error
-  //           );
-  //           keypair = Keypair.generate();
-  //           localStorage.setItem(
-  //             "wallet_private_key",
-  //             JSON.stringify(Array.from(keypair.secretKey))
-  //           );
-  //           console.log(
-  //             "✓ New wallet generated and stored:",
-  //             keypair.publicKey.toString()
-  //           );
-  //         }
-  //       } else {
-  //         // No stored key, wait for user onboarding
-  //         console.log("No wallet found, waiting for onboarding");
-  //         setIsInitialized(true);
-  //         return;
-  //       }
-
-  //       const walletInstance = new Wallet(keypair);
-  //       setWallet(walletInstance);
-  //       setAddress(keypair.publicKey.toString());
-
-  //       const provider = new anchor.AnchorProvider(conn, walletInstance, {
-  //         commitment: "confirmed",
-  //         preflightCommitment: "confirmed",
-  //       });
-  //       anchor.setProvider(provider);
-  //       console.log("✓ Provider configured");
-
-  //       const programInstance = new anchor.Program(
-  //         privacyPoolIdl as Idl,
-  //         provider
-  //       ) as Program<any>;
-  //       setProgram(programInstance);
-  //       console.log(
-  //         "✓ Program initialized:",
-  //         PRIVACY_POOL_PROGRAM_ID.toString()
-  //       );
-
-  //       const walletBalance = await conn.getBalance(keypair.publicKey);
-  //       setBalance(walletBalance / 1e9);
-  //       console.log(`✓ Balance: ${walletBalance / 1e9} SOL`);
-
-  //       setIsInitialized(true);
-  //       console.log("✅ SDK fully initialized and ready");
-
-  //       loadNotes();
-
-  //       if (walletBalance < 1e9) {
-  //         console.log("Balance low, requesting airdrop...");
-  //         try {
-  //           const airdropSignature = await conn.requestAirdrop(
-  //             keypair.publicKey,
-  //             2e9 // 2 SOL
-  //           );
-  //           await conn.confirmTransaction(airdropSignature);
-  //           const newBalance = await conn.getBalance(keypair.publicKey);
-  //           setBalance(newBalance / 1e9);
-  //           console.log(
-  //             "✓ Airdrop successful, new balance:",
-  //             newBalance / 1e9,
-  //             "SOL"
-  //           );
-  //         } catch (error) {
-  //           console.error("Airdrop failed:", error);
-  //         }
-  //       }
-  //     } catch (error) {
-  //       console.error("❌ Failed to initialize SDK:", error);
-  //     }
-  //   };
-
-  //   initializeSDK();
-  // }, []);
 
   const deposit = async (amount: number) => {
     if (!connection || !wallet || !program) {
@@ -441,13 +365,7 @@ function App() {
       // 1. Perform Deposit
       const result = await deposit(amount);
 
-      // 2. Refresh Main Balance
-      if (connection && wallet) {
-        const newBal = await connection.getBalance(wallet.publicKey);
-        setBalance(newBal / 1e9);
-      }
-
-      // 3. Encrypt and Save to Relayer (Blind Mailbox)
+      // 2. Encrypt and Save to Relayer (Blind Mailbox)
       if (wallet && "payer" in wallet) {
         const secretKey = (wallet as any).payer.secretKey;
         const myPubKey = (wallet as any).payer.publicKey.toBytes();
@@ -508,7 +426,7 @@ function App() {
         }));
         setStoredNotes(uiNotes);
         const balanceBigInt = await noteManager.getBalance();
-        setShieldedBalance(Number(balanceBigInt) / 1e9); // SOL
+        setBalance(Number(balanceBigInt) / 1e9); // SOL
       }
     } catch (e) {
       console.error("Shielding error:", e);
@@ -524,9 +442,8 @@ function App() {
     // Here we just check balance sufficient and use the first available note's root (or dummy).
 
     try {
-      // 1. Check Shielded Balance
-      if (amount > shieldedBalance)
-        throw new Error("Insufficient shielded funds");
+      // 1. Check Balance
+      if (amount > balance) throw new Error("Insufficient funds");
 
       // 2. Perform Withdrawal
       // We pick a root from our notes if available, or fall back (SDK handles dummy root)
@@ -557,8 +474,8 @@ function App() {
       // But since we didn't actually mark spent in NoteManager, balance won't change.
       // We should manually update local state for the demo feel.
 
-      const newTotal = Math.max(0, shieldedBalance - amount); // shieldedBalance is now SOL, amount is SOL
-      setShieldedBalance(newTotal);
+      const newTotal = Math.max(0, balance - amount); // balance is now SOL, amount is SOL
+      setBalance(newTotal);
 
       // Update local state ONLY (NoteManager remains out of sync until we impl spend logic properly)
       const updatedNotes = [...storedNotes];
@@ -583,12 +500,6 @@ function App() {
       await withdraw(recipient, amount, root);
 
       console.log(`✅ Successfully sent ${amount} SOL to ${recipient}`);
-
-      // Refresh balance
-      if (connection && wallet) {
-        const newBal = await connection.getBalance(wallet.publicKey);
-        setBalance(newBal / 1e9);
-      }
     } catch (error) {
       console.error("❌ Send failed:", error);
       throw error;
@@ -609,20 +520,53 @@ function App() {
       // 1. Register with backend
       const response = await registerUser(username);
 
-      // 2. Derive wallet from returned mnemonic
-      const mnemonic = response.encryptedMnemonic || "";
-      if (!mnemonic) throw new Error("No mnemonic returned");
+      // 2. Derive wallet from returned private key
+      const privateKeyHex = response.privateKey;
+      if (!privateKeyHex) throw new Error("No private key returned");
 
-      const seed = await bip39.mnemonicToSeed(mnemonic);
-      const keypair = Keypair.fromSeed(seed.slice(0, 32));
+      const privateKeyBytes = Buffer.from(privateKeyHex, "hex");
+      const keypair = Keypair.fromSecretKey(privateKeyBytes);
 
-      // 3. Encrypt and Store in IndexedDB
+      // 3. Encrypt all sensitive data
       const secretKeyStr = JSON.stringify(Array.from(keypair.secretKey));
-      const encryptedData = await encrypt(secretKeyStr, password);
-      // Store wallet AND token in the new secure storage
-      await saveWallet(encryptedData, response.token);
+      const encryptedSecretKey = await encrypt(secretKeyStr, password);
 
-      // 4. Update UI
+      const mnemonic = response.encryptedMnemonic || "";
+      const encryptedMnemonic = await encrypt(mnemonic, password);
+
+      const veiloPublicKey = response.veiloPublicKey || "";
+      const encryptedVeiloPublicKey = await encrypt(veiloPublicKey, password);
+
+      const veiloPrivateKeyHex = response.veiloPrivateKey || "";
+      const encryptedVeiloPrivateKey = await encrypt(
+        veiloPrivateKeyHex,
+        password
+      );
+
+      // 4. Store all encrypted data
+      await saveWallet(
+        {
+          encryptedSecretKey,
+          encryptedMnemonic,
+          encryptedVeiloPublicKey,
+          encryptedVeiloPrivateKey,
+          publicKey: response.publicKey,
+          username: response.username,
+        },
+        response.token
+      );
+
+      // 5. Store password in state for session use
+      setPassword(password);
+
+      // 6. Initialize NoteManager with account context
+      const accountNoteManager = new NoteManager(
+        response.publicKey,
+        privateKeyHex
+      );
+      setNoteManager(accountNoteManager);
+
+      // 7. Update UI
       setGeneratedPhrase(mnemonic.split(" "));
       setOnboardingStep("phrase");
 
@@ -646,6 +590,42 @@ function App() {
       setProgram(programInstance);
 
       setAuth({ username: response.username, publicKey: response.publicKey });
+
+      // Load notes immediately after registration
+      setTimeout(async () => {
+        try {
+          await syncNotesFromRelayer(
+            accountNoteManager,
+            response.publicKey,
+            privateKeyHex
+          );
+          // Reload notes to update balance and transaction history
+          const notes = await accountNoteManager.getAllNotes();
+          const balanceBigInt = await accountNoteManager.getBalance();
+          setBalance(Number(balanceBigInt) / 1e9);
+
+          // Update transaction history
+          const uiNotes = notes.map((n) => ({
+            commitment: n.commitment,
+            amount: Number(n.amount) / 1e9,
+            root: "dummy",
+            timestamp: n.timestamp,
+          }));
+          setStoredNotes(uiNotes);
+
+          const noteTxs: Transaction[] = notes.map((n) => ({
+            id: n.id || n.commitment.slice(0, 8),
+            type: "receive",
+            amount: Number(n.amount) / 1e9,
+            timestamp: n.timestamp,
+            status: "confirmed",
+            address: "Shielded Pool",
+          }));
+          setTransactions(noteTxs);
+        } catch (e) {
+          console.error("Initial sync failed:", e);
+        }
+      }, 500);
     } catch (e) {
       console.error("Registration failed", e);
     }
@@ -664,16 +644,39 @@ function App() {
   // Handle login for returning users
   const handleLogin = async (password: string) => {
     try {
-      const encryptedWallet = await loadWallet();
-      if (!encryptedWallet) {
+      const storedWallet = await loadWallet();
+      if (!storedWallet) {
         console.error("No wallet found");
         return;
       }
 
-      // Decrypt
-      const secretKeyStr = await decrypt(encryptedWallet, password);
+      // Decrypt all sensitive data
+      const secretKeyStr = await decrypt(
+        storedWallet.encryptedSecretKey,
+        password
+      );
       const secretKey = new Uint8Array(JSON.parse(secretKeyStr));
       const keypair = Keypair.fromSecretKey(secretKey);
+
+      const mnemonic = await decrypt(storedWallet.encryptedMnemonic, password);
+      const veiloPublicKey = await decrypt(
+        storedWallet.encryptedVeiloPublicKey,
+        password
+      );
+      const veiloPrivateKey = await decrypt(
+        storedWallet.encryptedVeiloPrivateKey,
+        password
+      );
+
+      // Store decrypted keys for use in the session
+      setPassword(password); // Keep password in memory for later use
+
+      // Initialize NoteManager with account context
+      const accountNoteManager = new NoteManager(
+        storedWallet.publicKey,
+        Buffer.from(secretKey).toString("hex")
+      );
+      setNoteManager(accountNoteManager);
 
       // Initialize Session
       const walletInstance = new Wallet(keypair);
@@ -698,8 +701,42 @@ function App() {
       setAuth({ username: "User", publicKey: keypair.publicKey.toString() });
       setPassword(password);
 
-      const bal = await conn.getBalance(keypair.publicKey);
-      setBalance(bal / 1e9);
+      // Load notes immediately after login
+      setTimeout(async () => {
+        try {
+          const privKeyHex = Buffer.from(secretKey).toString("hex");
+          await syncNotesFromRelayer(
+            accountNoteManager,
+            keypair.publicKey.toString(),
+            privKeyHex
+          );
+          // Reload notes to update balance and transaction history
+          const notes = await accountNoteManager.getAllNotes();
+          const balanceBigInt = await accountNoteManager.getBalance();
+          setBalance(Number(balanceBigInt) / 1e9);
+
+          // Update transaction history
+          const uiNotes = notes.map((n) => ({
+            commitment: n.commitment,
+            amount: Number(n.amount) / 1e9,
+            root: "dummy",
+            timestamp: n.timestamp,
+          }));
+          setStoredNotes(uiNotes);
+
+          const noteTxs: Transaction[] = notes.map((n) => ({
+            id: n.id || n.commitment.slice(0, 8),
+            type: "receive",
+            amount: Number(n.amount) / 1e9,
+            timestamp: n.timestamp,
+            status: "confirmed",
+            address: "Shielded Pool",
+          }));
+          setTransactions(noteTxs);
+        } catch (e) {
+          console.error("Initial sync failed:", e);
+        }
+      }, 500);
     } catch (e) {
       console.error("Login failed:", e);
       setError("Incorrect Password");
@@ -710,8 +747,8 @@ function App() {
   // Loading state
   if (isRegistering) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="w-full max-w-md h-[600px] flex flex-col items-center justify-center bg-black/90 border border-white/10">
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-full max-w-md h-[600px]  flex flex-col items-center justify-center bg-black/90 border border-white/10">
           <div className="w-12 h-12 border-2 border-neon-green/30 border-t-neon-green rounded-full animate-spin" />
           <p className="mt-4 text-zinc-500 font-mono text-sm">
             Create account...
@@ -732,8 +769,8 @@ function App() {
   // New user onboarding flow
   if (showOnboarding) {
     return (
-      <div className="h-full  bg-black flex items-center justify-center p-4">
-        <div className="w-full max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
+      <div className="h-full  bg-black flex items-center justify-center">
+        <div className="w-full max-w-md h-[600px]  flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
           <AnimatePresence mode="wait">
             {onboardingStep === "welcome" && (
               <WelcomePage
@@ -778,8 +815,8 @@ function App() {
   // Returning user login
   if (!isAuthenticated) {
     return (
-      <div className="h-full bg-black flex items-center justify-center p-4">
-        <div className="w-full max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
+      <div className="h-full bg-black flex items-center justify-center">
+        <div className="w-full  max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
           <LoginPage error={error} setError={setError} onLogin={handleLogin} />
         </div>
       </div>
@@ -788,10 +825,11 @@ function App() {
 
   // Dashboard (logged in)
   return (
-    <div className="h-full  bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
+    <div className="h-full  bg-black flex items-center justify-center">
+      <div className="w-full max-w-md h-[600px]  flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
         <WalletHeader
           address={user?.publicKey}
+          username={user?.username}
           onSettings={() => setIsSettingsModalOpen(true)}
         />
         <BalanceDisplay
@@ -799,40 +837,12 @@ function App() {
           address={user?.publicKey?.toString() || ""}
           onSend={() => setIsSendModalOpen(true)}
           onReceive={() => setIsReceiveModalOpen(true)}
+          onSync={handleSyncNotes}
+          isSyncing={isSyncing}
         />
 
-        {/* Shielded Balance + Action Buttons */}
+        {/* Action Buttons */}
         <div className="px-4 py-2 border-b border-white/10">
-          <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-zinc-500 font-mono mb-2">
-            <span>Shielded Balance</span>
-            <div className="flex items-center gap-2">
-              <span className="text-neon-green">
-                {shieldedBalance.toFixed(4)} SOL
-              </span>
-              <button
-                onClick={handleSyncNotes}
-                disabled={isSyncing}
-                className={`ml-2 p-1 rounded hover:bg-white/10 ${
-                  isSyncing ? "animate-spin" : ""
-                }`}
-                title="Sync Notes"
-              >
-                <svg
-                  className="w-3 h-3 text-zinc-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
           {!isInitialized && (
             <div className="py-2 px-3 mb-2 border border-neon-green/30 bg-neon-green/10">
               <p className="text-[10px] font-mono text-center">
@@ -856,6 +866,7 @@ function App() {
             setLastView("dashboard");
             setView("details");
           }}
+          solBalance={balance}
         />
 
         <AnimatePresence>
@@ -868,6 +879,7 @@ function App() {
                 setLastView("activity");
                 setView("details");
               }}
+              solBalance={balance}
             />
           )}
           {view === "details" && selectedTransaction && (
@@ -900,7 +912,7 @@ function App() {
           isOpen={isWithdrawModalOpen}
           onClose={() => setIsWithdrawModalOpen(false)}
           onWithdraw={handleUnshieldFunds}
-          shieldedBalance={shieldedBalance}
+          shieldedBalance={balance}
         />
 
         <SwapModal

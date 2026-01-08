@@ -9,16 +9,22 @@ export interface AuthResponse {
   success: boolean;
   username: string;
   publicKey: string;
-  encryptedMnemonic?: string; // Only on registration? The controller sends "encryptedMnemonic" which is actually the plain mnemonic in the code I saw
+  privateKey: string; // Wallet private key in hex
+  veiloPublicKey: string; // Privacy public key
+  veiloPrivateKey: string; // Privacy private key in hex
+  encryptedMnemonic: string; // Mnemonic phrase
   token: string;
   message?: string;
 }
 
 export const authService = {
   checkUsername: async (username: string): Promise<CheckUsernameResponse> => {
-    const response = await api.get<CheckUsernameResponse>(`/auth/checkUsername`, {
-      params: { username },
-    });
+    const response = await api.get<CheckUsernameResponse>(
+      `/auth/checkUsername`,
+      {
+        params: { username },
+      }
+    );
     return response.data;
   },
 
