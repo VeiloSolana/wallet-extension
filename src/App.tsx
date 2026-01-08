@@ -30,7 +30,6 @@ import privacyPoolIdl from "../program/idl/privacy_pool.json";
 import { type PrivacyPool } from "../program/types/privacy_pool";
 import "./App.css";
 import { AnimatePresence } from "framer-motion";
-import { createNoteWithCommitment, getPoolPdas, sol } from "./sdk/client";
 import {
   buildDummyProof,
   createNoteWithCommitment,
