@@ -46,6 +46,7 @@ import {
 } from "./utils/storage";
 import { NoteManager } from "./lib/noteManager";
 import { syncNotesFromRelayer } from "./lib/noteSync";
+import { handleWithdraw } from "./lib/transactions/withdraw";
 
 // Devnet RPC endpoint
 const DEVNET_RPC_URL = "https://api.devnet.solana.com";
@@ -284,22 +285,52 @@ function App() {
     console.log(`Starting deposit of ${amount} SOL to shielded pool`);
   };
 
-  const withdraw = async (
-    recipient: string,
-    amount: number,
-    merkleRoot?: Uint8Array,
-    depositNote?: any,
-    depositMerklePath?: any,
-    depositNullifier?: any
-  ) => {
-    console.log(recipient, amount, merkleRoot);
+  const withdraw = async (recipient: string, amount: number) => {
+    if (!noteManager) {
+      throw new Error("NoteManager not initialized");
+    }
+
+    try {
+      // Get all notes from storage
+      const notes = await noteManager.getAllNotes();
+
+      // Call handleWithdraw with the notes and a callback to save change note
+      const result = await handleWithdraw(
+        notes,
+        recipient,
+        amount,
+        async (changeNote) => {
+          // Save the change note to storage
+          await noteManager.saveNote(changeNote);
+        }
+      );
+
+      console.log("✅ Withdrawal complete:", result);
+
+      // Mark the spent notes as spent using the IDs from the result
+      if (result.spentNoteIds && result.spentNoteIds.length > 0) {
+        const txSig = result.txSignature || "withdrawal-completed";
+        for (const noteId of result.spentNoteIds) {
+          await noteManager.markAsSpent(noteId, txSig);
+        }
+        console.log(`Marked ${result.spentNoteIds.length} notes as spent`);
+      }
+
+      // Reload notes and update UI after withdrawal
+      await loadNotes();
+
+      return result;
+    } catch (error) {
+      console.error("Withdrawal failed:", error);
+      throw error;
+    }
   };
 
   const handleSend = async (recipient: string, amount: number) => {
     try {
       console.log(`Starting send operation: ${amount} SOL to ${recipient}`);
 
-      // const { root } = await deposit(amount);
+      await withdraw(recipient, amount);
       // await withdraw(recipient, amount, root);
 
       console.log(`✅ Successfully sent ${amount} SOL to ${recipient}`);
