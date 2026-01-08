@@ -102,7 +102,19 @@ export async function syncNotesFromRelayer(
           decrypted.leafIndex,
           veiloPrivKeyBuffer
         );
-
+        console.log({
+          amount: decrypted.amount.toString(),
+          commitment: Buffer.from(decrypted.commitment).toString("hex"),
+          root: Buffer.from(offchainTree.getRoot()).toString("hex"),
+          nullifier: Buffer.from(nullifier).toString("hex"),
+          blinding: Buffer.from(decrypted.blinding).toString("hex"),
+          privateKey: veiloPrivateKey,
+          publicKey: veiloPublicKey,
+          merklePath: merklePath,
+          leafIndex: decrypted.leafIndex,
+          timestamp: encryptedNote.timestamp,
+          txSignature: encryptedNote.txSignature,
+        });
         // 4. Save to storage
         await noteManager.saveNote({
           amount: decrypted.amount.toString(),
@@ -117,6 +129,7 @@ export async function syncNotesFromRelayer(
           timestamp: encryptedNote.timestamp,
           txSignature: encryptedNote.txSignature,
         });
+        console.log("made it here");
 
         decryptedCount++;
       } catch (error) {

@@ -32,13 +32,23 @@ export class NoteManager {
 
   private getStorageKey(): string {
     // Create account-specific storage key
-    return `veilo_notes_${this.publicKey}`;
+    return `veilo0000_notes_${this.publicKey}`;
   }
 
   private async encryptNote(note: StoredNote): Promise<string> {
-    // Simple encryption: XOR with encryption key hash
-    // In production, use proper encryption like AES-GCM
-    const noteStr = JSON.stringify(note);
+    // Convert BigInt to string for JSON serialization
+    const serializable = {
+      ...note,
+      merklePath: note.merklePath
+        ? {
+            pathElements: note.merklePath.pathElements.map((el) =>
+              el.toString()
+            ),
+            pathIndices: note.merklePath.pathIndices,
+          }
+        : undefined,
+    };
+    const noteStr = JSON.stringify(serializable);
     const keyHash = await crypto.subtle.digest(
       "SHA-256",
       new TextEncoder().encode(this.encryptionKey)
@@ -70,11 +80,19 @@ export class NoteManager {
     }
 
     const noteStr = new TextDecoder().decode(decrypted);
-    return JSON.parse(noteStr);
+    const parsed = JSON.parse(noteStr);
+    // Convert string back to BigInt
+    if (parsed.merklePath) {
+      parsed.merklePath.pathElements = parsed.merklePath.pathElements.map(
+        (el: string) => BigInt(el)
+      );
+    }
+    return parsed;
   }
 
   async saveNote(note: Omit<StoredNote, "id" | "spent">): Promise<string> {
     // Generate ID safely (handle missing crypto.randomUUID)
+    console.log("saing note........");
     const id =
       typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
         ? crypto.randomUUID()
@@ -85,10 +103,10 @@ export class NoteManager {
       id,
       spent: false,
     };
+    console.log("Saving note:", noteWithId);
 
     const notes = await this.getAllNotes();
 
-    console.log({ notes });
     notes.push(noteWithId);
 
     await this.saveNotesToStorage(notes);
@@ -125,7 +143,6 @@ export class NoteManager {
 
   async getNoteByCommitment(commitment: string): Promise<StoredNote | null> {
     const notes = await this.getAllNotes();
-    console.log({ notes });
     return notes.find((n) => n.commitment === commitment) || null;
   }
 
@@ -134,7 +151,6 @@ export class NoteManager {
 
     if (isExtension) {
       const result = await chrome.storage.local.get(storageKey);
-      console.log({ result });
       const encryptedNotes = (result[storageKey] as string[]) || [];
 
       // Decrypt each note
@@ -151,7 +167,6 @@ export class NoteManager {
     } else {
       // Local dev fallback
       const stored = localStorage.getItem(storageKey);
-      console.log({ stored });
       if (!stored) return [];
 
       const encryptedNotes = JSON.parse(stored) as string[];
