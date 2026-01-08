@@ -11,7 +11,6 @@ interface BalanceDisplayProps {
 
 export const BalanceDisplay = ({
   balance,
-  address: _address,
   onSend,
   onReceive,
   onSync,
