@@ -148,6 +148,7 @@ export async function decryptNoteBlob(
   commitment: Uint8Array;
   amount: bigint;
   timestamp: number;
+  mintAddress?: string;
 }> {
   await _sodium.ready;
 
