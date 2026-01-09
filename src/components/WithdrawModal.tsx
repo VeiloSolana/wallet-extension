@@ -83,7 +83,7 @@ export const WithdrawModal = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/20 z-50 max-w-md mx-auto"
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/10 shadow-lg shadow-neon-green/5 z-50 max-w-md mx-auto"
           >
             {/* Corner brackets */}
             <svg
@@ -131,9 +131,9 @@ export const WithdrawModal = ({
               />
             </svg>
 
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold tracking-tight">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold tracking-tight">
                   UNSHIELD FUNDS
                 </h2>
                 <button
@@ -141,7 +141,7 @@ export const WithdrawModal = ({
                   className="text-zinc-400 hover:text-white transition-colors"
                 >
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 h-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -156,11 +156,11 @@ export const WithdrawModal = ({
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* Status indicator */}
                 {status && (
                   <div
-                    className={`p-3 border ${
+                    className={`p-2 border ${
                       isProcessing
                         ? "border-neon-green/30 bg-neon-green/10"
                         : "border-red-500/30 bg-red-500/10"
@@ -172,24 +172,24 @@ export const WithdrawModal = ({
 
                 {/* Error indicator */}
                 {error && (
-                  <div className="p-3 border border-red-500/30 bg-red-500/10">
+                  <div className="p-2 border border-red-500/30 bg-red-500/10">
                     <p className="text-xs font-mono text-center text-red-400">
                       {error}
                     </p>
                   </div>
                 )}
 
-                <div className="p-3 bg-zinc-900/60 border border-white/10 mb-4">
-                  <p className="text-xs text-zinc-400 font-mono tracking-widest mb-1">
+                <div className="p-2.5 bg-zinc-900/60 border border-white/10">
+                  <p className="text-[10px] text-zinc-400 font-mono tracking-widest mb-0.5">
                     AVAILABLE SHIELDED
                   </p>
-                  <p className="text-lg font-mono text-neon-green">
+                  <p className="text-sm font-mono text-neon-green">
                     {privateBalance.toFixed(4)} SOL
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs text-zinc-400 font-mono tracking-widest mb-2">
+                  <label className="block text-[10px] text-zinc-400 font-mono tracking-widest mb-1.5">
                     RECIPIENT ADDRESS
                   </label>
                   <input
@@ -198,12 +198,12 @@ export const WithdrawModal = ({
                     onChange={(e) => setRecipient(e.target.value)}
                     placeholder="Enter Solana address"
                     disabled={isProcessing}
-                    className="w-full px-4 py-3 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-sm font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-2 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs text-zinc-400 font-mono tracking-widest mb-2">
+                  <label className="block text-[10px] text-zinc-400 font-mono tracking-widest mb-1.5">
                     AMOUNT (SOL)
                   </label>
                   <input
@@ -213,11 +213,11 @@ export const WithdrawModal = ({
                     placeholder="0.00"
                     step="0.0001"
                     disabled={isProcessing}
-                    className="w-full px-4 py-3 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-sm font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-2 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
 
-                <div className="pt-4 flex gap-3">
+                <div className="pt-3 flex gap-2">
                   <CyberButton
                     onClick={onClose}
                     variant="secondary"

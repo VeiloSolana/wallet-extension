@@ -65,7 +65,11 @@ export const loadToken = async (): Promise<string | undefined> => {
 // Clear wallet data
 export const clearWallet = async (): Promise<void> => {
   if (isExtension()) {
-    await chrome.storage.local.remove([WALLET_STORAGE_KEY, TOKEN_STORAGE_KEY, SESSION_STORAGE_KEY]);
+    await chrome.storage.local.remove([
+      WALLET_STORAGE_KEY,
+      TOKEN_STORAGE_KEY,
+      SESSION_STORAGE_KEY,
+    ]);
   } else {
     // Fallback
     localStorage.removeItem(WALLET_STORAGE_KEY);
@@ -76,7 +80,7 @@ export const clearWallet = async (): Promise<void> => {
 
 // --- Session Management ---
 const SESSION_STORAGE_KEY = "veilo_session";
-const SESSION_TIMEOUT_MS = 60 * 1000; // 1 minute
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
 export interface SessionData {
   encryptedPassword: string; // Password encrypted with a session key

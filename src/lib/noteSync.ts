@@ -73,6 +73,20 @@ export async function syncNotesFromRelayer(
           encryptedNote.commitment
         );
         if (existing) {
+          // Update spent status if it differs from relayer
+          const relayerSpent = encryptedNote.spent ?? false;
+          if (relayerSpent !== existing.spent) {
+            if (relayerSpent) {
+              await noteManager.markAsSpent(
+                existing.id,
+                encryptedNote.txSignature || "unknown"
+              );
+              console.log(
+                `✓ Marked note as spent: ${existing.commitment.slice(0, 8)}...`
+              );
+            }
+            // Note: We don't unmark spent notes since that shouldn't happen in normal flow
+          }
           continue;
         }
 
@@ -128,6 +142,7 @@ export async function syncNotesFromRelayer(
           leafIndex: decrypted.leafIndex,
           timestamp: encryptedNote.timestamp,
           txSignature: encryptedNote.txSignature,
+          spent: encryptedNote.spent ?? false,
         });
         console.log("made it here");
 

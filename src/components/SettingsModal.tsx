@@ -31,7 +31,7 @@ export const SettingsModal = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/20 z-50 max-w-md mx-auto"
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/10 shadow-lg shadow-neon-green/5 z-50 max-w-md mx-auto"
           >
             {/* Corner brackets */}
             <svg
@@ -56,16 +56,38 @@ export const SettingsModal = ({
                 fill="none"
               />
             </svg>
+            <svg
+              className="absolute bottom-0 left-0 w-6 h-6 text-neon-green"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M0 24 L0 12 M0 24 L12 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+              />
+            </svg>
+            <svg
+              className="absolute bottom-0 right-0 w-6 h-6 text-neon-green"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M24 24 L24 12 M24 24 L12 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+              />
+            </svg>
 
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold tracking-tight">SETTINGS</h2>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold tracking-tight">SETTINGS</h2>
                 <button
                   onClick={onClose}
                   className="text-zinc-400 hover:text-white transition-colors"
                 >
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 h-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -80,34 +102,34 @@ export const SettingsModal = ({
                 </button>
               </div>
 
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <p className="text-xs text-zinc-400 font-mono tracking-widest">
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <p className="text-[10px] text-zinc-400 font-mono tracking-widest">
                     NETWORK
                   </p>
-                  <div className="flex items-center justify-between p-3 bg-zinc-900/60 border border-white/10">
-                    <span className="text-sm">Solana Devnet</span>
+                  <div className="flex items-center justify-between p-2.5 bg-zinc-900/60 border border-white/10">
+                    <span className="text-xs">Solana Devnet</span>
                     <span className="w-2 h-2 rounded-full bg-neon-green shadow-neon-sm"></span>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-xs text-zinc-400 font-mono tracking-widest">
+                <div className="space-y-1.5">
+                  <p className="text-[10px] text-zinc-400 font-mono tracking-widest">
                     WALLET ADDRESS
                   </p>
-                  <div className="p-3 bg-zinc-900/60 border border-white/10 break-all text-xs font-mono text-zinc-300">
+                  <div className="p-2.5 bg-zinc-900/60 border border-white/10 break-all text-[10px] font-mono text-zinc-300">
                     {address}
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-xs text-zinc-400 font-mono tracking-widest">
+                <div className="space-y-1.5">
+                  <p className="text-[10px] text-zinc-400 font-mono tracking-widest">
                     PRIVATE KEY
                   </p>
                   {showPrivateKey ? (
-                    <div className="p-3 bg-red-500/10 border border-red-500/30 break-all text-xs font-mono text-white">
+                    <div className="p-2.5 bg-red-500/10 border border-red-500/30 break-all text-[10px] font-mono text-white">
                       Private key export not yet implemented
-                      <p className="text-red-400 mt-2 text-[10px]">
+                      <p className="text-red-400 mt-1.5 text-[9px]">
                         ⚠️ NEVER SHARE THIS KEY
                       </p>
                     </div>
@@ -116,15 +138,15 @@ export const SettingsModal = ({
                       onClick={() => setShowPrivateKey(true)}
                       variant="secondary"
                       fullWidth
-                      className="text-xs py-2"
+                      className="text-xs py-1.5"
                     >
                       REVEAL PRIVATE KEY
                     </CyberButton>
                   )}
                 </div>
 
-                <div className="pt-2">
-                  <p className="text-xs text-zinc-500 text-center">
+                <div className="pt-1">
+                  <p className="text-[10px] text-zinc-500 text-center">
                     Version 0.1.0 Beta
                   </p>
                 </div>

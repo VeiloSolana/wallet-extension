@@ -238,7 +238,9 @@ export const ActivityPage = ({
                 <div className="text-right">
                   <p className="text-lg font-mono font-bold text-white">0.00</p>
                   <p className="text-xs text-zinc-500 font-mono">
-                    {isPriceLoading ? "--" : `≈ $${(0 * usdc.price).toFixed(2)}`}
+                    {isPriceLoading
+                      ? "--"
+                      : `≈ $${(0 * usdc.price).toFixed(2)}`}
                   </p>
                 </div>
               </div>
@@ -307,7 +309,9 @@ export const ActivityPage = ({
                 <div className="text-right">
                   <p className="text-lg font-mono font-bold text-white">0.00</p>
                   <p className="text-xs text-zinc-500 font-mono">
-                    {isPriceLoading ? "--" : `≈ $${(0 * usdt.price).toFixed(2)}`}
+                    {isPriceLoading
+                      ? "--"
+                      : `≈ $${(0 * usdt.price).toFixed(2)}`}
                   </p>
                 </div>
               </div>
@@ -366,7 +370,7 @@ export const ActivityPage = ({
                     </div>
                     <div>
                       <p className="font-medium text-sm text-white">
-                        {tx.type === "send" ? "Sent SOL" : "Received SOL"}
+                        {tx.type === "send" ? "Spent SOL" : "Received SOL"}
                       </p>
                       <p className="text-xs text-zinc-500 font-mono">
                         {new Date(tx.timestamp).toLocaleDateString()}

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CyberButton } from "./CyberButton";
 
 interface DepositModalProps {
@@ -18,6 +18,16 @@ export const DepositModal = ({
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
 
+  // Clear form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setAmount("");
+      setStatus("");
+      setError("");
+      setIsProcessing(false);
+    }
+  }, [isOpen]);
+
   const handleDeposit = async () => {
     if (!amount) {
       setError("Please enter an amount");
@@ -33,14 +43,10 @@ export const DepositModal = ({
 
       setStatus("Funds deposited successfully!");
 
-      // Reset form after delay
+      // Close modal after short delay
       setTimeout(() => {
-        setAmount("");
-        setStatus("");
-        setError("");
-        setIsProcessing(false);
         onClose();
-      }, 2000);
+      }, 1500);
     } catch (err) {
       console.error("Deposit failed:", err);
       setError(err instanceof Error ? err.message : "Deposit failed");
@@ -64,7 +70,7 @@ export const DepositModal = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/20 z-50 max-w-md mx-auto"
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/10 shadow-lg shadow-neon-green/5 z-50 max-w-md mx-auto"
           >
             {/* Corner brackets */}
             <svg
@@ -112,9 +118,9 @@ export const DepositModal = ({
               />
             </svg>
 
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold tracking-tight">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold tracking-tight">
                   DEPOSIT FUNDS
                 </h2>
                 <button
@@ -122,7 +128,7 @@ export const DepositModal = ({
                   className="text-zinc-400 hover:text-white transition-colors"
                 >
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 h-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -137,11 +143,11 @@ export const DepositModal = ({
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* Status indicator */}
                 {status && (
                   <div
-                    className={`p-3 border ${
+                    className={`p-2 border ${
                       isProcessing
                         ? "border-neon-green/30 bg-neon-green/10"
                         : "border-red-500/30 bg-red-500/10"
@@ -153,7 +159,7 @@ export const DepositModal = ({
 
                 {/* Error indicator */}
                 {error && (
-                  <div className="p-3 border border-red-500/30 bg-red-500/10">
+                  <div className="p-2 border border-red-500/30 bg-red-500/10">
                     <p className="text-xs font-mono text-center text-red-400">
                       {error}
                     </p>
@@ -161,7 +167,7 @@ export const DepositModal = ({
                 )}
 
                 <div>
-                  <label className="block text-xs text-zinc-400 font-mono tracking-widest mb-2">
+                  <label className="block text-[10px] text-zinc-400 font-mono tracking-widest mb-1.5">
                     AMOUNT (SOL)
                   </label>
                   <input
@@ -171,14 +177,14 @@ export const DepositModal = ({
                     placeholder="0.00"
                     step="0.0001"
                     disabled={isProcessing}
-                    className="w-full px-4 py-3 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-sm font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-3 py-2 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   />
-                  <p className="text-xs text-zinc-500 mt-2">
+                  <p className="text-[10px] text-zinc-500 mt-1.5">
                     This will convert public SOL into a private Note.
                   </p>
                 </div>
 
-                <div className="pt-4 flex gap-3">
+                <div className="pt-3 flex gap-2">
                   <CyberButton
                     onClick={onClose}
                     variant="secondary"

@@ -87,11 +87,11 @@ export const BalanceDisplay = ({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M5 10l7-7m0 0l7 7m-7-7v18"
+                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
               />
             </svg>
           </button>
-          <button
+          {/* <button
             onClick={onReceive}
             className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900/60 border border-white/10 hover:border-neon-green/50 transition-all rounded group"
           >
@@ -108,7 +108,7 @@ export const BalanceDisplay = ({
                 d="M19 14l-7 7m0 0l-7-7m7 7V3"
               />
             </svg>
-          </button>
+          </button> */}
           {onSync && (
             <button
               onClick={onSync}

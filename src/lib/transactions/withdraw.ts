@@ -28,7 +28,7 @@ export const handleWithdraw = async (
   notes: StoredNote[],
   recipient: string,
   amount: number,
-  onChangeNote: (changeNote: Omit<StoredNote, "id" | "spent">) => Promise<void>
+  userPublicKey: string
 ) => {
   console.log(
     `Withdrawing ${amount} SOL to ${recipient} from ${notes.length} notes`
@@ -86,6 +86,7 @@ export const handleWithdraw = async (
       notes: notesForApi,
       recipient,
       amount: amount.toString(),
+      userPublicKey,
     }),
   });
 
@@ -106,26 +107,8 @@ export const handleWithdraw = async (
   );
   console.log(`Change: ${result.data.changeAmount} SOL`);
 
-  // CRITICAL: Save the change note to local storage
-  if (result.data.changeNote && Number(result.data.changeNote.amount) > 0) {
-    console.log("Saving change note to storage...");
-
-    // Get the next leaf index (this would be the next index in the tree)
-    // For now, use timestamp as a temporary solution
-    const changeNoteData: Omit<StoredNote, "id" | "spent"> = {
-      amount: result.data.changeNote.amount,
-      commitment: result.data.changeNote.commitment,
-      nullifier: result.data.changeNote.nullifier,
-      blinding: result.data.changeNote.blinding,
-      privateKey: result.data.changeNote.privateKey,
-      publicKey: result.data.changeNote.publicKey,
-      leafIndex: Date.now(), // TODO: Get actual leaf index from relayer
-      timestamp: Date.now(),
-    };
-
-    await onChangeNote(changeNoteData);
-    console.log("✅ Change note saved");
-  }
+  // Note: The change note is already saved on the relayer
+  // It will be synced in the next syncNotesFromRelayer call
 
   return {
     success: true,

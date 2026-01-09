@@ -90,7 +90,9 @@ export class NoteManager {
     return parsed;
   }
 
-  async saveNote(note: Omit<StoredNote, "id" | "spent">): Promise<string> {
+  async saveNote(
+    note: Omit<StoredNote, "id"> & { spent?: boolean }
+  ): Promise<string> {
     // Generate ID safely (handle missing crypto.randomUUID)
     console.log("saing note........");
     const id =
@@ -101,7 +103,7 @@ export class NoteManager {
     const noteWithId: StoredNote = {
       ...note,
       id,
-      spent: false,
+      spent: note.spent ?? false,
     };
     console.log("Saving note:", noteWithId);
 

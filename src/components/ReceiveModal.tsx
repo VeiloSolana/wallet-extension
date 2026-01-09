@@ -27,7 +27,7 @@ export const ReceiveModal = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/20 z-50 max-w-md mx-auto"
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/10 shadow-lg shadow-neon-green/5 z-50 max-w-md mx-auto"
           >
             {/* Corner brackets */}
             <svg
@@ -75,9 +75,9 @@ export const ReceiveModal = ({
               />
             </svg>
 
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold tracking-tight">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold tracking-tight">
                   RECEIVE SOL
                 </h2>
                 <button
@@ -85,7 +85,7 @@ export const ReceiveModal = ({
                   className="text-zinc-400 hover:text-white transition-colors"
                 >
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 h-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -101,27 +101,27 @@ export const ReceiveModal = ({
               </div>
 
               <div className="text-center">
-                <div className="mb-6 p-6 bg-white inline-block">
+                <div className="mb-4 p-4 bg-white inline-block">
                   {/* Placeholder for QR code - in real implementation, use a QR library */}
-                  <div className="w-48 h-48 bg-black flex items-center justify-center">
+                  <div className="w-40 h-40 bg-black flex items-center justify-center">
                     <span className="text-white text-xs font-mono">
                       QR CODE
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <p className="text-xs text-zinc-400 font-mono tracking-widest">
+                <div className="space-y-2">
+                  <p className="text-[10px] text-zinc-400 font-mono tracking-widest">
                     YOUR WALLET ADDRESS
                   </p>
-                  <div className="p-4 bg-zinc-900/60 border border-white/10">
-                    <p className="text-sm font-mono break-all text-zinc-300">
+                  <div className="p-2.5 bg-zinc-900/60 border border-white/10">
+                    <p className="text-xs font-mono break-all text-zinc-300">
                       {address}
                     </p>
                   </div>
                   <button
                     onClick={() => navigator.clipboard.writeText(address)}
-                    className="w-full py-3 bg-neon-green/10 border border-neon-green/30 text-neon-green hover:bg-neon-green/20 transition-colors font-mono text-sm"
+                    className="w-full py-2 bg-neon-green/10 border border-neon-green/30 text-neon-green hover:bg-neon-green/20 transition-colors font-mono text-xs"
                   >
                     COPY ADDRESS
                   </button>

@@ -8,6 +8,7 @@ export interface EncryptedNote {
   timestamp: number;
   blockHeight?: number;
   txSignature?: string;
+  spent?: boolean; // Whether this note has been spent
 }
 
 export interface QueryNotesRequest {

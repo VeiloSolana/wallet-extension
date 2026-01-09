@@ -1,24 +1,62 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CyberButton } from "./CyberButton";
 
 interface TransferModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onTransfer: (username: string, amount: number) => void;
+  privateBalance: number;
 }
 
-export const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
+export const TransferModal = ({
+  isOpen,
+  onClose,
+  onTransfer,
+  privateBalance,
+}: TransferModalProps) => {
+  const [username, setUsername] = useState("");
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [status, setStatus] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
-  // Mock handler
-  const handleTransfer = () => {
-    setIsProcessing(true);
-    setTimeout(() => {
+  // Clear form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setUsername("");
+      setAmount("");
+      setStatus("");
+      setError("");
       setIsProcessing(false);
-      alert("Transfer feature coming soon!");
-      onClose();
-    }, 1500);
+    }
+  }, [isOpen]);
+
+  const handleTransfer = async () => {
+    if (!username || !amount) {
+      setError("Please enter recipient username and amount");
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      setError("");
+      setStatus("Processing private transfer...");
+
+      // Call parent handler which contains the full transfer logic
+      await onTransfer(username, parseFloat(amount));
+
+      setStatus("Transfer completed successfully!");
+
+      // Close modal after short delay
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (err) {
+      console.error("Transfer failed:", err);
+      setError(err instanceof Error ? err.message : "Transfer failed");
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -37,7 +75,7 @@ export const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/20 z-50 max-w-md mx-auto"
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/10 shadow-lg shadow-neon-green/5 z-50 max-w-md mx-auto"
           >
             {/* Corner brackets */}
             <svg
@@ -62,18 +100,40 @@ export const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
                 fill="none"
               />
             </svg>
+            <svg
+              className="absolute bottom-0 left-0 w-6 h-6 text-neon-green"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M0 24 L0 12 M0 24 L12 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+              />
+            </svg>
+            <svg
+              className="absolute bottom-0 right-0 w-6 h-6 text-neon-green"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M24 24 L24 12 M24 24 L12 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+              />
+            </svg>
 
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold tracking-tight">
-                  TRANSFER TOKENS
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold tracking-tight">
+                  PRIVATE TRANSFER
                 </h2>
                 <button
                   onClick={onClose}
                   className="text-zinc-400 hover:text-white transition-colors"
                 >
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 h-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -88,86 +148,84 @@ export const TransferModal = ({ isOpen, onClose }: TransferModalProps) => {
                 </button>
               </div>
 
-              <div className="space-y-4">
-                {/* From Token */}
-                <div className="p-3 bg-zinc-900/60 border border-white/10">
-                  <div className="flex justify-between mb-1">
-                    <label className="text-xs text-zinc-400 font-mono tracking-widest">
-                      FROM
-                    </label>
-                    <span className="text-xs text-zinc-500">
-                      Balance: 0.0 SOL
-                    </span>
+              <div className="space-y-3">
+                {/* Status indicator */}
+                {status && (
+                  <div
+                    className={`p-2 border ${
+                      isProcessing
+                        ? "border-neon-green/30 bg-neon-green/10"
+                        : "border-red-500/30 bg-red-500/10"
+                    }`}
+                  >
+                    <p className="text-xs font-mono text-center">{status}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="0.00"
-                      className="w-full bg-transparent outline-none text-lg font-mono placeholder-zinc-600"
-                    />
-                    <span className="font-bold text-white bg-zinc-800 px-2 py-1 rounded border border-white/10 text-xs">
-                      SOL
-                    </span>
+                )}
+
+                {/* Error indicator */}
+                {error && (
+                  <div className="p-2 border border-red-500/30 bg-red-500/10">
+                    <p className="text-xs font-mono text-center text-red-400">
+                      {error}
+                    </p>
                   </div>
+                )}
+
+                {/* Available Balance Display */}
+                <div className="p-2.5 bg-zinc-900/60 border border-white/10">
+                  <p className="text-[10px] text-zinc-400 font-mono tracking-widest mb-0.5">
+                    AVAILABLE SHIELDED
+                  </p>
+                  <p className="text-sm font-mono text-neon-green">
+                    {privateBalance.toFixed(4)} SOL
+                  </p>
                 </div>
 
-                {/* Arrow */}
-                <div className="flex justify-center -my-2 relative z-10">
-                  <div className="bg-black border border-white/20 p-2 rounded-full">
-                    <svg
-                      className="w-4 h-4 text-neon-green"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                      />
-                    </svg>
-                  </div>
+                <div>
+                  <label className="block text-[10px] text-zinc-400 font-mono tracking-widest mb-1.5">
+                    RECIPIENT USERNAME
+                  </label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter Veilo username"
+                    disabled={isProcessing}
+                    className="w-full px-3 py-2 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
                 </div>
 
-                {/* To Token */}
-                <div className="p-3 bg-zinc-900/60 border border-white/10">
-                  <div className="flex justify-between mb-1">
-                    <label className="text-xs text-zinc-400 font-mono tracking-widest">
-                      TO
-                    </label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={
-                        amount ? (parseFloat(amount) * 145).toFixed(2) : ""
-                      }
-                      readOnly
-                      placeholder="0.00"
-                      className="w-full bg-transparent outline-none text-lg font-mono placeholder-zinc-600 text-zinc-400"
-                    />
-                    <span className="font-bold text-white bg-zinc-800 px-2 py-1 rounded border border-white/10 text-xs">
-                      USDC
-                    </span>
-                  </div>
+                <div>
+                  <label className="block text-[10px] text-zinc-400 font-mono tracking-widest mb-1.5">
+                    AMOUNT (SOL)
+                  </label>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0.00"
+                    step="0.0001"
+                    disabled={isProcessing}
+                    className="w-full px-3 py-2 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
                 </div>
 
-                <div className="pt-2">
-                  <div className="flex justify-between text-xs text-zinc-500 font-mono mb-4">
-                    <span>Rate</span>
-                    <span>1 SOL = 145.00 USDC</span>
-                  </div>
-
+                <div className="pt-3 flex gap-2">
+                  <CyberButton
+                    onClick={onClose}
+                    variant="secondary"
+                    fullWidth
+                    disabled={isProcessing}
+                  >
+                    CANCEL
+                  </CyberButton>
                   <CyberButton
                     onClick={handleTransfer}
                     variant="primary"
                     fullWidth
-                    disabled={!amount || isProcessing}
+                    disabled={!username || !amount || isProcessing}
                   >
-                    {isProcessing ? "TRANSFERRING..." : "TRANSFER"}
+                    {isProcessing ? "PROCESSING..." : "TRANSFER"}
                   </CyberButton>
                 </div>
               </div>

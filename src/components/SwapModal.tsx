@@ -13,12 +13,12 @@ export const SwapModal = ({ isOpen, onClose }: SwapModalProps) => {
 
   // Mock handler
   const handleSwap = () => {
-      setIsProcessing(true);
-      setTimeout(() => {
-          setIsProcessing(false);
-          alert("Swap feature coming soon!");
-          onClose();
-      }, 1500);
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      alert("Swap feature coming soon!");
+      onClose();
+    }, 1500);
   };
 
   return (
@@ -37,10 +37,10 @@ export const SwapModal = ({ isOpen, onClose }: SwapModalProps) => {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/20 z-50 max-w-md mx-auto"
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/10 shadow-lg shadow-neon-green/5 z-50 max-w-md mx-auto"
           >
-             {/* Corner brackets */}
-             <svg
+            {/* Corner brackets */}
+            <svg
               className="absolute top-0 left-0 w-6 h-6 text-neon-green"
               viewBox="0 0 24 24"
             >
@@ -62,16 +62,40 @@ export const SwapModal = ({ isOpen, onClose }: SwapModalProps) => {
                 fill="none"
               />
             </svg>
-            
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold tracking-tight">SWAP TOKENS</h2>
+            <svg
+              className="absolute bottom-0 left-0 w-6 h-6 text-neon-green"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M0 24 L0 12 M0 24 L12 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+              />
+            </svg>
+            <svg
+              className="absolute bottom-0 right-0 w-6 h-6 text-neon-green"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M24 24 L24 12 M24 24 L12 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+              />
+            </svg>
+
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold tracking-tight">
+                  SWAP TOKENS
+                </h2>
                 <button
                   onClick={onClose}
                   className="text-zinc-400 hover:text-white transition-colors"
                 >
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 h-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -86,68 +110,88 @@ export const SwapModal = ({ isOpen, onClose }: SwapModalProps) => {
                 </button>
               </div>
 
-              <div className="space-y-4">
-                 
+              <div className="space-y-3">
                 {/* From Token */}
-                <div className="p-3 bg-zinc-900/60 border border-white/10">
-                     <div className="flex justify-between mb-1">
-                        <label className="text-xs text-zinc-400 font-mono tracking-widest">FROM</label>
-                        <span className="text-xs text-zinc-500">Balance: 0.0 SOL</span>
-                     </div>
-                     <div className="flex items-center gap-2">
-                        <input
-                            type="number"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            placeholder="0.00"
-                            className="w-full bg-transparent outline-none text-lg font-mono placeholder-zinc-600"
-                        />
-                         <span className="font-bold text-white bg-zinc-800 px-2 py-1 rounded border border-white/10 text-xs">SOL</span>
-                     </div>
+                <div className="p-2.5 bg-zinc-900/60 border border-white/10">
+                  <div className="flex justify-between mb-1">
+                    <label className="text-[10px] text-zinc-400 font-mono tracking-widest">
+                      FROM
+                    </label>
+                    <span className="text-[10px] text-zinc-500">
+                      Balance: 0.0 SOL
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full bg-transparent outline-none text-sm font-mono placeholder-zinc-600"
+                    />
+                    <span className="font-bold text-white bg-zinc-800 px-2 py-1 rounded border border-white/10 text-xs">
+                      SOL
+                    </span>
+                  </div>
                 </div>
 
                 {/* Arrow */}
                 <div className="flex justify-center -my-2 relative z-10">
-                    <div className="bg-black border border-white/20 p-2 rounded-full">
-                         <svg className="w-4 h-4 text-neon-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                        </svg>
-                    </div>
+                  <div className="bg-black border border-white/20 p-2 rounded-full">
+                    <svg
+                      className="w-4 h-4 text-neon-green"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                      />
+                    </svg>
+                  </div>
                 </div>
 
                 {/* To Token */}
-                 <div className="p-3 bg-zinc-900/60 border border-white/10">
-                     <div className="flex justify-between mb-1">
-                        <label className="text-xs text-zinc-400 font-mono tracking-widest">TO</label>
-                     </div>
-                     <div className="flex items-center gap-2">
-                        <input
-                            type="text"
-                            value={amount ? (parseFloat(amount) * 145).toFixed(2) : ""}
-                            readOnly
-                            placeholder="0.00"
-                            className="w-full bg-transparent outline-none text-lg font-mono placeholder-zinc-600 text-zinc-400"
-                        />
-                        <span className="font-bold text-white bg-zinc-800 px-2 py-1 rounded border border-white/10 text-xs">USDC</span>
-                     </div>
+                <div className="p-2.5 bg-zinc-900/60 border border-white/10">
+                  <div className="flex justify-between mb-1">
+                    <label className="text-[10px] text-zinc-400 font-mono tracking-widest">
+                      TO
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={
+                        amount ? (parseFloat(amount) * 145).toFixed(2) : ""
+                      }
+                      readOnly
+                      placeholder="0.00"
+                      className="w-full bg-transparent outline-none text-sm font-mono placeholder-zinc-600 text-zinc-400"
+                    />
+                    <span className="font-bold text-white bg-zinc-800 px-2 py-1 rounded border border-white/10 text-xs">
+                      USDC
+                    </span>
+                  </div>
                 </div>
 
                 <div className="pt-2">
-                     <div className="flex justify-between text-xs text-zinc-500 font-mono mb-4">
-                        <span>Rate</span>
-                        <span>1 SOL = 145.00 USDC</span>
-                     </div>
+                  <div className="flex justify-between text-[10px] text-zinc-500 font-mono mb-3">
+                    <span>Rate</span>
+                    <span>1 SOL = 145.00 USDC</span>
+                  </div>
 
-                    <CyberButton
-                        onClick={handleSwap}
-                        variant="primary"
-                        fullWidth
-                        disabled={!amount || isProcessing}
-                    >
-                        {isProcessing ? "SWAPPING..." : "SWAP"}
-                    </CyberButton>
+                  <CyberButton
+                    onClick={handleSwap}
+                    variant="primary"
+                    fullWidth
+                    disabled={!amount || isProcessing}
+                  >
+                    {isProcessing ? "SWAPPING..." : "SWAP"}
+                  </CyberButton>
                 </div>
-
               </div>
             </div>
           </motion.div>

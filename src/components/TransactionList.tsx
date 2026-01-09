@@ -29,8 +29,8 @@ export const TransactionList = ({
   isLoadingNotes = false,
 }: TransactionListProps) => {
   const [activeTab, setActiveTab] = useState<TabType>("history");
-    const { price: solPrice, isLoading: isPriceLoading } = useSolPrice();
-  
+  const { price: solPrice, isLoading: isPriceLoading } = useSolPrice();
+
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -153,11 +153,11 @@ export const TransactionList = ({
                   {solBalance.toFixed(4)}
                 </p>
                 <p className="text-[10px] text-zinc-400 font-mono">
-                 {isPriceLoading ? (
-                      <span>--</span>
-                    ) : (
-                      <span>≈ ${(solBalance * solPrice).toFixed(2)}</span>
-                    )}
+                  {isPriceLoading ? (
+                    <span>--</span>
+                  ) : (
+                    <span>≈ ${(solBalance * solPrice).toFixed(2)}</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -427,7 +427,7 @@ export const TransactionList = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-white">
-                        {tx.type === "send" ? "Sent" : "Received"}
+                        {tx.type === "send" ? "Spent" : "Received"}
                       </span>
                       <span
                         className={`text-xs font-mono ${

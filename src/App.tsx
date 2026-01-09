@@ -13,7 +13,6 @@ import { TransactionDetailsPage } from "./components/TransactionDetailsPage";
 import { SendModal } from "./components/SendModal";
 import { ReceiveModal } from "./components/ReceiveModal";
 import { DepositModal } from "./components/DepositModal";
-import { WithdrawModal } from "./components/WithdrawModal";
 import { TransferModal } from "./components/TransferModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { WelcomePage } from "./components/WelcomePage";
@@ -72,7 +71,7 @@ interface StoredNote {
 
 function App() {
   // Auth state
-  const { isAuthenticated, setAuth, user } = useAuthStore();
+  const { isAuthenticated, setAuth, user, logout } = useAuthStore();
   const { mutateAsync: registerUser, isPending: isRegistering } =
     useRegisterUser();
   const { mutateAsync: restoreAccountApi, isPending: isRestoring } =
@@ -118,8 +117,10 @@ function App() {
             await clearSession();
           }
         } else if (session) {
-          console.log("Session expired, clearing...");
+          console.log("Session expired, logging out...");
           await clearSession();
+          // Clear authentication state to force login
+          logout();
         }
       } else {
         console.log("No wallet found, starting onboarding");
@@ -146,7 +147,6 @@ function App() {
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
-  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [password, setPassword] = useState("");
@@ -203,17 +203,24 @@ function App() {
       // Map notes to transactions for history
       const noteTxs: Transaction[] = notes.map((n) => ({
         id: n.id || n.commitment.slice(0, 8),
-        type: "receive", // Default to receive for shielded notes
+        type: n.spent ? "send" : "receive",
         amount: Number(n.amount) / 1e9, // Convert Lamports to SOL
         timestamp: n.timestamp,
         status: "confirmed",
         address: "Shielded Pool",
       }));
 
-      // Merge with dummy for demo feeling and sort by timestamp (most recent first)
+      // Merge with dummy for demo feeling and sort: unspent notes first, then by timestamp
       setTransactions((prev) =>
         [...prev.filter((t) => t.address !== "Shielded Pool"), ...noteTxs].sort(
-          (a, b) => b.timestamp - a.timestamp
+          (a, b) => {
+            // Show receive (unspent) before send (spent)
+            if (a.type !== b.type) {
+              return a.type === "receive" ? -1 : 1;
+            }
+            // Within same type, sort by timestamp (most recent first)
+            return b.timestamp - a.timestamp;
+          }
         )
       );
     } catch (e) {
@@ -238,6 +245,10 @@ function App() {
           return;
         }
 
+        console.log("Syncing notes from relayer...");
+        const notes = await noteManager.getAllNotes();
+        console.log(`Currently have ${notes.length} notes stored locally`);
+        console.log(notes);
         // Decrypt the wallet private key
         const secretKeyStr = await decrypt(
           storedWallet.encryptedSecretKey,
@@ -292,37 +303,56 @@ function App() {
   };
 
   const withdraw = async (recipient: string, amount: number) => {
-    if (!noteManager) {
-      throw new Error("NoteManager not initialized");
+    if (!noteManager || !wallet) {
+      throw new Error("NoteManager or wallet not initialized");
     }
 
     try {
       // Get all notes from storage
       const notes = await noteManager.getAllNotes();
 
-      // Call handleWithdraw with the notes and a callback to save change note
+      // Get veilo public key for the withdraw request
+      const storedWallet = await loadWallet();
+      if (!storedWallet) {
+        throw new Error("Wallet not found");
+      }
+      const veiloPublicKeyStr = await decrypt(
+        storedWallet.encryptedVeiloPublicKey,
+        password
+      );
+
+      // Call handleWithdraw with the veilo public key
       const result = await handleWithdraw(
         notes,
         recipient,
         amount,
-        async (changeNote) => {
-          // Save the change note to storage
-          await noteManager.saveNote(changeNote);
-        }
+        storedWallet.publicKey
       );
 
       console.log("✅ Withdrawal complete:", result);
 
-      // Mark the spent notes as spent using the IDs from the result
-      if (result.spentNoteIds && result.spentNoteIds.length > 0) {
-        const txSig = result.txSignature || "withdrawal-completed";
-        for (const noteId of result.spentNoteIds) {
-          await noteManager.markAsSpent(noteId, txSig);
-        }
-        console.log(`Marked ${result.spentNoteIds.length} notes as spent`);
+      // Sync notes from relayer to get the change note and updated spent status
+      console.log("Syncing notes from relayer after withdrawal...");
+      if (storedWallet) {
+        const veiloPrivateKeyStr = await decrypt(
+          storedWallet.encryptedVeiloPrivateKey,
+          password
+        );
+        const privateKeyHex = await decrypt(
+          storedWallet.encryptedSecretKey,
+          password
+        );
+
+        await syncNotesFromRelayer(
+          noteManager,
+          wallet.payer.publicKey.toString(),
+          privateKeyHex,
+          veiloPrivateKeyStr,
+          veiloPublicKeyStr
+        );
       }
 
-      // Reload notes and update UI after withdrawal
+      // Reload notes and update UI after sync
       await loadNotes();
 
       return result;
@@ -342,6 +372,24 @@ function App() {
       console.log(`✅ Successfully sent ${amount} SOL to ${recipient}`);
     } catch (error) {
       console.error("❌ Send failed:", error);
+      throw error;
+    }
+  };
+
+  const handleTransfer = async (username: string, amount: number) => {
+    try {
+      console.log(`Starting private transfer: ${amount} SOL to @${username}`);
+
+      // TODO: Implement private transfer logic
+      // This will need to:
+      // 1. Look up the recipient's Veilo public key from username
+      // 2. Create a new note for the recipient
+      // 3. Spend existing notes and create change note
+      // 4. Submit to relayer
+
+      throw new Error("Private transfer feature coming soon");
+    } catch (error) {
+      console.error("❌ Transfer failed:", error);
       throw error;
     }
   };
@@ -447,14 +495,21 @@ function App() {
 
           const existingTxs: Transaction[] = existingNotes.map((n) => ({
             id: n.id || n.commitment.slice(0, 8),
-            type: "receive",
+            type: n.spent ? "send" : "receive",
             amount: Number(n.amount) / 1e9,
             timestamp: n.timestamp,
             status: "confirmed",
             address: "Shielded Pool",
           }));
           setTransactions(
-            existingTxs.sort((a, b) => b.timestamp - a.timestamp)
+            existingTxs.sort((a, b) => {
+              // Show receive (unspent) before send (spent)
+              if (a.type !== b.type) {
+                return a.type === "receive" ? -1 : 1;
+              }
+              // Within same type, sort by timestamp (most recent first)
+              return b.timestamp - a.timestamp;
+            })
           );
 
           // Then sync with relayer for new notes
@@ -482,13 +537,22 @@ function App() {
 
           const noteTxs: Transaction[] = notes.map((n) => ({
             id: n.id || n.commitment.slice(0, 8),
-            type: "receive",
+            type: n.spent ? "send" : "receive",
             amount: Number(n.amount) / 1e9,
             timestamp: n.timestamp,
             status: "confirmed",
             address: "Shielded Pool",
           }));
-          setTransactions(noteTxs.sort((a, b) => b.timestamp - a.timestamp));
+          setTransactions(
+            noteTxs.sort((a, b) => {
+              // Show receive (unspent) before send (spent)
+              if (a.type !== b.type) {
+                return a.type === "receive" ? -1 : 1;
+              }
+              // Within same type, sort by timestamp (most recent first)
+              return b.timestamp - a.timestamp;
+            })
+          );
         } catch (e) {
           console.error("Initial sync failed:", e);
         } finally {
@@ -626,13 +690,22 @@ function App() {
 
           const noteTxs: Transaction[] = notes.map((n) => ({
             id: n.id || n.commitment.slice(0, 8),
-            type: "receive",
+            type: n.spent ? "send" : "receive",
             amount: Number(n.amount) / 1e9,
             timestamp: n.timestamp,
             status: "confirmed",
             address: "Shielded Pool",
           }));
-          setTransactions(noteTxs);
+          setTransactions(
+            noteTxs.sort((a, b) => {
+              // Show receive (unspent) before send (spent)
+              if (a.type !== b.type) {
+                return a.type === "receive" ? -1 : 1;
+              }
+              // Within same type, sort by timestamp (most recent first)
+              return b.timestamp - a.timestamp;
+            })
+          );
         } catch (e) {
           console.error("Initial sync after restore failed:", e);
         }
@@ -733,14 +806,21 @@ function App() {
 
           const existingTxs: Transaction[] = existingNotes.map((n) => ({
             id: n.id || n.commitment.slice(0, 8),
-            type: "receive",
+            type: n.spent ? "send" : "receive",
             amount: Number(n.amount) / 1e9,
             timestamp: n.timestamp,
             status: "confirmed",
             address: "Shielded Pool",
           }));
           setTransactions(
-            existingTxs.sort((a, b) => b.timestamp - a.timestamp)
+            existingTxs.sort((a, b) => {
+              // Show receive (unspent) before send (spent)
+              if (a.type !== b.type) {
+                return a.type === "receive" ? -1 : 1;
+              }
+              // Within same type, sort by timestamp (most recent first)
+              return b.timestamp - a.timestamp;
+            })
           );
 
           // Then sync with relayer for new notes
@@ -769,13 +849,22 @@ function App() {
 
           const noteTxs: Transaction[] = notes.map((n) => ({
             id: n.id || n.commitment.slice(0, 8),
-            type: "receive",
+            type: n.spent ? "send" : "receive",
             amount: Number(n.amount) / 1e9,
             timestamp: n.timestamp,
             status: "confirmed",
             address: "Shielded Pool",
           }));
-          setTransactions(noteTxs.sort((a, b) => b.timestamp - a.timestamp));
+          setTransactions(
+            noteTxs.sort((a, b) => {
+              // Show receive (unspent) before send (spent)
+              if (a.type !== b.type) {
+                return a.type === "receive" ? -1 : 1;
+              }
+              // Within same type, sort by timestamp (most recent first)
+              return b.timestamp - a.timestamp;
+            })
+          );
         } catch (e) {
           console.error("Initial sync failed:", e);
         } finally {
@@ -919,7 +1008,7 @@ function App() {
         <ActionButtons
           onTransfer={() => setIsTransferModalOpen(true)}
           onDeposit={() => setIsDepositModalOpen(true)}
-          onWithdraw={() => setIsWithdrawModalOpen(true)}
+          onWithdraw={() => setIsSendModalOpen(true)}
         />
 
         <TransactionList
@@ -959,6 +1048,7 @@ function App() {
           isOpen={isSendModalOpen}
           onClose={() => setIsSendModalOpen(false)}
           onSend={handleSend}
+          privateBalance={balance}
         />
 
         <ReceiveModal
@@ -973,16 +1063,11 @@ function App() {
           onDeposit={deposit}
         />
 
-        <WithdrawModal
-          isOpen={isWithdrawModalOpen}
-          onClose={() => setIsWithdrawModalOpen(false)}
-          onWithdraw={withdraw}
-          privateBalance={balance}
-        />
-
         <TransferModal
           isOpen={isTransferModalOpen}
           onClose={() => setIsTransferModalOpen(false)}
+          onTransfer={handleTransfer}
+          privateBalance={balance}
         />
 
         <SettingsModal
