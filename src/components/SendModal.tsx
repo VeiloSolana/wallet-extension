@@ -2,11 +2,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { CyberButton } from "./CyberButton";
 import { PublicKey } from "@solana/web3.js";
+import solLogo from "/images/sol-logo.svg";
+import usdcLogo from "/images/usdc-logo.svg";
+import usdtLogo from "/images/usdt-logo.svg";
 
 interface SendModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSend: (address: string, amount: number) => void;
+  onSend: (address: string, amount: number, token: string) => void;
   privateBalance: number;
 }
 
@@ -23,6 +26,7 @@ export const SendModal = ({
   const [error, setError] = useState<string>("");
   const [isVerifyingAddress, setIsVerifyingAddress] = useState(false);
   const [addressValid, setAddressValid] = useState<boolean | null>(null);
+  const [selectedToken, setSelectedToken] = useState("SOL");
 
   // Clear form when modal closes
   useEffect(() => {
@@ -34,6 +38,7 @@ export const SendModal = ({
       setIsProcessing(false);
       setIsVerifyingAddress(false);
       setAddressValid(null);
+      setSelectedToken("SOL");
     }
   }, [isOpen]);
 
@@ -88,7 +93,7 @@ export const SendModal = ({
       setStatus("Processing transaction...");
 
       // Call parent handler which contains the full withdrawal logic
-      await onSend(recipient, parseFloat(amount));
+      await onSend(recipient, parseFloat(amount), selectedToken);
 
       setStatus("Transaction completed successfully!");
 
@@ -222,6 +227,37 @@ export const SendModal = ({
                   <p className="text-sm font-mono text-neon-green">
                     {privateBalance.toFixed(4)} SOL
                   </p>
+                </div>
+
+                {/* Token Selector */}
+                <div>
+                  <label className="block text-[10px] text-zinc-400 font-mono tracking-widest mb-1.5">
+                    SELECT TOKEN
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={selectedToken}
+                      onChange={(e) => setSelectedToken(e.target.value)}
+                      disabled={isProcessing}
+                      className="w-full px-3 py-2 pl-10 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed appearance-none"
+                    >
+                      <option value="SOL">SOL - Solana</option>
+                      <option value="USDC">USDC - USD Coin</option>
+                      <option value="USDT">USDT - Tether</option>
+                    </select>
+                    {/* Token Icon */}
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      {selectedToken === "SOL" && (
+                        <img src={solLogo} alt="SOL" className="w-4 h-4" />
+                      )}
+                      {selectedToken === "USDC" && (
+                        <img src={usdcLogo} alt="USDC" className="w-4 h-4" />
+                      )}
+                      {selectedToken === "USDT" && (
+                        <img src={usdtLogo} alt="USDT" className="w-4 h-4" />
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div>

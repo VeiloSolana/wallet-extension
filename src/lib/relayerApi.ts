@@ -156,6 +156,7 @@ export interface WithdrawRequest {
   recipient: string;
   amount: string;
   userPublicKey: string;
+  mintAddress: string;
 }
 
 export interface WithdrawResponse {
@@ -211,6 +212,7 @@ export interface PrivateTransferRequest {
   amount: number;
   recipientUsername: string;
   userPublicKey?: string;
+  mintAddress?: string;
 }
 
 export interface PrivateTransferResponse {

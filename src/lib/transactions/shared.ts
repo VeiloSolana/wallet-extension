@@ -160,7 +160,22 @@ export async function generateTransactionProof(inputs: {
 
   return convertProofToBytes(proof);
 }
+
+// Token mint addresses
 export const SOL_MINT = PublicKey.default;
+export const USDC_MINT = new PublicKey(
+  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+); // USDC on mainnet
+export const USDT_MINT = new PublicKey(
+  "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+); // USDT on mainnet
+
+// Token mint mapping
+export const TOKEN_MINTS: Record<string, PublicKey> = {
+  SOL: SOL_MINT,
+  USDC: USDC_MINT,
+  USDT: USDT_MINT,
+};
 
 export function extractRootFromAccount(acc: any): Uint8Array {
   const rootIndex = acc.rootIndex;

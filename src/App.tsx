@@ -48,6 +48,7 @@ import { NoteManager } from "./lib/noteManager";
 import { syncNotesFromRelayer } from "./lib/noteSync";
 import { handleWithdraw } from "./lib/transactions/withdraw";
 import { handleTransfer as handlePrivateTransfer } from "./lib/transactions/transfer";
+import { TOKEN_MINTS } from "./lib/transactions/shared";
 
 // Devnet RPC endpoint
 const DEVNET_RPC_URL = "https://api.devnet.solana.com";
@@ -301,7 +302,7 @@ function App() {
     }
   };
 
-  const withdraw = async (recipient: string, amount: number) => {
+  const withdraw = async (recipient: string, amount: number, token: string) => {
     if (!noteManager || !wallet) {
       throw new Error("NoteManager or wallet not initialized");
     }
@@ -320,12 +321,19 @@ function App() {
         password
       );
 
-      // Call handleWithdraw with the veilo public key
+      // Get mint address for the selected token
+      const mintAddress = TOKEN_MINTS[token];
+      if (!mintAddress) {
+        throw new Error(`Invalid token: ${token}`);
+      }
+
+      // Call handleWithdraw with the veilo public key and mint address
       const result = await handleWithdraw(
         notes,
         recipient,
         amount,
-        storedWallet.publicKey
+        storedWallet.publicKey,
+        mintAddress
       );
 
       console.log("✅ Withdrawal complete:", result);
@@ -361,27 +369,39 @@ function App() {
     }
   };
 
-  const handleSend = async (recipient: string, amount: number) => {
+  const handleSend = async (
+    recipient: string,
+    amount: number,
+    token: string
+  ) => {
     try {
-      console.log(`Starting send operation: ${amount} SOL to ${recipient}`);
+      console.log(
+        `Starting send operation: ${amount} ${token} to ${recipient}`
+      );
 
-      await withdraw(recipient, amount);
-      // await withdraw(recipient, amount, root);
+      await withdraw(recipient, amount, token);
+      // await withdraw(recipient, amount, root, token);
 
-      console.log(`✅ Successfully sent ${amount} SOL to ${recipient}`);
+      console.log(`✅ Successfully sent ${amount} ${token} to ${recipient}`);
     } catch (error) {
       console.error("❌ Send failed:", error);
       throw error;
     }
   };
 
-  const handleTransfer = async (username: string, amount: number) => {
+  const handleTransfer = async (
+    username: string,
+    amount: number,
+    token: string
+  ) => {
     if (!noteManager || !wallet) {
       throw new Error("NoteManager or wallet not initialized");
     }
 
     try {
-      console.log(`Starting private transfer: ${amount} SOL to @${username}`);
+      console.log(
+        `Starting private transfer: ${amount} ${token} to @${username}`
+      );
 
       // Get all notes from storage
       const notes = await noteManager.getAllNotes();
@@ -392,12 +412,19 @@ function App() {
         throw new Error("Wallet not found");
       }
 
+      // Get mint address for the selected token
+      const mintAddress = TOKEN_MINTS[token];
+      if (!mintAddress) {
+        throw new Error(`Invalid token: ${token}`);
+      }
+
       // Call handlePrivateTransfer with the required parameters
       const result = await handlePrivateTransfer(
         notes,
         username,
         amount,
-        storedWallet.publicKey
+        storedWallet.publicKey,
+        mintAddress
       );
 
       console.log("✅ Private transfer complete:", result);

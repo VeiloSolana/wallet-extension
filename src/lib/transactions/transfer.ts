@@ -1,13 +1,14 @@
 import type { StoredNote } from "../noteManager";
 import { selectNotesForWithdrawal } from "./note-selector";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { submitPrivateTransfer } from "../relayerApi";
 
 export const handleTransfer = async (
   notes: StoredNote[],
   recipientUsername: string,
   amount: number,
-  userPublicKey: string
+  userPublicKey: string,
+  mintAddress: PublicKey
 ) => {
   console.log(
     `Transferring ${amount} SOL privately to ${recipientUsername} from ${notes.length} notes`
@@ -63,6 +64,7 @@ export const handleTransfer = async (
     recipientUsername,
     amount,
     userPublicKey,
+    mintAddress: mintAddress.toString(),
   });
 
   if (!result.success || !result.data) {
