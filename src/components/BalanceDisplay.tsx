@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { useSolPrice } from "../hooks/useSolPrice";
+import { useSolPrice, usePortfolio24hChange } from "../hooks/useSolPrice";
 
 interface BalanceDisplayProps {
   balance: number;
@@ -18,11 +18,7 @@ export const BalanceDisplay = ({
   isSyncing,
 }: BalanceDisplayProps) => {
   const [displayBalance, setDisplayBalance] = useState(0);
-  const {
-    price: solPrice,
-    priceChange24h,
-    isLoading: isPriceLoading,
-  } = useSolPrice();
+  const { price: solPrice, isLoading: isPriceLoading } = useSolPrice();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -34,8 +30,10 @@ export const BalanceDisplay = ({
   // Calculate USD balance from live SOL price
   const usdBalance = displayBalance * solPrice;
 
-  // Use actual 24h price change from API
-  const isPositive = priceChange24h >= 0;
+  // Use portfolio-based 24h change (tracks your portfolio value change, not market change)
+  const { change24h: portfolioChange24h, isLoading: isChangeLoading } =
+    usePortfolio24hChange(usdBalance);
+  const isPositive = portfolioChange24h >= 0;
 
   return (
     <div className="px-4 py-4 bg-black/40 border-b border-white/10">
@@ -59,12 +57,12 @@ export const BalanceDisplay = ({
               isPositive ? "text-green-500" : "text-red-500"
             }`}
           >
-            {isPriceLoading ? (
+            {isPriceLoading || isChangeLoading ? (
               <span className="text-zinc-500">--</span>
             ) : (
               <>
                 {isPositive ? "+" : ""}
-                {priceChange24h.toFixed(2)}%
+                {portfolioChange24h.toFixed(2)}%
                 <span className="text-zinc-500 text-[10px]">24h</span>
               </>
             )}
