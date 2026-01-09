@@ -13,7 +13,6 @@ interface BalanceDisplayProps {
 export const BalanceDisplay = ({
   balance,
   onSend,
-  onReceive,
   onSync,
   isSyncing,
 }: BalanceDisplayProps) => {

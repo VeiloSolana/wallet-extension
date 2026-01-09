@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { CyberButton } from "./CyberButton";
-import { useState } from "react";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -13,8 +12,6 @@ export const SettingsModal = ({
   onClose,
   address,
 }: SettingsModalProps) => {
-  const [showPrivateKey, setShowPrivateKey] = useState(false);
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -126,23 +123,15 @@ export const SettingsModal = ({
                   <p className="text-[10px] text-zinc-400 font-mono tracking-widest">
                     PRIVATE KEY
                   </p>
-                  {showPrivateKey ? (
-                    <div className="p-2.5 bg-red-500/10 border border-red-500/30 break-all text-[10px] font-mono text-white">
-                      Private key export not yet implemented
-                      <p className="text-red-400 mt-1.5 text-[9px]">
-                        ⚠️ NEVER SHARE THIS KEY
-                      </p>
-                    </div>
-                  ) : (
-                    <CyberButton
-                      onClick={() => setShowPrivateKey(true)}
-                      variant="secondary"
-                      fullWidth
-                      className="text-xs py-1.5"
-                    >
-                      REVEAL PRIVATE KEY
-                    </CyberButton>
-                  )}
+                  <CyberButton
+                    onClick={() => {}}
+                    variant="secondary"
+                    fullWidth
+                    className="text-xs py-1.5 opacity-50 cursor-not-allowed"
+                    disabled
+                  >
+                    REVEAL PRIVATE KEY
+                  </CyberButton>
                 </div>
 
                 <div className="pt-1">

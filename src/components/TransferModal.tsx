@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { CyberButton } from "./CyberButton";
+import { getVeiloPublicKey } from "../lib/relayerApi";
 
 interface TransferModalProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ export const TransferModal = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [isVerifyingUsername, setIsVerifyingUsername] = useState(false);
+  const [usernameValid, setUsernameValid] = useState<boolean | null>(null);
 
   // Clear form when modal closes
   useEffect(() => {
@@ -29,8 +32,49 @@ export const TransferModal = ({
       setStatus("");
       setError("");
       setIsProcessing(false);
+      setIsVerifyingUsername(false);
+      setUsernameValid(null);
     }
   }, [isOpen]);
+
+  // Verify username when it changes
+  useEffect(() => {
+    if (!username || username.trim().length === 0) {
+      setUsernameValid(null);
+      setError("");
+      return;
+    }
+
+    const verifyUsername = async () => {
+      setIsVerifyingUsername(true);
+      try {
+        await getVeiloPublicKey(username.trim());
+        setUsernameValid(true);
+        setError("");
+      } catch (err) {
+        setUsernameValid(false);
+        setError(err instanceof Error ? err.message : "User not found");
+      } finally {
+        setIsVerifyingUsername(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      verifyUsername();
+    }, 500); // Debounce for 500ms
+
+    return () => clearTimeout(debounceTimer);
+  }, [username]);
+
+  // Auto-clear error messages after 10 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError("");
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const handleTransfer = async () => {
     if (!username || !amount) {
@@ -162,8 +206,8 @@ export const TransferModal = ({
                   </div>
                 )}
 
-                {/* Error indicator */}
-                {error && (
+                {/* General Error indicator (not user not found) */}
+                {error && !error.toLowerCase().includes("user not found") && (
                   <div className="p-2 border border-red-500/30 bg-red-500/10">
                     <p className="text-xs font-mono text-center text-red-400">
                       {error}
@@ -183,16 +227,83 @@ export const TransferModal = ({
 
                 <div>
                   <label className="block text-[10px] text-zinc-400 font-mono tracking-widest mb-1.5">
-                    RECIPIENT USERNAME
+                    VEILO USERNAME
                   </label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter Veilo username"
-                    disabled={isProcessing}
-                    className="w-full px-3 py-2 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="@ss"
+                      disabled={isProcessing}
+                      className={`w-full px-3 py-2 pr-8 bg-zinc-900/60 border ${
+                        usernameValid === false
+                          ? "border-red-500/50"
+                          : usernameValid === true
+                          ? "border-neon-green/50"
+                          : "border-white/10"
+                      } focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                    />
+                    {/* Validation indicator */}
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                      {isVerifyingUsername && (
+                        <svg
+                          className="w-4 h-4 text-zinc-400 animate-spin"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                      )}
+                      {!isVerifyingUsername && usernameValid === true && (
+                        <svg
+                          className="w-4 h-4 text-neon-green"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                      {!isVerifyingUsername && usernameValid === false && (
+                        <svg
+                          className="w-4 h-4 text-red-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  {usernameValid === false && error && (
+                    <p className="mt-1.5 text-xs text-red-400 font-mono">
+                      {error}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -223,7 +334,13 @@ export const TransferModal = ({
                     onClick={handleTransfer}
                     variant="primary"
                     fullWidth
-                    disabled={!username || !amount || isProcessing}
+                    disabled={
+                      !username ||
+                      !amount ||
+                      isProcessing ||
+                      isVerifyingUsername ||
+                      usernameValid !== true
+                    }
                   >
                     {isProcessing ? "PROCESSING..." : "TRANSFER"}
                   </CyberButton>

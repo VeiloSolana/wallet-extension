@@ -1,28 +1,7 @@
 import type { StoredNote } from "../noteManager";
 import { selectNotesForWithdrawal } from "./note-selector";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-
-const RELAYER_API_URL = "http://localhost:8080";
-
-interface WithdrawResponse {
-  success: boolean;
-  message: string;
-  data?: {
-    withdrawRecipient: string;
-    withdrawAmount: number;
-    changeAmount: number;
-    changeNote: {
-      commitment: string;
-      privateKey: string;
-      publicKey: string;
-      blinding: string;
-      amount: string;
-      nullifier: string;
-    };
-    spentNoteIds?: string[]; // IDs of notes that were spent
-    txSignature?: string; // Transaction signature
-  };
-}
+import { submitWithdraw } from "../relayerApi";
 
 export const handleWithdraw = async (
   notes: StoredNote[],
@@ -77,25 +56,12 @@ export const handleWithdraw = async (
 
   // Send withdrawal request to relayer
   console.log("Sending withdrawal request to relayer...");
-  const response = await fetch(`${RELAYER_API_URL}/api/transact/withdraw`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      notes: notesForApi,
-      recipient,
-      amount: amount.toString(),
-      userPublicKey,
-    }),
+  const result = await submitWithdraw({
+    notes: notesForApi,
+    recipient,
+    amount: amount.toString(),
+    userPublicKey,
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Withdrawal request failed");
-  }
-
-  const result: WithdrawResponse = await response.json();
 
   if (!result.success || !result.data) {
     throw new Error(result.message || "Withdrawal failed");
@@ -106,9 +72,6 @@ export const handleWithdraw = async (
     `Withdrew ${result.data.withdrawAmount} SOL to ${result.data.withdrawRecipient}`
   );
   console.log(`Change: ${result.data.changeAmount} SOL`);
-
-  // Note: The change note is already saved on the relayer
-  // It will be synced in the next syncNotesFromRelayer call
 
   return {
     success: true,

@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { CyberButton } from "./CyberButton";
+import { PublicKey } from "@solana/web3.js";
 
 interface SendModalProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ export const SendModal = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [isVerifyingAddress, setIsVerifyingAddress] = useState(false);
+  const [addressValid, setAddressValid] = useState<boolean | null>(null);
 
   // Clear form when modal closes
   useEffect(() => {
@@ -29,8 +32,49 @@ export const SendModal = ({
       setStatus("");
       setError("");
       setIsProcessing(false);
+      setIsVerifyingAddress(false);
+      setAddressValid(null);
     }
   }, [isOpen]);
+
+  // Verify recipient address when it changes
+  useEffect(() => {
+    if (!recipient || recipient.trim().length === 0) {
+      setAddressValid(null);
+      setError("");
+      return;
+    }
+
+    const verifyAddress = async () => {
+      setIsVerifyingAddress(true);
+      try {
+        new PublicKey(recipient.trim());
+        setAddressValid(true);
+        setError("");
+      } catch {
+        setAddressValid(false);
+        setError("Invalid Solana address");
+      } finally {
+        setIsVerifyingAddress(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      verifyAddress();
+    }, 300); // Debounce for 300ms
+
+    return () => clearTimeout(debounceTimer);
+  }, [recipient]);
+
+  // Auto-clear error messages after 10 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError("");
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const handleSend = async () => {
     if (!recipient || !amount) {
@@ -160,14 +204,15 @@ export const SendModal = ({
                   </div>
                 )}
 
-                {/* Error indicator */}
-                {error && (
-                  <div className="p-2 border border-red-500/30 bg-red-500/10">
-                    <p className="text-xs font-mono text-center text-red-400">
-                      {error}
-                    </p>
-                  </div>
-                )}
+                {/* General Error indicator (not address validation) */}
+                {error &&
+                  !error.toLowerCase().includes("invalid solana address") && (
+                    <div className="p-2 border border-red-500/30 bg-red-500/10">
+                      <p className="text-xs font-mono text-center text-red-400">
+                        {error}
+                      </p>
+                    </div>
+                  )}
 
                 {/* Available Balance Display */}
                 <div className="p-2.5 bg-zinc-900/60 border border-white/10">
@@ -183,14 +228,81 @@ export const SendModal = ({
                   <label className="block text-[10px] text-zinc-400 font-mono tracking-widest mb-1.5">
                     RECIPIENT ADDRESS
                   </label>
-                  <input
-                    type="text"
-                    value={recipient}
-                    onChange={(e) => setRecipient(e.target.value)}
-                    placeholder="Enter Solana address"
-                    disabled={isProcessing}
-                    className="w-full px-3 py-2 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={recipient}
+                      onChange={(e) => setRecipient(e.target.value)}
+                      placeholder="Enter Solana address"
+                      disabled={isProcessing}
+                      className={`w-full px-3 py-2 pr-8 bg-zinc-900/60 border ${
+                        addressValid === false
+                          ? "border-red-500/50"
+                          : addressValid === true
+                          ? "border-neon-green/50"
+                          : "border-white/10"
+                      } focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                    />
+                    {/* Validation indicator */}
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                      {isVerifyingAddress && (
+                        <svg
+                          className="w-4 h-4 text-zinc-400 animate-spin"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                      )}
+                      {!isVerifyingAddress && addressValid === true && (
+                        <svg
+                          className="w-4 h-4 text-neon-green"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                      {!isVerifyingAddress && addressValid === false && (
+                        <svg
+                          className="w-4 h-4 text-red-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  {addressValid === false && error && (
+                    <p className="mt-1.5 text-xs text-red-400 font-mono">
+                      {error}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -221,7 +333,13 @@ export const SendModal = ({
                     onClick={handleSend}
                     variant="primary"
                     fullWidth
-                    disabled={!recipient || !amount || isProcessing}
+                    disabled={
+                      !recipient ||
+                      !amount ||
+                      isProcessing ||
+                      isVerifyingAddress ||
+                      addressValid !== true
+                    }
                   >
                     {isProcessing ? "PROCESSING..." : "SEND"}
                   </CyberButton>

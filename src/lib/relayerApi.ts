@@ -150,3 +150,158 @@ export async function getMerkleTree(): Promise<MerkleTreeResponse> {
     throw error;
   }
 }
+
+export interface WithdrawRequest {
+  notes: any[];
+  recipient: string;
+  amount: string;
+  userPublicKey: string;
+}
+
+export interface WithdrawResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    withdrawRecipient: string;
+    withdrawAmount: number;
+    changeAmount: number;
+    changeNote: {
+      commitment: string;
+      privateKey: string;
+      publicKey: string;
+      blinding: string;
+      amount: string;
+      nullifier: string;
+    };
+    spentNoteIds?: string[];
+    txSignature?: string;
+  };
+}
+
+export async function submitWithdraw(
+  data: WithdrawRequest
+): Promise<WithdrawResponse> {
+  try {
+    const response = await fetch(`${RELAYER_API_URL}/api/transact/withdraw`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      // Extract error message from API response
+      const errorMessage =
+        result.error || result.message || "Withdrawal request failed";
+      throw new Error(errorMessage);
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error("Error submitting withdrawal:", error);
+    throw error;
+  }
+}
+
+export interface PrivateTransferRequest {
+  notes: any[];
+  amount: number;
+  recipientUsername: string;
+  userPublicKey?: string;
+}
+
+export interface PrivateTransferResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    recipient: string;
+    transferAmount: number;
+    senderChangeAmount: number;
+    txSignature: string;
+    recipientNote: {
+      commitment: string;
+      amount: string;
+      leafIndex: number;
+      savedNoteId: string;
+    };
+    senderChangeNote: {
+      commitment: string;
+      privateKey: string;
+      publicKey: string;
+      blinding: string;
+      amount: string;
+      leafIndex: number;
+      savedNoteId: string;
+    } | null;
+  };
+}
+
+export async function submitPrivateTransfer(
+  data: PrivateTransferRequest
+): Promise<PrivateTransferResponse> {
+  try {
+    const response = await fetch(
+      `${RELAYER_API_URL}/api/transact/private-transfer`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      // Extract error message from API response
+      const errorMessage =
+        result.error || result.message || "Private transfer request failed";
+      throw new Error(errorMessage);
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error("Error submitting private transfer:", error);
+    throw error;
+  }
+}
+
+export interface VeiloPublicKeyResponse {
+  success: boolean;
+  username: string;
+  pubK: string;
+  veiloPublicKey: string;
+}
+
+export async function getVeiloPublicKey(
+  username: string
+): Promise<VeiloPublicKeyResponse> {
+  try {
+    const response = await fetch(
+      `${RELAYER_API_URL}/api/auth/veiloPublicKey?username=${encodeURIComponent(
+        username
+      )}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to get Veilo public key");
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error("Error fetching Veilo public key:", error);
+    throw error;
+  }
+}

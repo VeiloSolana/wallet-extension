@@ -9,6 +9,7 @@ interface Transaction {
   timestamp: number;
   status: "confirmed" | "pending";
   address: string;
+  txSignature?: string;
 }
 
 interface TransactionListProps {
@@ -64,7 +65,7 @@ export const TransactionList = ({
           {activeTab === "balances" && (
             <motion.div
               layoutId="dashboardTab"
-              className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00FF00]"
+              className="absolute bottom-0 left-0 right-0 h-0.5 bg-neon-green"
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           )}
@@ -81,7 +82,7 @@ export const TransactionList = ({
           {activeTab === "history" && (
             <motion.div
               layoutId="dashboardTab"
-              className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00FF00]"
+              className="absolute bottom-0 left-0 right-0 h-0.5 bg-neon-green"
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           )}
@@ -94,7 +95,7 @@ export const TransactionList = ({
           <div className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group">
             {/* Corner Brackets */}
             <svg
-              className="absolute top-0 left-0 w-2.5 h-2.5 text-[#00FF00]/40"
+              className="absolute top-0 left-0 w-2.5 h-2.5 text-neon-green/40"
               viewBox="0 0 10 10"
             >
               <path
@@ -105,7 +106,7 @@ export const TransactionList = ({
               />
             </svg>
             <svg
-              className="absolute top-0 right-0 w-2.5 h-2.5 text-[#00FF00]/40"
+              className="absolute top-0 right-0 w-2.5 h-2.5 text-neon-green/40"
               viewBox="0 0 10 10"
             >
               <path
@@ -116,7 +117,7 @@ export const TransactionList = ({
               />
             </svg>
             <svg
-              className="absolute bottom-0 left-0 w-2.5 h-2.5 text-[#00FF00]/40"
+              className="absolute bottom-0 left-0 w-2.5 h-2.5 text-neon-green/40"
               viewBox="0 0 10 10"
             >
               <path
@@ -127,7 +128,7 @@ export const TransactionList = ({
               />
             </svg>
             <svg
-              className="absolute bottom-0 right-0 w-2.5 h-2.5 text-[#00FF00]/40"
+              className="absolute bottom-0 right-0 w-2.5 h-2.5 text-neon-green/40"
               viewBox="0 0 10 10"
             >
               <path
@@ -167,7 +168,7 @@ export const TransactionList = ({
           <div className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group">
             {/* Corner Brackets */}
             <svg
-              className="absolute top-0 left-0 w-2.5 h-2.5 text-[#00FF00]/40"
+              className="absolute top-0 left-0 w-2.5 h-2.5 text-neon-green/40"
               viewBox="0 0 10 10"
             >
               <path
@@ -178,7 +179,7 @@ export const TransactionList = ({
               />
             </svg>
             <svg
-              className="absolute top-0 right-0 w-2.5 h-2.5 text-[#00FF00]/40"
+              className="absolute top-0 right-0 w-2.5 h-2.5 text-neon-green/40"
               viewBox="0 0 10 10"
             >
               <path
@@ -189,7 +190,7 @@ export const TransactionList = ({
               />
             </svg>
             <svg
-              className="absolute bottom-0 left-0 w-2.5 h-2.5 text-[#00FF00]/40"
+              className="absolute bottom-0 left-0 w-2.5 h-2.5 text-neon-green/40"
               viewBox="0 0 10 10"
             >
               <path
@@ -200,7 +201,7 @@ export const TransactionList = ({
               />
             </svg>
             <svg
-              className="absolute bottom-0 right-0 w-2.5 h-2.5 text-[#00FF00]/40"
+              className="absolute bottom-0 right-0 w-2.5 h-2.5 text-neon-green/40"
               viewBox="0 0 10 10"
             >
               <path
@@ -238,7 +239,7 @@ export const TransactionList = ({
           <div className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group">
             {/* Corner Brackets */}
             <svg
-              className="absolute top-0 left-0 w-2.5 h-2.5 text-[#00FF00]/40"
+              className="absolute top-0 left-0 w-2.5 h-2.5 text-neon-green/40"
               viewBox="0 0 10 10"
             >
               <path
@@ -249,7 +250,7 @@ export const TransactionList = ({
               />
             </svg>
             <svg
-              className="absolute top-0 right-0 w-2.5 h-2.5 text-[#00FF00]/40"
+              className="absolute top-0 right-0 w-2.5 h-2.5 text-neon-green/40"
               viewBox="0 0 10 10"
             >
               <path
@@ -260,7 +261,7 @@ export const TransactionList = ({
               />
             </svg>
             <svg
-              className="absolute bottom-0 left-0 w-2.5 h-2.5 text-[#00FF00]/40"
+              className="absolute bottom-0 left-0 w-2.5 h-2.5 text-neon-green/40"
               viewBox="0 0 10 10"
             >
               <path
@@ -271,7 +272,7 @@ export const TransactionList = ({
               />
             </svg>
             <svg
-              className="absolute bottom-0 right-0 w-2.5 h-2.5 text-[#00FF00]/40"
+              className="absolute bottom-0 right-0 w-2.5 h-2.5 text-neon-green/40"
               viewBox="0 0 10 10"
             >
               <path
@@ -369,7 +370,7 @@ export const TransactionList = ({
             </span>
             <button
               onClick={onViewAll}
-              className="text-xs text-[#00FF00] hover:text-[#00FF00]/80 font-mono transition-colors"
+              className="text-xs text-neon-green hover:text-neon-green/80 font-mono transition-colors"
             >
               VIEW ALL
             </button>
@@ -393,7 +394,7 @@ export const TransactionList = ({
                     ${
                       tx.type === "send"
                         ? "bg-red-500/10 border border-red-500/30"
-                        : "bg-[#00FF00]/10 border border-[#00FF00]/30"
+                        : "bg-neon-green/10 border border-neon-green/30"
                     }
                   `}
                   >
@@ -413,7 +414,7 @@ export const TransactionList = ({
                       </svg>
                     ) : (
                       <svg
-                        className="w-3 h-3 text-[#00FF00]"
+                        className="w-3 h-3 text-neon-green"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -435,7 +436,9 @@ export const TransactionList = ({
                       </span>
                       <span
                         className={`text-xs font-mono ${
-                          tx.type === "send" ? "text-red-500" : "text-[#00FF00]"
+                          tx.type === "send"
+                            ? "text-red-500"
+                            : "text-neon-green"
                         }`}
                       >
                         {tx.type === "send" ? "-" : "+"}

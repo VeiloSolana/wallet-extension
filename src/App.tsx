@@ -47,6 +47,7 @@ import {
 import { NoteManager } from "./lib/noteManager";
 import { syncNotesFromRelayer } from "./lib/noteSync";
 import { handleWithdraw } from "./lib/transactions/withdraw";
+import { handleTransfer as handlePrivateTransfer } from "./lib/transactions/transfer";
 
 // Devnet RPC endpoint
 const DEVNET_RPC_URL = "https://api.devnet.solana.com";
@@ -58,6 +59,7 @@ interface Transaction {
   timestamp: number;
   status: "confirmed" | "pending";
   address: string;
+  txSignature?: string; // Optional blockchain transaction signature
 }
 
 // Simple interface for a stored note
@@ -175,7 +177,7 @@ function App() {
     const intervalId = setInterval(async () => {
       console.log("🔄 Auto-refreshing notes...");
       await handleSyncNotes();
-    }, 30000); // 30 seconds
+    }, 15000); // 15 seconds
 
     return () => clearInterval(intervalId);
   }, [isAuthenticated, noteManager, wallet]);
@@ -203,6 +205,7 @@ function App() {
       // Map notes to transactions for history
       const noteTxs: Transaction[] = notes.map((n) => ({
         id: n.id || n.commitment.slice(0, 8),
+        txSignature: n.txSignature,
         type: n.spent ? "send" : "receive",
         amount: Number(n.amount) / 1e9, // Convert Lamports to SOL
         timestamp: n.timestamp,
@@ -298,10 +301,6 @@ function App() {
     }
   };
 
-  const deposit = async (amount: number) => {
-    console.log(`Starting deposit of ${amount} SOL to shielded pool`);
-  };
-
   const withdraw = async (recipient: string, amount: number) => {
     if (!noteManager || !wallet) {
       throw new Error("NoteManager or wallet not initialized");
@@ -377,17 +376,61 @@ function App() {
   };
 
   const handleTransfer = async (username: string, amount: number) => {
+    if (!noteManager || !wallet) {
+      throw new Error("NoteManager or wallet not initialized");
+    }
+
     try {
       console.log(`Starting private transfer: ${amount} SOL to @${username}`);
 
-      // TODO: Implement private transfer logic
-      // This will need to:
-      // 1. Look up the recipient's Veilo public key from username
-      // 2. Create a new note for the recipient
-      // 3. Spend existing notes and create change note
-      // 4. Submit to relayer
+      // Get all notes from storage
+      const notes = await noteManager.getAllNotes();
 
-      throw new Error("Private transfer feature coming soon");
+      // Get veilo public key for the transfer request
+      const storedWallet = await loadWallet();
+      if (!storedWallet) {
+        throw new Error("Wallet not found");
+      }
+
+      // Call handlePrivateTransfer with the required parameters
+      const result = await handlePrivateTransfer(
+        notes,
+        username,
+        amount,
+        storedWallet.publicKey
+      );
+
+      console.log("✅ Private transfer complete:", result);
+
+      // Sync notes from relayer to get the change note and updated spent status
+      console.log("Syncing notes from relayer after transfer...");
+      if (storedWallet) {
+        const veiloPrivateKeyStr = await decrypt(
+          storedWallet.encryptedVeiloPrivateKey,
+          password
+        );
+        const privateKeyHex = await decrypt(
+          storedWallet.encryptedSecretKey,
+          password
+        );
+        const veiloPublicKeyStr = await decrypt(
+          storedWallet.encryptedVeiloPublicKey,
+          password
+        );
+
+        await syncNotesFromRelayer(
+          noteManager,
+          wallet.payer.publicKey.toString(),
+          privateKeyHex,
+          veiloPrivateKeyStr,
+          veiloPublicKeyStr
+        );
+      }
+
+      // Reload notes and update UI after sync
+      await loadNotes();
+
+      return result;
     } catch (error) {
       console.error("❌ Transfer failed:", error);
       throw error;
@@ -495,6 +538,7 @@ function App() {
 
           const existingTxs: Transaction[] = existingNotes.map((n) => ({
             id: n.id || n.commitment.slice(0, 8),
+            txSignature: n.txSignature,
             type: n.spent ? "send" : "receive",
             amount: Number(n.amount) / 1e9,
             timestamp: n.timestamp,
@@ -537,6 +581,7 @@ function App() {
 
           const noteTxs: Transaction[] = notes.map((n) => ({
             id: n.id || n.commitment.slice(0, 8),
+            txSignature: n.txSignature,
             type: n.spent ? "send" : "receive",
             amount: Number(n.amount) / 1e9,
             timestamp: n.timestamp,
@@ -690,6 +735,7 @@ function App() {
 
           const noteTxs: Transaction[] = notes.map((n) => ({
             id: n.id || n.commitment.slice(0, 8),
+            txSignature: n.txSignature,
             type: n.spent ? "send" : "receive",
             amount: Number(n.amount) / 1e9,
             timestamp: n.timestamp,
@@ -806,6 +852,7 @@ function App() {
 
           const existingTxs: Transaction[] = existingNotes.map((n) => ({
             id: n.id || n.commitment.slice(0, 8),
+            txSignature: n.txSignature,
             type: n.spent ? "send" : "receive",
             amount: Number(n.amount) / 1e9,
             timestamp: n.timestamp,
@@ -849,6 +896,7 @@ function App() {
 
           const noteTxs: Transaction[] = notes.map((n) => ({
             id: n.id || n.commitment.slice(0, 8),
+            txSignature: n.txSignature,
             type: n.spent ? "send" : "receive",
             amount: Number(n.amount) / 1e9,
             timestamp: n.timestamp,
@@ -1060,7 +1108,7 @@ function App() {
         <DepositModal
           isOpen={isDepositModalOpen}
           onClose={() => setIsDepositModalOpen(false)}
-          onDeposit={deposit}
+          username={user?.username}
         />
 
         <TransferModal

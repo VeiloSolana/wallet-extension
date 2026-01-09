@@ -1,57 +1,24 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
-import { CyberButton } from "./CyberButton";
 
 interface DepositModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onDeposit: (amount: number) => Promise<void>;
+  username?: string;
 }
+
+const DEPOSIT_DAPP_URL = "http://localhost:3000/deposit"; // TODO: Update with actual dapp URL
 
 export const DepositModal = ({
   isOpen,
   onClose,
-  onDeposit,
+  username,
 }: DepositModalProps) => {
-  const [amount, setAmount] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [status, setStatus] = useState<string>("");
-  const [error, setError] = useState<string>("");
-
-  // Clear form when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setAmount("");
-      setStatus("");
-      setError("");
-      setIsProcessing(false);
-    }
-  }, [isOpen]);
-
-  const handleDeposit = async () => {
-    if (!amount) {
-      setError("Please enter an amount");
-      return;
-    }
-
-    try {
-      setIsProcessing(true);
-      setError("");
-      setStatus("Initiating deposit process...");
-
-      await onDeposit(parseFloat(amount));
-
-      setStatus("Funds deposited successfully!");
-
-      // Close modal after short delay
-      setTimeout(() => {
-        onClose();
-      }, 1500);
-    } catch (err) {
-      console.error("Deposit failed:", err);
-      setError(err instanceof Error ? err.message : "Deposit failed");
-      setIsProcessing(false);
-    }
+  const handleOpenDepositDapp = () => {
+    // Open deposit dapp in new tab with username parameter
+    const url = username
+      ? `${DEPOSIT_DAPP_URL}?username=${encodeURIComponent(username)}`
+      : DEPOSIT_DAPP_URL;
+    window.open(url, "_blank");
   };
 
   return (
@@ -143,64 +110,61 @@ export const DepositModal = ({
                 </button>
               </div>
 
-              <div className="space-y-3">
-                {/* Status indicator */}
-                {status && (
-                  <div
-                    className={`p-2 border ${
-                      isProcessing
-                        ? "border-neon-green/30 bg-neon-green/10"
-                        : "border-red-500/30 bg-red-500/10"
-                    }`}
-                  >
-                    <p className="text-xs font-mono text-center">{status}</p>
-                  </div>
-                )}
+              <div className="space-y-2.5">
+                {/* Info Box */}
+                <div className="p-2.5 bg-zinc-900/60 border border-neon-green/20">
+                  <p className="text-xs font-mono text-zinc-300 leading-relaxed">
+                    Use our deposit dapp to add SOL privately to your shielded
+                    balance.
+                  </p>
+                </div>
 
-                {/* Error indicator */}
-                {error && (
-                  <div className="p-2 border border-red-500/30 bg-red-500/10">
-                    <p className="text-xs font-mono text-center text-red-400">
-                      {error}
+                {/* Username Display */}
+                {username && (
+                  <div className="p-2 bg-zinc-900/60 border border-white/10">
+                    <p className="text-[10px] text-zinc-400 font-mono tracking-widest mb-0.5">
+                      USERNAME
+                    </p>
+                    <p className="text-xs font-mono text-neon-green">
+                      @{username}
                     </p>
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-[10px] text-zinc-400 font-mono tracking-widest mb-1.5">
-                    AMOUNT (SOL)
-                  </label>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    step="0.0001"
-                    disabled={isProcessing}
-                    className="w-full px-3 py-2 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                  <p className="text-[10px] text-zinc-500 mt-1.5">
-                    This will convert public SOL into a private Note.
+                {/* Instructions */}
+                <div className="space-y-1.5">
+                  <p className="text-[10px] text-zinc-400 font-mono tracking-widest">
+                    STEPS:
                   </p>
+                  <div className="space-y-1 text-xs font-mono text-zinc-500 leading-snug">
+                    <div className="flex gap-1.5">
+                      <span className="text-neon-green">1.</span>
+                      <span>Open deposit dapp</span>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <span className="text-neon-green">2.</span>
+                      <span>Enter amount & confirm</span>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <span className="text-neon-green">3.</span>
+                      <span>Funds appear as private notes</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="pt-3 flex gap-2">
-                  <CyberButton
+                <div className="pt-2 flex gap-2">
+                  <button
                     onClick={onClose}
-                    variant="secondary"
-                    fullWidth
-                    disabled={isProcessing}
+                    className="flex-1 px-3 py-1.5 text-xs font-mono text-zinc-400 hover:text-white border border-white/10 hover:border-white/30 transition-colors"
                   >
-                    CANCEL
-                  </CyberButton>
-                  <CyberButton
-                    onClick={handleDeposit}
-                    variant="primary"
-                    fullWidth
-                    disabled={!amount || isProcessing}
+                    CLOSE
+                  </button>
+                  <button
+                    onClick={handleOpenDepositDapp}
+                    className="flex-1 px-3 py-1.5 text-xs font-mono font-bold text-neon-green border border-neon-green hover:border-neon-green/80 hover:text-neon-green/80 transition-colors"
                   >
-                    {isProcessing ? "DEPOSITING..." : "DEPOSIT"}
-                  </CyberButton>
+                    OPEN DAPP
+                  </button>
                 </div>
               </div>
             </div>
