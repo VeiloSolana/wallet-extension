@@ -365,7 +365,7 @@ export const TransferModal = ({
 
                 <div>
                   <label className="block text-[10px] text-zinc-400 font-mono tracking-widest mb-1.5">
-                    AMOUNT (SOL)
+                    AMOUNT ({selectedToken})
                   </label>
                   <input
                     type="number"
