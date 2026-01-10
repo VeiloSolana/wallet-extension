@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useCryptoPrices } from "../hooks/useSolPrice";
+import solLogo from "/images/sol-logo.svg";
+import usdcLogo from "/images/usdc-logo.svg";
+import usdtLogo from "/images/usdt-logo.svg";
 
 interface Transaction {
   id: string;
@@ -154,7 +157,7 @@ export const TransactionList = ({
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <img src="/images/sol-logo.svg" alt="SOL" className="w-8 h-8" />
+                <img src={solLogo} alt="SOL" className="w-8 h-8" />
                 <div>
                   <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-medium mb-0.5">
                     Solana
@@ -229,11 +232,7 @@ export const TransactionList = ({
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <img
-                  src="/images/usdc-logo.svg"
-                  alt="USDC"
-                  className="w-8 h-8"
-                />
+                <img src={usdcLogo} alt="USDC" className="w-8 h-8" />
                 <div>
                   <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-medium mb-0.5">
                     USD Coin
@@ -306,11 +305,7 @@ export const TransactionList = ({
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <img
-                  src="/images/usdt-logo.svg"
-                  alt="USDT"
-                  className="w-8 h-8"
-                />
+                <img src={usdtLogo} alt="USDT" className="w-8 h-8" />
                 <div>
                   <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-medium mb-0.5">
                     Tether
