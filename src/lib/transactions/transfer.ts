@@ -1,6 +1,6 @@
 import type { StoredNote } from "../noteManager";
 import { selectNotesForWithdrawal } from "./note-selector";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { submitPrivateTransfer } from "../relayerApi";
 
 export const handleTransfer = async (
@@ -8,7 +8,8 @@ export const handleTransfer = async (
   recipientUsername: string,
   amount: number,
   userPublicKey: string,
-  mintAddress: PublicKey
+  mintAddress: PublicKey,
+  decimals: number
 ) => {
   console.log(
     `Transferring ${amount} SOL privately to ${recipientUsername} from ${notes.length} notes`
@@ -27,13 +28,15 @@ export const handleTransfer = async (
     "unspent notes"
   );
 
-  // Convert amount to lamports
-  const transferAmountLamports = BigInt(Math.floor(amount * LAMPORTS_PER_SOL));
+  // Convert amount to smallest unit (using token's decimals)
+  const transferAmountSmallestUnit = BigInt(
+    Math.floor(amount * Math.pow(10, decimals))
+  );
 
   // Select the optimal notes for this transfer
   const selectionResult = selectNotesForWithdrawal(
     unspentNotes,
-    transferAmountLamports
+    transferAmountSmallestUnit
   );
 
   if (!selectionResult.success) {
@@ -45,7 +48,9 @@ export const handleTransfer = async (
     `Selected ${selectionResult.selectedNotes.length} note(s) for transfer`
   );
   console.log(
-    `Change: ${Number(selectionResult.changeAmount) / LAMPORTS_PER_SOL} SOL`
+    `Change: ${
+      Number(selectionResult.changeAmount) / Math.pow(10, decimals)
+    } tokens`
   );
 
   // Prepare notes for API - remove merklePath as it contains BigInt values
@@ -64,7 +69,7 @@ export const handleTransfer = async (
     recipientUsername,
     amount,
     userPublicKey,
-    mintAddress: mintAddress.toString(),
+    mintAddress: mintAddress.toBase58(),
   });
 
   if (!result.success || !result.data) {

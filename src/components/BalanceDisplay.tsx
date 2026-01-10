@@ -1,9 +1,13 @@
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { useSolPrice, usePortfolio24hChange } from "../hooks/useSolPrice";
+import { useCryptoPrices, usePortfolio24hChange } from "../hooks/useSolPrice";
 
 interface BalanceDisplayProps {
-  balance: number;
+  tokenBalances?: {
+    sol: number;
+    usdc: number;
+    usdt: number;
+    veilo: number;
+  };
   onSend?: () => void;
   onReceive?: () => void;
   onSync?: () => void;
@@ -11,23 +15,25 @@ interface BalanceDisplayProps {
 }
 
 export const BalanceDisplay = ({
-  balance,
+  tokenBalances = { sol: 0, usdc: 0, usdt: 0, veilo: 0 },
   onSend,
   onSync,
   isSyncing,
 }: BalanceDisplayProps) => {
-  const [displayBalance, setDisplayBalance] = useState(0);
-  const { price: solPrice, isLoading: isPriceLoading } = useSolPrice();
+  const {
+    sol,
+    usdc,
+    usdt,
+    veilo,
+    isLoading: isPriceLoading,
+  } = useCryptoPrices();
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDisplayBalance(balance);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [balance]);
-
-  // Calculate USD balance from live SOL price
-  const usdBalance = displayBalance * solPrice;
+  // Calculate USD balance from all tokens
+  const usdBalance =
+    tokenBalances.sol * (sol?.price || 0) +
+    tokenBalances.usdc * (usdc?.price || 0) +
+    tokenBalances.usdt * (usdt?.price || 0) +
+    tokenBalances.veilo * (veilo?.price || 0);
 
   // Use portfolio-based 24h change (tracks your portfolio value change, not market change)
   const { change24h: portfolioChange24h, isLoading: isChangeLoading } =

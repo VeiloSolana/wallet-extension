@@ -12,6 +12,7 @@ export interface StoredNote {
   spent: boolean;
   spentAt?: number;
   txSignature?: string;
+  mintAddress: string; // SPL token mint address (PublicKey.default for SOL)
   merklePath?: {
     pathElements: bigint[];
     pathIndices: number[];
@@ -124,6 +125,21 @@ export class NoteManager {
 
   async getBalance(): Promise<bigint> {
     const unspent = await this.getUnspentNotes();
+    return unspent.reduce((sum, note) => sum + BigInt(note.amount), 0n);
+  }
+
+  async getUnspentNotesByMint(mintAddress: string): Promise<StoredNote[]> {
+    const notes = await this.getAllNotes();
+    return notes.filter((n) => !n.spent && n.mintAddress === mintAddress);
+  }
+
+  async getNotesByMint(mintAddress: string): Promise<StoredNote[]> {
+    const notes = await this.getAllNotes();
+    return notes.filter((n) => n.mintAddress === mintAddress);
+  }
+
+  async getBalanceByMint(mintAddress: string): Promise<bigint> {
+    const unspent = await this.getUnspentNotesByMint(mintAddress);
     return unspent.reduce((sum, note) => sum + BigInt(note.amount), 0n);
   }
 

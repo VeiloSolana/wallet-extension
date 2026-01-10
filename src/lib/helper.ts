@@ -79,6 +79,7 @@ export async function createEncryptedNoteBlob(
     leafIndex: number;
     commitment: Uint8Array;
     amount: bigint;
+    mintAddress?: string;
   }
 ): Promise<{
   ephemeralPublicKey: Uint8Array;
@@ -115,6 +116,7 @@ export async function createEncryptedNoteBlob(
     commitment: Buffer.from(noteData.commitment).toString("hex"),
     amount: noteData.amount.toString(),
     timestamp: Date.now(),
+    mintAddress: noteData.mintAddress,
   });
 
   console.log("📦 Note data prepared for encryption:", noteJson);
@@ -178,5 +180,6 @@ export async function decryptNoteBlob(
     commitment: Buffer.from(parsed.commitment, "hex"),
     amount: BigInt(parsed.amount),
     timestamp: parsed.timestamp,
+    mintAddress: parsed.mintAddress,
   };
 }

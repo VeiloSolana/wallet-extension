@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useSolPrice } from "../hooks/useSolPrice";
+import { useCryptoPrices } from "../hooks/useSolPrice";
 
 interface Transaction {
   id: string;
@@ -9,6 +9,8 @@ interface Transaction {
   status: "confirmed" | "pending";
   address: string;
   txSignature?: string;
+  token: string;
+  mintAddress: string;
 }
 
 interface TransactionDetailsPageProps {
@@ -20,7 +22,29 @@ export const TransactionDetailsPage = ({
   onBack,
   transaction,
 }: TransactionDetailsPageProps) => {
-  const { price: solPrice, isLoading: isPriceLoading } = useSolPrice();
+  const {
+    sol,
+    usdc,
+    usdt,
+    veilo,
+    isLoading: isPriceLoading,
+  } = useCryptoPrices();
+
+  // Get the appropriate price for the token
+  const getTokenPrice = () => {
+    switch (transaction.token) {
+      case "SOL":
+        return sol.price;
+      case "USDC":
+        return usdc.price;
+      case "USDT":
+        return usdt.price;
+      case "VEILO":
+        return veilo.price;
+      default:
+        return 0;
+    }
+  };
 
   return (
     <motion.div
@@ -100,12 +124,12 @@ export const TransactionDetailsPage = ({
             }`}
           >
             {transaction.type === "send" ? "-" : "+"}
-            {transaction.amount} SOL
+            {transaction.amount} {transaction.token || "SOL"}
           </h3>
           <p className="text-xs text-zinc-500 font-mono mb-1.5">
             {isPriceLoading
               ? "--"
-              : `≈ $${(transaction.amount * solPrice).toFixed(2)}`}
+              : `≈ $${(transaction.amount * getTokenPrice()).toFixed(2)}`}
           </p>
           <span
             className={`text-[10px] px-1.5 py-0.5 rounded border ${

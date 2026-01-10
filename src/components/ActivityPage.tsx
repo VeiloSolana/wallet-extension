@@ -9,6 +9,8 @@ interface Transaction {
   status: "confirmed" | "pending";
   address: string;
   txSignature?: string;
+  token: string;
+  mintAddress: string;
 }
 
 interface ActivityPageProps {
@@ -120,7 +122,7 @@ export const ActivityPage = ({
                         }`}
                       >
                         {tx.type === "send" ? "-" : "+"}
-                        {tx.amount} SOL
+                        {tx.amount} {tx.token || "SOL"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between mt-0.5">
@@ -130,7 +132,12 @@ export const ActivityPage = ({
                       <span className="text-[10px] text-zinc-500 font-mono">
                         {isPriceLoading
                           ? "--"
-                          : `≈ $${(tx.amount * sol.price).toFixed(2)}`}
+                          : `≈ $${(
+                              tx.amount *
+                              (tx.token === "USDC" || tx.token === "USDT"
+                                ? 1
+                                : sol.price)
+                            ).toFixed(2)}`}
                       </span>
                     </div>
                   </div>

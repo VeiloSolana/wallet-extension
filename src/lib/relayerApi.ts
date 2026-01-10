@@ -121,9 +121,16 @@ export interface MerkleTreeResponse {
   };
 }
 
-export async function getMerkleRoot(): Promise<MerkleRootResponse> {
+export async function getMerkleRoot(
+  mintAddress?: string
+): Promise<MerkleRootResponse> {
   try {
-    const response = await fetch(`${RELAYER_API_URL}/api/merkle/root`);
+    const url = mintAddress
+      ? `${RELAYER_API_URL}/api/merkle/root?mintAddress=${encodeURIComponent(
+          mintAddress
+        )}`
+      : `${RELAYER_API_URL}/api/merkle/root`;
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error("Failed to fetch merkle root");
@@ -136,9 +143,16 @@ export async function getMerkleRoot(): Promise<MerkleRootResponse> {
   }
 }
 
-export async function getMerkleTree(): Promise<MerkleTreeResponse> {
+export async function getMerkleTree(
+  mintAddress?: string
+): Promise<MerkleTreeResponse> {
   try {
-    const response = await fetch(`${RELAYER_API_URL}/api/merkle/tree`);
+    const url = mintAddress
+      ? `${RELAYER_API_URL}/api/merkle/tree?mintAddress=${encodeURIComponent(
+          mintAddress
+        )}`
+      : `${RELAYER_API_URL}/api/merkle/tree`;
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error("Failed to fetch merkle tree");

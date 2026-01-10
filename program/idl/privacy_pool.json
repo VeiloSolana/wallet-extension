@@ -1,5 +1,5 @@
 {
-  "address": "8aeAAnLc9TZE5K5Pye9sS7MxxvgeUa5uWYP3JpM8sgHM",
+  "address": "25nWpBnbvqh8mQ19SpnkVcDnmm72m3R7YCSh2RAEpLQF",
   "metadata": {
     "name": "privacy_pool",
     "version": "0.1.0",
@@ -22,6 +22,10 @@
                   112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
                   103, 95, 118, 51
                 ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
               }
             ]
           }
@@ -34,6 +38,10 @@
         }
       ],
       "args": [
+        {
+          "name": "_mint_address",
+          "type": "pubkey"
+        },
         {
           "name": "new_relayer",
           "type": "pubkey"
@@ -55,6 +63,10 @@
                   112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
                   103, 95, 118, 51
                 ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
               }
             ]
           }
@@ -70,6 +82,10 @@
                   112, 114, 105, 118, 97, 99, 121, 95, 118, 97, 117, 108, 116,
                   95, 118, 51
                 ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
               }
             ]
           }
@@ -85,6 +101,10 @@
                   112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
                   116, 114, 101, 101, 95, 118, 51
                 ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
               }
             ]
           }
@@ -100,6 +120,10 @@
                   112, 114, 105, 118, 97, 99, 121, 95, 110, 117, 108, 108, 105,
                   102, 105, 101, 114, 115, 95, 118, 51
                 ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
               }
             ]
           }
@@ -140,6 +164,10 @@
                   112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
                   103, 95, 118, 51
                 ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
               }
             ]
           }
@@ -152,6 +180,10 @@
         }
       ],
       "args": [
+        {
+          "name": "_mint_address",
+          "type": "pubkey"
+        },
         {
           "name": "paused",
           "type": "bool"
@@ -177,6 +209,10 @@
                   112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
                   103, 95, 118, 51
                 ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
               }
             ]
           }
@@ -192,6 +228,10 @@
                   112, 114, 105, 118, 97, 99, 121, 95, 118, 97, 117, 108, 116,
                   95, 118, 51
                 ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
               }
             ]
           }
@@ -207,6 +247,10 @@
                   112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
                   116, 114, 101, 101, 95, 118, 51
                 ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
               }
             ]
           }
@@ -222,6 +266,10 @@
                   112, 114, 105, 118, 97, 99, 121, 95, 110, 117, 108, 108, 105,
                   102, 105, 101, 114, 115, 95, 118, 51
                 ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
               }
             ]
           }
@@ -239,6 +287,10 @@
                 "value": [
                   110, 117, 108, 108, 105, 102, 105, 101, 114, 95, 118, 51
                 ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
               },
               {
                 "kind": "arg",
@@ -260,6 +312,10 @@
                 "value": [
                   110, 117, 108, 108, 105, 102, 105, 101, 114, 95, 118, 51
                 ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
               },
               {
                 "kind": "arg",
@@ -588,6 +644,10 @@
           {
             "name": "timestamp",
             "type": "i64"
+          },
+          {
+            "name": "mint_address",
+            "type": "pubkey"
           }
         ]
       }
@@ -757,6 +817,10 @@
           {
             "name": "timestamp",
             "type": "i64"
+          },
+          {
+            "name": "mint_address",
+            "type": "pubkey"
           }
         ]
       }
@@ -869,33 +933,6 @@
             "name": "bump",
             "docs": ["PDA bump for this vault"],
             "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "WithdrawProof",
-      "docs": ["Proof broken into (a, b, c) parts."],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "proof_a",
-            "type": {
-              "array": ["u8", 64]
-            }
-          },
-          {
-            "name": "proof_b",
-            "type": {
-              "array": ["u8", 128]
-            }
-          },
-          {
-            "name": "proof_c",
-            "type": {
-              "array": ["u8", 64]
-            }
           }
         ]
       }

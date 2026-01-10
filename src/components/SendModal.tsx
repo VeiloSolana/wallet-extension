@@ -10,14 +10,19 @@ interface SendModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSend: (address: string, amount: number, token: string) => void;
-  privateBalance: number;
+  tokenBalances?: {
+    sol: number;
+    usdc: number;
+    usdt: number;
+    veilo: number;
+  };
 }
 
 export const SendModal = ({
   isOpen,
   onClose,
   onSend,
-  privateBalance,
+  tokenBalances,
 }: SendModalProps) => {
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
@@ -27,6 +32,13 @@ export const SendModal = ({
   const [isVerifyingAddress, setIsVerifyingAddress] = useState(false);
   const [addressValid, setAddressValid] = useState<boolean | null>(null);
   const [selectedToken, setSelectedToken] = useState("SOL");
+
+  // Debug tokenBalances
+  useEffect(() => {
+    if (isOpen) {
+      console.log("SendModal tokenBalances:", tokenBalances);
+    }
+  }, [isOpen, tokenBalances]);
 
   // Clear form when modal closes
   useEffect(() => {
@@ -225,7 +237,15 @@ export const SendModal = ({
                     AVAILABLE SHIELDED
                   </p>
                   <p className="text-sm font-mono text-neon-green">
-                    {privateBalance.toFixed(4)} SOL
+                    {(selectedToken === "SOL"
+                      ? tokenBalances?.sol || 0
+                      : selectedToken === "USDC"
+                      ? tokenBalances?.usdc || 0
+                      : selectedToken === "USDT"
+                      ? tokenBalances?.usdt || 0
+                      : tokenBalances?.veilo || 0
+                    ).toFixed(4)}{" "}
+                    {selectedToken}
                   </p>
                 </div>
 
@@ -244,6 +264,7 @@ export const SendModal = ({
                       <option value="SOL">SOL - Solana</option>
                       <option value="USDC">USDC - USD Coin</option>
                       <option value="USDT">USDT - Tether</option>
+                      <option value="VEILO">VEILO - Veilo Token</option>
                     </select>
                     {/* Token Icon */}
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -255,6 +276,13 @@ export const SendModal = ({
                       )}
                       {selectedToken === "USDT" && (
                         <img src={usdtLogo} alt="USDT" className="w-4 h-4" />
+                      )}
+                      {selectedToken === "VEILO" && (
+                        <div className="w-4 h-4 rounded-full bg-neon-green/10 border border-neon-green/30 flex items-center justify-center">
+                          <span className="text-[8px] font-bold text-neon-green">
+                            V
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>

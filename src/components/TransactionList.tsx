@@ -10,13 +10,20 @@ interface Transaction {
   status: "confirmed" | "pending";
   address: string;
   txSignature?: string;
+  token: string;
+  mintAddress: string;
 }
 
 interface TransactionListProps {
   transactions: Transaction[];
   onViewAll?: () => void;
   onSelectTransaction?: (tx: Transaction) => void;
-  solBalance: number;
+  tokenBalances?: {
+    sol: number;
+    usdc: number;
+    usdt: number;
+    veilo: number;
+  };
   isLoadingNotes?: boolean;
 }
 
@@ -26,11 +33,17 @@ export const TransactionList = ({
   transactions,
   onViewAll,
   onSelectTransaction,
-  solBalance,
+  tokenBalances = { sol: 0, usdc: 0, usdt: 0, veilo: 0 },
   isLoadingNotes = false,
 }: TransactionListProps) => {
   const [activeTab, setActiveTab] = useState<TabType>("history");
-  const { sol, usdc, usdt, isLoading: isPriceLoading } = useCryptoPrices();
+  const {
+    sol,
+    usdc,
+    usdt,
+    veilo,
+    isLoading: isPriceLoading,
+  } = useCryptoPrices();
 
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -151,13 +164,15 @@ export const TransactionList = ({
               </div>
               <div className="text-right">
                 <p className="text-sm font-mono font-light text-white">
-                  {solBalance.toFixed(4)}
+                  {tokenBalances.sol.toFixed(4)}
                 </p>
                 <p className="text-[10px] text-zinc-400 font-mono">
                   {isPriceLoading ? (
                     <span>--</span>
                   ) : (
-                    <span>≈ ${(solBalance * sol.price).toFixed(2)}</span>
+                    <span>
+                      ≈ ${(tokenBalances.sol * (sol?.price || 0)).toFixed(2)}
+                    </span>
                   )}
                 </p>
               </div>
@@ -227,9 +242,15 @@ export const TransactionList = ({
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-mono font-light text-white">0.00</p>
+                <p className="text-sm font-mono font-light text-white">
+                  {tokenBalances.usdc.toFixed(2)}
+                </p>
                 <p className="text-[10px] text-zinc-400 font-mono">
-                  {isPriceLoading ? "--" : `≈ $${(0 * usdc.price).toFixed(2)}`}
+                  {isPriceLoading
+                    ? "--"
+                    : `≈ $${(tokenBalances.usdc * (usdc?.price || 0)).toFixed(
+                        2
+                      )}`}
                 </p>
               </div>
             </div>
@@ -298,9 +319,90 @@ export const TransactionList = ({
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-mono font-light text-white">0.00</p>
+                <p className="text-sm font-mono font-light text-white">
+                  {tokenBalances.usdt.toFixed(2)}
+                </p>
                 <p className="text-[10px] text-zinc-400 font-mono">
-                  {isPriceLoading ? "--" : `≈ $${(0 * usdt.price).toFixed(2)}`}
+                  {isPriceLoading
+                    ? "--"
+                    : `≈ $${(tokenBalances.usdt * (usdt?.price || 0)).toFixed(
+                        2
+                      )}`}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* VEILO Balance */}
+          <div className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group">
+            {/* Corner Brackets */}
+            <svg
+              className="absolute top-0 left-0 w-2.5 h-2.5 text-neon-green/40"
+              viewBox="0 0 10 10"
+            >
+              <path
+                d="M0,3 L0,0 L3,0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+              />
+            </svg>
+            <svg
+              className="absolute top-0 right-0 w-2.5 h-2.5 text-neon-green/40"
+              viewBox="0 0 10 10"
+            >
+              <path
+                d="M7,0 L10,0 L10,3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+              />
+            </svg>
+            <svg
+              className="absolute bottom-0 left-0 w-2.5 h-2.5 text-neon-green/40"
+              viewBox="0 0 10 10"
+            >
+              <path
+                d="M0,7 L0,10 L3,10"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+              />
+            </svg>
+            <svg
+              className="absolute bottom-0 right-0 w-2.5 h-2.5 text-neon-green/40"
+              viewBox="0 0 10 10"
+            >
+              <path
+                d="M10,7 L10,10 L7,10"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+              />
+            </svg>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-neon-green/10 border border-neon-green/30 flex items-center justify-center">
+                  <span className="text-xs font-bold text-neon-green">V</span>
+                </div>
+                <div>
+                  <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-medium mb-0.5">
+                    Veilo
+                  </p>
+                  <p className="text-xs text-white font-medium">VEILO</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-mono font-light text-white">
+                  {tokenBalances.veilo.toFixed(2)}
+                </p>
+                <p className="text-[10px] text-zinc-400 font-mono">
+                  {isPriceLoading
+                    ? "--"
+                    : `≈ $${(tokenBalances.veilo * (veilo?.price || 0)).toFixed(
+                        2
+                      )}`}
                 </p>
               </div>
             </div>
@@ -442,7 +544,7 @@ export const TransactionList = ({
                         }`}
                       >
                         {tx.type === "send" ? "-" : "+"}
-                        {tx.amount} SOL
+                        {tx.amount} {tx.token || "SOL"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between mt-0.5">

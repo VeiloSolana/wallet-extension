@@ -27,19 +27,19 @@ export const useSaveNote = () => {
 };
 
 // Get merkle root
-export const useMerkleRoot = (enabled = true) => {
+export const useMerkleRoot = (mintAddress?: string, enabled = true) => {
   return useQuery({
-    queryKey: ["merkle-root"],
-    queryFn: getMerkleRoot,
+    queryKey: ["merkle-root", mintAddress],
+    queryFn: () => getMerkleRoot(mintAddress),
     enabled,
   });
 };
 
 // Get merkle tree
-export const useMerkleTree = (enabled = true) => {
+export const useMerkleTree = (mintAddress?: string, enabled = true) => {
   return useQuery({
-    queryKey: ["merkle-tree"],
-    queryFn: getMerkleTree,
+    queryKey: ["merkle-tree", mintAddress],
+    queryFn: () => getMerkleTree(mintAddress),
     enabled,
   });
 };

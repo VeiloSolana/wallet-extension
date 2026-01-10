@@ -162,6 +162,7 @@ export async function generateTransactionProof(inputs: {
 }
 
 // Token mint addresses
+// Native SOL wrapped token mint address
 export const SOL_MINT = PublicKey.default;
 export const USDC_MINT = new PublicKey(
   "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
@@ -169,12 +170,16 @@ export const USDC_MINT = new PublicKey(
 export const USDT_MINT = new PublicKey(
   "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
 ); // USDT on mainnet
+export const VEILO_MINT = new PublicKey(
+  "A4jyQhHNRW5kFAdGN8ZnXB8HHW5kXJU4snGddS5UpdSq"
+); // VEILO token
 
 // Token mint mapping
 export const TOKEN_MINTS: Record<string, PublicKey> = {
   SOL: SOL_MINT,
   USDC: USDC_MINT,
   USDT: USDT_MINT,
+  VEILO: VEILO_MINT,
 };
 
 export function extractRootFromAccount(acc: any): Uint8Array {

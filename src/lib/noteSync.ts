@@ -56,13 +56,6 @@ export async function syncNotesFromRelayer(
 
     console.log(`📬 Found ${response.notes.length} candidate notes.`);
 
-    // 2. Fetch and build merkle tree
-    const merkleTreeResponse = await getMerkleTree();
-    const offchainTree = buildMerkleTree(merkleTreeResponse.data, poseidon);
-    console.log(
-      `🌲 Merkle tree built with ${merkleTreeResponse.data.totalCommitments} commitments`
-    );
-
     let decryptedCount = 0;
 
     // 3. Try to decrypt each note
@@ -106,6 +99,12 @@ export async function syncNotesFromRelayer(
           encryptedNote.encryptedBlob
         );
 
+        // 2. Fetch and build merkle tree
+        const merkleTreeResponse = await getMerkleTree(decrypted.mintAddress);
+        const offchainTree = buildMerkleTree(merkleTreeResponse.data, poseidon);
+        console.log(
+          `🌲 Merkle tree built with ${merkleTreeResponse.data.totalCommitments} commitments`
+        );
         // Get merkle proof for this note's leaf index
         const merklePath = offchainTree.getMerkleProof(decrypted.leafIndex);
 
@@ -143,6 +142,7 @@ export async function syncNotesFromRelayer(
           timestamp: encryptedNote.timestamp,
           txSignature: encryptedNote.txSignature,
           spent: encryptedNote.spent ?? false,
+          mintAddress: decrypted.mintAddress || "", // Default to empty string if undefined
         });
         console.log("made it here");
 

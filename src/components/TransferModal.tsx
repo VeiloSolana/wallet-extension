@@ -9,19 +9,20 @@ import usdtLogo from "/images/usdt-logo.svg";
 interface TransferModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onTransfer: (
-    username: string,
-    amount: number,
-    token: string
-  ) => Promise<void>;
-  privateBalance: number;
+  onTransfer: (username: string, amount: number, token: string) => Promise<any>;
+  tokenBalances?: {
+    sol: number;
+    usdc: number;
+    usdt: number;
+    veilo: number;
+  };
 }
 
 export const TransferModal = ({
   isOpen,
   onClose,
   onTransfer,
-  privateBalance,
+  tokenBalances,
 }: TransferModalProps) => {
   const [username, setUsername] = useState("");
   const [amount, setAmount] = useState("");
@@ -230,7 +231,15 @@ export const TransferModal = ({
                     AVAILABLE SHIELDED
                   </p>
                   <p className="text-sm font-mono text-neon-green">
-                    {privateBalance.toFixed(4)} SOL
+                    {(selectedToken === "SOL"
+                      ? tokenBalances?.sol || 0
+                      : selectedToken === "USDC"
+                      ? tokenBalances?.usdc || 0
+                      : selectedToken === "USDT"
+                      ? tokenBalances?.usdt || 0
+                      : tokenBalances?.veilo || 0
+                    ).toFixed(4)}{" "}
+                    {selectedToken}
                   </p>
                 </div>
 
@@ -249,6 +258,7 @@ export const TransferModal = ({
                       <option value="SOL">SOL - Solana</option>
                       <option value="USDC">USDC - USD Coin</option>
                       <option value="USDT">USDT - Tether</option>
+                      <option value="VEILO">VEILO - Veilo Token</option>
                     </select>
                     {/* Token Icon */}
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -260,6 +270,13 @@ export const TransferModal = ({
                       )}
                       {selectedToken === "USDT" && (
                         <img src={usdtLogo} alt="USDT" className="w-4 h-4" />
+                      )}
+                      {selectedToken === "VEILO" && (
+                        <div className="w-4 h-4 rounded-full bg-neon-green/10 border border-neon-green/30 flex items-center justify-center">
+                          <span className="text-[8px] font-bold text-neon-green">
+                            V
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>

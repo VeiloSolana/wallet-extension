@@ -48,10 +48,37 @@ import { NoteManager } from "./lib/noteManager";
 import { syncNotesFromRelayer } from "./lib/noteSync";
 import { handleWithdraw } from "./lib/transactions/withdraw";
 import { handleTransfer as handlePrivateTransfer } from "./lib/transactions/transfer";
-import { TOKEN_MINTS } from "./lib/transactions/shared";
+import { TOKEN_MINTS, SOL_MINT } from "./lib/transactions/shared";
+import { PublicKey } from "@solana/web3.js";
 
 // Devnet RPC endpoint
 const DEVNET_RPC_URL = "https://api.devnet.solana.com";
+
+// Helper function to get token info from mint address
+const getTokenInfo = (
+  mintAddress: string
+): { symbol: string; decimals: number } => {
+  const mint = mintAddress.toLowerCase();
+
+  if (
+    mint === SOL_MINT.toString().toLowerCase() ||
+    mint === PublicKey.default.toString().toLowerCase()
+  ) {
+    return { symbol: "SOL", decimals: 9 };
+  }
+
+  // Check against known mints
+  for (const [symbol, address] of Object.entries(TOKEN_MINTS)) {
+    if (address.toString().toLowerCase() === mint) {
+      // SOL has 9 decimals, USDC/USDT/VEILO have 6 decimals
+      const decimals = symbol === "SOL" ? 9 : 6;
+      return { symbol, decimals };
+    }
+  }
+
+  // Default fallback
+  return { symbol: "UNKNOWN", decimals: 9 };
+};
 
 interface Transaction {
   id: string;
@@ -61,6 +88,8 @@ interface Transaction {
   status: "confirmed" | "pending";
   address: string;
   txSignature?: string; // Optional blockchain transaction signature
+  token: string; // Token symbol (SOL, USDC, USDT)
+  mintAddress: string; // Token mint address
 }
 
 // Simple interface for a stored note
@@ -134,6 +163,12 @@ function App() {
   }, []);
 
   const [balance, setBalance] = useState(0);
+  const [tokenBalances, setTokenBalances] = useState({
+    sol: 0,
+    usdc: 0,
+    usdt: 0,
+    veilo: 0,
+  });
   const [address, setAddress] = useState("");
 
   // Navigation State
@@ -171,6 +206,14 @@ function App() {
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
+  // Load notes immediately when authenticated and noteManager is ready
+  useEffect(() => {
+    if (isAuthenticated && noteManager) {
+      console.log("🔄 Loading notes on authentication...");
+      loadNotes();
+    }
+  }, [isAuthenticated, noteManager]);
+
   // Auto-refresh notes every 30 seconds
   useEffect(() => {
     if (!isAuthenticated || !noteManager || !wallet) return;
@@ -192,27 +235,62 @@ function App() {
 
     try {
       const notes = await noteManager.getAllNotes();
-      const uiNotes = notes.map((n) => ({
-        commitment: n.commitment,
-        amount: Number(n.amount) / 1e9, // Convert Lamports to SOL
-        root: "dummy",
-        timestamp: n.timestamp,
-      }));
+      const uiNotes = notes.map((n) => {
+        const tokenInfo = getTokenInfo(n.mintAddress || SOL_MINT.toString());
+        return {
+          commitment: n.commitment,
+          amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals), // Convert Lamports to SOL
+          root: "dummy",
+          timestamp: n.timestamp,
+        };
+      });
       setStoredNotes(uiNotes);
 
       const balanceBigInt = await noteManager.getBalance();
       setBalance(Number(balanceBigInt) / 1e9); // Convert Lamports to SOL
 
+      // Calculate balances per token
+      const balances = {
+        sol: 0,
+        usdc: 0,
+        usdt: 0,
+        veilo: 0,
+      };
+
+      notes.forEach((n) => {
+        if (!n.spent) {
+          const tokenInfo = getTokenInfo(n.mintAddress || SOL_MINT.toString());
+          const amount = Number(n.amount) / Math.pow(10, tokenInfo.decimals);
+          if (tokenInfo.symbol === "SOL") {
+            balances.sol += amount;
+          } else if (tokenInfo.symbol === "USDC") {
+            balances.usdc += amount;
+          } else if (tokenInfo.symbol === "USDT") {
+            balances.usdt += amount;
+          } else if (tokenInfo.symbol === "VEILO") {
+            balances.veilo += amount;
+          }
+        }
+      });
+
+      setTokenBalances(balances);
+      console.log("📊 Token balances calculated:", balances);
+
       // Map notes to transactions for history
-      const noteTxs: Transaction[] = notes.map((n) => ({
-        id: n.id || n.commitment.slice(0, 8),
-        txSignature: n.txSignature,
-        type: n.spent ? "send" : "receive",
-        amount: Number(n.amount) / 1e9, // Convert Lamports to SOL
-        timestamp: n.timestamp,
-        status: "confirmed",
-        address: "Shielded Pool",
-      }));
+      const noteTxs: Transaction[] = notes.map((n) => {
+        const tokenInfo = getTokenInfo(n.mintAddress || SOL_MINT.toString());
+        return {
+          id: n.id || n.commitment.slice(0, 8),
+          txSignature: n.txSignature,
+          type: n.spent ? "send" : "receive",
+          amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
+          timestamp: n.timestamp,
+          status: "confirmed",
+          address: "Shielded Pool",
+          token: tokenInfo.symbol,
+          mintAddress: n.mintAddress || SOL_MINT.toString(),
+        };
+      });
 
       // Merge with dummy for demo feeling and sort: unspent notes first, then by timestamp
       setTransactions((prev) =>
@@ -309,7 +387,24 @@ function App() {
 
     try {
       // Get all notes from storage
-      const notes = await noteManager.getAllNotes();
+      const allNotes = await noteManager.getAllNotes();
+
+      // Get mint address for the selected token
+      const mintAddress = TOKEN_MINTS[token];
+      if (!mintAddress) {
+        throw new Error(`Invalid token: ${token}`);
+      }
+
+      // Filter notes by selected token mint
+      const notes = allNotes.filter((note) => {
+        const noteMintStr = note.mintAddress?.toString() || "";
+        const targetMintStr = mintAddress.toString();
+        // Handle legacy SOL notes with empty mint address
+        if (token === "SOL" && noteMintStr === "") {
+          return true;
+        }
+        return noteMintStr === targetMintStr;
+      });
 
       // Get veilo public key for the withdraw request
       const storedWallet = await loadWallet();
@@ -321,11 +416,9 @@ function App() {
         password
       );
 
-      // Get mint address for the selected token
-      const mintAddress = TOKEN_MINTS[token];
-      if (!mintAddress) {
-        throw new Error(`Invalid token: ${token}`);
-      }
+      // Get token info for decimals
+      const tokenInfo = getTokenInfo(mintAddress.toString());
+      console.log("🎯 Token info:", tokenInfo);
 
       // Call handleWithdraw with the veilo public key and mint address
       const result = await handleWithdraw(
@@ -333,7 +426,8 @@ function App() {
         recipient,
         amount,
         storedWallet.publicKey,
-        mintAddress
+        mintAddress,
+        tokenInfo.decimals
       );
 
       console.log("✅ Withdrawal complete:", result);
@@ -404,7 +498,44 @@ function App() {
       );
 
       // Get all notes from storage
-      const notes = await noteManager.getAllNotes();
+      const allNotes = await noteManager.getAllNotes();
+      console.log("📝 All notes:", allNotes.length, "notes found");
+      console.log(
+        "📝 Notes detail:",
+        allNotes.map((n) => ({
+          id: n.id?.slice(0, 8),
+          mintAddress: n.mintAddress,
+          spent: n.spent,
+          amount: n.amount,
+        }))
+      );
+
+      // Get mint address for the selected token
+      const mintAddress = TOKEN_MINTS[token];
+      if (!mintAddress) {
+        throw new Error(`Invalid token: ${token}`);
+      }
+      console.log("🎯 Looking for notes with mintAddress:", mintAddress);
+
+      // Filter notes by selected token mint
+      const notes = allNotes.filter((note) => {
+        const noteMintStr = note.mintAddress?.toString() || "";
+        const targetMintStr = mintAddress.toString();
+        // Handle legacy SOL notes with empty mint address
+        if (token === "SOL" && noteMintStr === "") {
+          return true;
+        }
+        return noteMintStr === targetMintStr;
+      });
+      console.log(
+        "🎯 Filtered notes:",
+        notes.length,
+        "notes match mintAddress"
+      );
+      console.log(
+        "🎯 Unspent filtered notes:",
+        notes.filter((n) => !n.spent).length
+      );
 
       // Get veilo public key for the transfer request
       const storedWallet = await loadWallet();
@@ -412,11 +543,9 @@ function App() {
         throw new Error("Wallet not found");
       }
 
-      // Get mint address for the selected token
-      const mintAddress = TOKEN_MINTS[token];
-      if (!mintAddress) {
-        throw new Error(`Invalid token: ${token}`);
-      }
+      // Get token info for decimals
+      const tokenInfo = getTokenInfo(mintAddress.toString());
+      console.log("🎯 Token info:", tokenInfo);
 
       // Call handlePrivateTransfer with the required parameters
       const result = await handlePrivateTransfer(
@@ -424,7 +553,8 @@ function App() {
         username,
         amount,
         storedWallet.publicKey,
-        mintAddress
+        mintAddress,
+        tokenInfo.decimals
       );
 
       console.log("✅ Private transfer complete:", result);
@@ -555,23 +685,35 @@ function App() {
           setBalance(Number(existingBalance) / 1e9);
 
           // Update UI with existing notes
-          const uiNotes = existingNotes.map((n) => ({
-            commitment: n.commitment,
-            amount: Number(n.amount) / 1e9,
-            root: "dummy",
-            timestamp: n.timestamp,
-          }));
+          const uiNotes = existingNotes.map((n) => {
+            const tokenInfo = getTokenInfo(
+              n.mintAddress || SOL_MINT.toString()
+            );
+            return {
+              commitment: n.commitment,
+              amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
+              root: "dummy",
+              timestamp: n.timestamp,
+            };
+          });
           setStoredNotes(uiNotes);
 
-          const existingTxs: Transaction[] = existingNotes.map((n) => ({
-            id: n.id || n.commitment.slice(0, 8),
-            txSignature: n.txSignature,
-            type: n.spent ? "send" : "receive",
-            amount: Number(n.amount) / 1e9,
-            timestamp: n.timestamp,
-            status: "confirmed",
-            address: "Shielded Pool",
-          }));
+          const existingTxs: Transaction[] = existingNotes.map((n) => {
+            const tokenInfo = getTokenInfo(
+              n.mintAddress || SOL_MINT.toString()
+            );
+            return {
+              id: n.id || n.commitment.slice(0, 8),
+              txSignature: n.txSignature,
+              type: n.spent ? "send" : "receive",
+              amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
+              timestamp: n.timestamp,
+              status: "confirmed",
+              address: "Shielded Pool",
+              token: tokenInfo.symbol,
+              mintAddress: n.mintAddress || SOL_MINT.toString(),
+            };
+          });
           setTransactions(
             existingTxs.sort((a, b) => {
               // Show receive (unspent) before send (spent)
@@ -598,23 +740,35 @@ function App() {
           setBalance(Number(balanceBigInt) / 1e9);
 
           // Update transaction history
-          const updatedUiNotes = notes.map((n) => ({
-            commitment: n.commitment,
-            amount: Number(n.amount) / 1e9,
-            root: "dummy",
-            timestamp: n.timestamp,
-          }));
+          const updatedUiNotes = notes.map((n) => {
+            const tokenInfo = getTokenInfo(
+              n.mintAddress || SOL_MINT.toString()
+            );
+            return {
+              commitment: n.commitment,
+              amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
+              root: "dummy",
+              timestamp: n.timestamp,
+            };
+          });
           setStoredNotes(updatedUiNotes);
 
-          const noteTxs: Transaction[] = notes.map((n) => ({
-            id: n.id || n.commitment.slice(0, 8),
-            txSignature: n.txSignature,
-            type: n.spent ? "send" : "receive",
-            amount: Number(n.amount) / 1e9,
-            timestamp: n.timestamp,
-            status: "confirmed",
-            address: "Shielded Pool",
-          }));
+          const noteTxs: Transaction[] = notes.map((n) => {
+            const tokenInfo = getTokenInfo(
+              n.mintAddress || SOL_MINT.toString()
+            );
+            return {
+              id: n.id || n.commitment.slice(0, 8),
+              txSignature: n.txSignature,
+              type: n.spent ? "send" : "receive",
+              amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
+              timestamp: n.timestamp,
+              status: "confirmed",
+              address: "Shielded Pool",
+              token: tokenInfo.symbol,
+              mintAddress: n.mintAddress || SOL_MINT.toString(),
+            };
+          });
           setTransactions(
             noteTxs.sort((a, b) => {
               // Show receive (unspent) before send (spent)
@@ -752,23 +906,35 @@ function App() {
           setBalance(Number(balanceBigInt) / 1e9);
 
           // Update transaction history
-          const uiNotes = notes.map((n) => ({
-            commitment: n.commitment,
-            amount: Number(n.amount) / 1e9,
-            root: "dummy",
-            timestamp: n.timestamp,
-          }));
+          const uiNotes = notes.map((n) => {
+            const tokenInfo = getTokenInfo(
+              n.mintAddress || SOL_MINT.toString()
+            );
+            return {
+              commitment: n.commitment,
+              amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
+              root: "dummy",
+              timestamp: n.timestamp,
+            };
+          });
           setStoredNotes(uiNotes);
 
-          const noteTxs: Transaction[] = notes.map((n) => ({
-            id: n.id || n.commitment.slice(0, 8),
-            txSignature: n.txSignature,
-            type: n.spent ? "send" : "receive",
-            amount: Number(n.amount) / 1e9,
-            timestamp: n.timestamp,
-            status: "confirmed",
-            address: "Shielded Pool",
-          }));
+          const noteTxs: Transaction[] = notes.map((n) => {
+            const tokenInfo = getTokenInfo(
+              n.mintAddress || SOL_MINT.toString()
+            );
+            return {
+              id: n.id || n.commitment.slice(0, 8),
+              txSignature: n.txSignature,
+              type: n.spent ? "send" : "receive",
+              amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
+              timestamp: n.timestamp,
+              status: "confirmed",
+              address: "Shielded Pool",
+              token: tokenInfo.symbol,
+              mintAddress: n.mintAddress || SOL_MINT.toString(),
+            };
+          });
           setTransactions(
             noteTxs.sort((a, b) => {
               // Show receive (unspent) before send (spent)
@@ -869,23 +1035,35 @@ function App() {
           setBalance(Number(existingBalance) / 1e9);
 
           // Update UI with existing notes
-          const uiNotes = existingNotes.map((n) => ({
-            commitment: n.commitment,
-            amount: Number(n.amount) / 1e9,
-            root: "dummy",
-            timestamp: n.timestamp,
-          }));
+          const uiNotes = existingNotes.map((n) => {
+            const tokenInfo = getTokenInfo(
+              n.mintAddress || SOL_MINT.toString()
+            );
+            return {
+              commitment: n.commitment,
+              amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
+              root: "dummy",
+              timestamp: n.timestamp,
+            };
+          });
           setStoredNotes(uiNotes);
 
-          const existingTxs: Transaction[] = existingNotes.map((n) => ({
-            id: n.id || n.commitment.slice(0, 8),
-            txSignature: n.txSignature,
-            type: n.spent ? "send" : "receive",
-            amount: Number(n.amount) / 1e9,
-            timestamp: n.timestamp,
-            status: "confirmed",
-            address: "Shielded Pool",
-          }));
+          const existingTxs: Transaction[] = existingNotes.map((n) => {
+            const tokenInfo = getTokenInfo(
+              n.mintAddress || SOL_MINT.toString()
+            );
+            return {
+              id: n.id || n.commitment.slice(0, 8),
+              txSignature: n.txSignature,
+              type: n.spent ? "send" : "receive",
+              amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
+              timestamp: n.timestamp,
+              status: "confirmed",
+              address: "Shielded Pool",
+              token: tokenInfo.symbol,
+              mintAddress: n.mintAddress || SOL_MINT.toString(),
+            };
+          });
           setTransactions(
             existingTxs.sort((a, b) => {
               // Show receive (unspent) before send (spent)
@@ -913,23 +1091,35 @@ function App() {
           setBalance(Number(balanceBigInt) / 1e9);
 
           // Update transaction history
-          const updatedUiNotes = notes.map((n) => ({
-            commitment: n.commitment,
-            amount: Number(n.amount) / 1e9,
-            root: "dummy",
-            timestamp: n.timestamp,
-          }));
+          const updatedUiNotes = notes.map((n) => {
+            const tokenInfo = getTokenInfo(
+              n.mintAddress || SOL_MINT.toString()
+            );
+            return {
+              commitment: n.commitment,
+              amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
+              root: "dummy",
+              timestamp: n.timestamp,
+            };
+          });
           setStoredNotes(updatedUiNotes);
 
-          const noteTxs: Transaction[] = notes.map((n) => ({
-            id: n.id || n.commitment.slice(0, 8),
-            txSignature: n.txSignature,
-            type: n.spent ? "send" : "receive",
-            amount: Number(n.amount) / 1e9,
-            timestamp: n.timestamp,
-            status: "confirmed",
-            address: "Shielded Pool",
-          }));
+          const noteTxs: Transaction[] = notes.map((n) => {
+            const tokenInfo = getTokenInfo(
+              n.mintAddress || SOL_MINT.toString()
+            );
+            return {
+              id: n.id || n.commitment.slice(0, 8),
+              txSignature: n.txSignature,
+              type: n.spent ? "send" : "receive",
+              amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
+              timestamp: n.timestamp,
+              status: "confirmed",
+              address: "Shielded Pool",
+              token: tokenInfo.symbol,
+              mintAddress: n.mintAddress || SOL_MINT.toString(),
+            };
+          });
           setTransactions(
             noteTxs.sort((a, b) => {
               // Show receive (unspent) before send (spent)
@@ -1062,7 +1252,7 @@ function App() {
           onSettings={() => setIsSettingsModalOpen(true)}
         />
         <BalanceDisplay
-          balance={balance}
+          tokenBalances={tokenBalances}
           // address={user?.publicKey?.toString() || ""}
           onSend={() => setIsSendModalOpen(true)}
           onReceive={() => setIsReceiveModalOpen(true)}
@@ -1094,7 +1284,7 @@ function App() {
             setLastView("dashboard");
             setView("details");
           }}
-          solBalance={balance}
+          tokenBalances={tokenBalances}
           isLoadingNotes={isLoadingNotes}
         />
 
@@ -1123,7 +1313,7 @@ function App() {
           isOpen={isSendModalOpen}
           onClose={() => setIsSendModalOpen(false)}
           onSend={handleSend}
-          privateBalance={balance}
+          tokenBalances={tokenBalances}
         />
 
         <ReceiveModal
@@ -1142,7 +1332,7 @@ function App() {
           isOpen={isTransferModalOpen}
           onClose={() => setIsTransferModalOpen(false)}
           onTransfer={handleTransfer}
-          privateBalance={balance}
+          tokenBalances={tokenBalances}
         />
 
         <SettingsModal

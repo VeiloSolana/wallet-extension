@@ -1,13 +1,17 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { CyberButton } from "./CyberButton";
+import solLogo from "/images/sol-logo.svg";
+import usdcLogo from "/images/usdc-logo.svg";
+import usdtLogo from "/images/usdt-logo.svg";
 
 interface WithdrawModalProps {
   isOpen: boolean;
   onClose: () => void;
   onWithdraw: (
     recipient: string,
-    amount: number
+    amount: number,
+    token: string
   ) => Promise<{
     success: boolean;
     withdrawAmount: number;
@@ -16,17 +20,23 @@ interface WithdrawModalProps {
     spentNoteIds: string[];
     txSignature: string | undefined;
   }>;
-  privateBalance: number;
+  tokenBalances?: {
+    sol: number;
+    usdc: number;
+    usdt: number;
+    veilo: number;
+  };
 }
 
 export const WithdrawModal = ({
   isOpen,
   onClose,
   onWithdraw,
-  privateBalance,
+  tokenBalances,
 }: WithdrawModalProps) => {
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
+  const [selectedToken, setSelectedToken] = useState("SOL");
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -37,7 +47,16 @@ export const WithdrawModal = ({
       return;
     }
 
-    if (parseFloat(amount) > privateBalance) {
+    const selectedBalance =
+      selectedToken === "SOL"
+        ? tokenBalances?.sol || 0
+        : selectedToken === "USDC"
+        ? tokenBalances?.usdc || 0
+        : selectedToken === "USDT"
+        ? tokenBalances?.usdt || 0
+        : tokenBalances?.veilo || 0;
+
+    if (parseFloat(amount) > selectedBalance) {
       setError("Insufficient private balance");
       return;
     }
@@ -47,7 +66,7 @@ export const WithdrawModal = ({
       setError("");
       setStatus("Generating Zero-Knowledge Proof...");
 
-      await onWithdraw(recipient, parseFloat(amount));
+      await onWithdraw(recipient, parseFloat(amount), selectedToken);
 
       setStatus("Withdrawn successfully!");
 
@@ -184,8 +203,55 @@ export const WithdrawModal = ({
                     AVAILABLE SHIELDED
                   </p>
                   <p className="text-sm font-mono text-neon-green">
-                    {privateBalance.toFixed(4)} SOL
+                    {(selectedToken === "SOL"
+                      ? tokenBalances?.sol || 0
+                      : selectedToken === "USDC"
+                      ? tokenBalances?.usdc || 0
+                      : selectedToken === "USDT"
+                      ? tokenBalances?.usdt || 0
+                      : tokenBalances?.veilo || 0
+                    ).toFixed(4)}{" "}
+                    {selectedToken}
                   </p>
+                </div>
+
+                {/* Token Selector */}
+                <div>
+                  <label className="block text-[10px] text-zinc-400 font-mono tracking-widest mb-1.5">
+                    SELECT TOKEN
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={selectedToken}
+                      onChange={(e) => setSelectedToken(e.target.value)}
+                      disabled={isProcessing}
+                      className="w-full px-3 py-2 pl-10 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed appearance-none"
+                    >
+                      <option value="SOL">SOL - Solana</option>
+                      <option value="USDC">USDC - USD Coin</option>
+                      <option value="USDT">USDT - Tether</option>
+                      <option value="VEILO">VEILO - Veilo Token</option>
+                    </select>
+                    {/* Token Icon */}
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      {selectedToken === "SOL" && (
+                        <img src={solLogo} alt="SOL" className="w-4 h-4" />
+                      )}
+                      {selectedToken === "USDC" && (
+                        <img src={usdcLogo} alt="USDC" className="w-4 h-4" />
+                      )}
+                      {selectedToken === "USDT" && (
+                        <img src={usdtLogo} alt="USDT" className="w-4 h-4" />
+                      )}
+                      {selectedToken === "VEILO" && (
+                        <div className="w-4 h-4 rounded-full bg-neon-green/10 border border-neon-green/30 flex items-center justify-center">
+                          <span className="text-[8px] font-bold text-neon-green">
+                            V
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div>
