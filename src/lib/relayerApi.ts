@@ -1,4 +1,4 @@
-const RELAYER_API_URL = "http://localhost:8080"; // TODO: Load from config/storage
+const RELAYER_API_URL = "https://relayer-server.onrender.com"; // TODO: Load from config/storage
 
 export interface EncryptedNote {
   noteId: string;
