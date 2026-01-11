@@ -94,8 +94,22 @@ export class NoteManager {
   async saveNote(
     note: Omit<StoredNote, "id"> & { spent?: boolean }
   ): Promise<string> {
+    const notes = await this.getAllNotes();
+
+    // Check if a note with the same commitment already exists to prevent duplicates
+    const existing = notes.find((n) => n.commitment === note.commitment);
+    if (existing) {
+      console.log(
+        `⚠️ Note already exists (commitment: ${note.commitment.slice(
+          0,
+          8
+        )}...). Skipping save.`
+      );
+      return existing.id;
+    }
+
     // Generate ID safely (handle missing crypto.randomUUID)
-    console.log("saing note........");
+    console.log("Saving new note...");
     const id =
       typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
         ? crypto.randomUUID()
@@ -106,9 +120,11 @@ export class NoteManager {
       id,
       spent: note.spent ?? false,
     };
-    console.log("Saving note:", noteWithId);
-
-    const notes = await this.getAllNotes();
+    console.log("Saving note details:", {
+      id: noteWithId.id,
+      amount: noteWithId.amount,
+      commitment: noteWithId.commitment.slice(0, 8),
+    });
 
     notes.push(noteWithId);
 
@@ -166,39 +182,53 @@ export class NoteManager {
 
   async getAllNotes(): Promise<StoredNote[]> {
     const storageKey = this.getStorageKey();
+    let encryptedNotes: string[] = [];
 
     if (isExtension) {
       const result = await chrome.storage.local.get(storageKey);
-      const encryptedNotes = (result[storageKey] as string[]) || [];
-
-      // Decrypt each note
-      const notes: StoredNote[] = [];
-      for (const encrypted of encryptedNotes) {
-        try {
-          const note = await this.decryptNote(encrypted);
-          notes.push(note);
-        } catch (e) {
-          console.error("Failed to decrypt note:", e);
-        }
-      }
-      return notes;
+      encryptedNotes = (result[storageKey] as string[]) || [];
     } else {
       // Local dev fallback
       const stored = localStorage.getItem(storageKey);
-      if (!stored) return [];
-
-      const encryptedNotes = JSON.parse(stored) as string[];
-      const notes: StoredNote[] = [];
-      for (const encrypted of encryptedNotes) {
-        try {
-          const note = await this.decryptNote(encrypted);
-          notes.push(note);
-        } catch (e) {
-          console.error("Failed to decrypt note:", e);
-        }
+      if (stored) {
+        encryptedNotes = JSON.parse(stored) as string[];
       }
-      return notes;
     }
+
+    const notes: StoredNote[] = [];
+    const commitments = new Set<string>();
+    let hasDuplicates = false;
+
+    for (const encrypted of encryptedNotes) {
+      try {
+        const note = await this.decryptNote(encrypted);
+
+        // Check for duplicates based on commitment
+        if (commitments.has(note.commitment)) {
+          console.log(
+            `🧹 Found and removed duplicate note during load: ${note.commitment.slice(
+              0,
+              8
+            )}...`
+          );
+          hasDuplicates = true;
+          continue;
+        }
+
+        commitments.add(note.commitment);
+        notes.push(note);
+      } catch (e) {
+        console.error("Failed to decrypt note:", e);
+      }
+    }
+
+    // optimizing: If we found duplicates during load, save the cleaned list back to storage immediately
+    if (hasDuplicates) {
+      console.log("💾 Saving cleaned note list back to storage...");
+      await this.saveNotesToStorage(notes);
+    }
+
+    return notes;
   }
 
   async clearAllNotes(): Promise<void> {

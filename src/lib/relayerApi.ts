@@ -1,4 +1,38 @@
+import nacl from "tweetnacl";
+import util from "tweetnacl-util";
+
+// const RELAYER_API_URL = "http://localhost:8080"; // TODO: Load from config/storage
 const RELAYER_API_URL = "https://relayer-server.onrender.com"; // TODO: Load from config/storage
+const RELAYER_PUBLIC_KEY = "utVxnA7zax09qJCZ7UJsa8PAOoWLRcCwOkdxg/ZGmD4=";
+
+function encryptForRelayer(data: any): string {
+  const relayerPublicKey = util.decodeBase64(RELAYER_PUBLIC_KEY);
+  const ephemeralKeyPair = nacl.box.keyPair();
+
+  const jsonString = JSON.stringify(data);
+  const messageUint8 = util.decodeUTF8(jsonString);
+  const nonce = nacl.randomBytes(nacl.box.nonceLength);
+
+  const encryptedBox = nacl.box(
+    messageUint8,
+    nonce,
+    relayerPublicKey,
+    ephemeralKeyPair.secretKey
+  );
+
+  const fullPayload = new Uint8Array(
+    ephemeralKeyPair.publicKey.length + nonce.length + encryptedBox.length
+  );
+
+  fullPayload.set(ephemeralKeyPair.publicKey, 0);
+  fullPayload.set(nonce, ephemeralKeyPair.publicKey.length);
+  fullPayload.set(
+    encryptedBox,
+    ephemeralKeyPair.publicKey.length + nonce.length
+  );
+
+  return util.encodeBase64(fullPayload);
+}
 
 export interface EncryptedNote {
   noteId: string;
@@ -197,12 +231,20 @@ export async function submitWithdraw(
   data: WithdrawRequest
 ): Promise<WithdrawResponse> {
   try {
+    // Encrypt the payload before sending
+    const minifiedData = {
+      ...data,
+      timestamp: Date.now(), // Add timestamp to prevent replay attacks if not present
+    };
+    const encryptedPayload = encryptForRelayer(minifiedData);
+
     const response = await fetch(`${RELAYER_API_URL}/api/transact/withdraw`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
+      // Backend expects: { encryptedPayload: "base64..." }
+      body: JSON.stringify({ encryptedPayload }),
     });
 
     const result = await response.json();
@@ -259,6 +301,13 @@ export async function submitPrivateTransfer(
   data: PrivateTransferRequest
 ): Promise<PrivateTransferResponse> {
   try {
+    // Encrypt the payload before sending
+    const minifiedData = {
+      ...data,
+      timestamp: Date.now(),
+    };
+    const encryptedPayload = encryptForRelayer(minifiedData);
+
     const response = await fetch(
       `${RELAYER_API_URL}/api/transact/private-transfer`,
       {
@@ -266,7 +315,8 @@ export async function submitPrivateTransfer(
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        // Backend expects: { encryptedPayload: "base64..." }
+        body: JSON.stringify({ encryptedPayload }),
       }
     );
 

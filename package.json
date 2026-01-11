@@ -30,6 +30,8 @@
     "react-dom": "^19.2.0",
     "snarkjs": "^0.7.5",
     "stream-browserify": "^3.0.0",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1",
     "util": "^0.12.5",
     "veilo-sdk-core": "^0.1.18",
     "zustand": "^5.0.9"

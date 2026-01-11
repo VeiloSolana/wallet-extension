@@ -1,73 +1,62 @@
-# React + TypeScript + Vite
+# Veilo Wallet Extension
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Veilo is a privacy-focused browser extension wallet for the Solana blockchain. It enables shielded transactions using Zero-Knowledge (ZK) proofs, allowing users to deposit, transfer, and withdraw assets privately while maintaining a user-friendly experience through usernames and abstraction of complex cryptographic operations.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **🛡️ Shielded Balance:** Hold assets privately. Your balance and transaction history are not visible on the public ledger.
+- **⚡ Private Transfers:** Send assets to other Veilo users instantaneously and privately using usernames (e.g., `@alice`).
+- **🌉 Relayer Integration:** Transactions are submitted via a relayer to preserve privacy by dissociating the gas payer from the transaction origin.
+- **🔑 Non-Custodial:** Your private keys and seed phrase are encrypted and stored locally. You have full control.
+- **🪙 Multi-Token Support:** Support for SOL and SPL tokens (USDC, USDT, etc.) within the privacy pool.
 
-## React Compiler
+## User Flows
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Onboarding & Account Creation
+- **New User:** The user chooses a unique username (e.g., `@satoshi`).
+- **Key Generation:** The wallet generates a Solana Keypair (Public/Private keys) and a specific Privacy Keypair.
+- **Security:** A mnemonic seed phrase is generated. The user sets a password which encrypts these keys in local storage.
+- **Registration:** The username is registered with the backend service to map it to the user's public identity keys for discovery (while preserving transactional privacy).
 
-## Expanding the ESLint configuration
+### 2. Deposit (Shielding)
+*Flow: Public Address → Shielded Pool*
+1. User selects an amount to deposit from their public Solana balance.
+2. The wallet creates a transaction calling the **Privacy Pool Program**.
+3. Funds are transferred to the program's vault.
+4. A "Note" (UTXO) representing the deposited value is created and added to the on-chain Merkle Tree.
+5. The user's encrypted local state is updated to include this new Note.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 3. Private Transfer
+*Flow: User A (Shielded) → User B (Shielded)*
+1. User A enters User B's username and amount.
+2. **Note Selection:** The wallet selects "Notes" from User A's local storage that sum up to the required amount.
+3. **ZK Proof Generation:** The wallet generates a Zero-Knowledge proof locally. This proof asserts:
+   - User A owns the notes.
+   - The notes exist in the Merkle Tree.
+   - The notes have not been spent (nullifier check).
+4. **Relayer Submission:** The proof and encrypted output notes (for User B) are sent to the Relayer.
+5. **On-Chain Settlement:** The Relayer submits the transaction. The Program verifies the proof and updates the Merkle Tree with new notes for User B. User A's spent notes are nullified.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 4. Withdraw (Unshielding)
+*Flow: Shielded Pool → Public Address*
+1. User selects an amount to withdraw to a public Solana address (their own or external).
+2. Similar to a transfer, the wallet generates a ZK proof proving ownership of funds.
+3. The transaction instructs the Privacy Pool Program to release funds from the vault to the target public address.
+4. This action breaks the link between the deposit history and the withdrawal event.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Use Cases
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **Private Payments:** Send money to friends or vendors without revealing your net worth or history.
+- **Payroll:** Pay employees without exposing the company's full treasury or salary details publicly.
+- **Trading:** Move funds to an exchange (via Withdraw) strategies without linking back to a main identifyable wallet.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Technologies
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **Frontend:** React, TypeScript, Vite, Tailwind CSS
+- **Cryptographic:** `circomlibjs` (for ZK integration), `@solana/web3.js`
+- **State Management:** Zustand
+- **Animation:** Framer Motion
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## License
+
+MIT
