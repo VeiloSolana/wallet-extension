@@ -296,7 +296,8 @@ export type PrivacyPool = {
       name: "transact";
       docs: [
         "Unified UTXO transaction instruction",
-        "Handles deposits (publicAmount < 0), withdrawals (publicAmount > 0), and transfers (publicAmount = 0)"
+        "Circuit equation: sumIns + publicAmount = sumOuts",
+        "Handles deposits (publicAmount > 0), withdrawals (publicAmount < 0), and transfers (publicAmount = 0)"
       ];
       discriminator: [217, 149, 130, 143, 221, 52, 252, 119];
       accounts: [
@@ -805,6 +806,31 @@ export type PrivacyPool = {
       code: 6030;
       name: "invalidTokenAuthority";
       msg: "Invalid token account authority";
+    },
+    {
+      code: 6031;
+      name: "relayerMismatch";
+      msg: "Relayer account does not match ext_data.relayer";
+    },
+    {
+      code: 6032;
+      name: "relayerTokenAccountMismatch";
+      msg: "Relayer token account not owned by ext_data.relayer";
+    },
+    {
+      code: 6033;
+      name: "recipientTokenAccountMismatch";
+      msg: "Recipient token account not owned by ext_data.recipient";
+    },
+    {
+      code: 6034;
+      name: "depositorTokenAccountMismatch";
+      msg: "Depositor token account not owned/delegated to relayer";
+    },
+    {
+      code: 6035;
+      name: "invalidPrivateTransferFee";
+      msg: "Private transfer (public_amount == 0) must have fee == 0 and refund == 0";
     }
   ];
   types: [
