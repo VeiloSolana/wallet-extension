@@ -146,8 +146,63 @@
         {
           "name": "mint_address",
           "type": "pubkey"
+        },
+        {
+          "name": "min_deposit_amount",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "max_deposit_amount",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "min_withdraw_amount",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "max_withdraw_amount",
+          "type": {
+            "option": "u64"
+          }
         }
       ]
+    },
+    {
+      "name": "initialize_global_config",
+      "discriminator": [113, 216, 122, 131, 225, 209, 22, 55],
+      "accounts": [
+        {
+          "name": "global_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103, 108, 111, 98, 97, 108, 95, 99, 111, 110, 102, 105, 103,
+                  95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
     },
     {
       "name": "set_paused",
@@ -214,6 +269,20 @@
               {
                 "kind": "arg",
                 "path": "mint_address"
+              }
+            ]
+          }
+        },
+        {
+          "name": "global_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103, 108, 111, 98, 97, 108, 95, 99, 111, 110, 102, 105, 103,
+                  95, 118, 49
+                ]
               }
             ]
           }
@@ -429,9 +498,119 @@
           }
         }
       ]
+    },
+    {
+      "name": "update_global_config",
+      "discriminator": [164, 84, 130, 189, 111, 58, 250, 200],
+      "accounts": [
+        {
+          "name": "global_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103, 108, 111, 98, 97, 108, 95, 99, 111, 110, 102, 105, 103,
+                  95, 118, 49
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": ["global_config"]
+        }
+      ],
+      "args": [
+        {
+          "name": "relayer_enabled",
+          "type": {
+            "option": "bool"
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_pool_config",
+      "discriminator": [68, 236, 203, 122, 179, 62, 234, 252],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
+                  103, 95, 118, 51
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": ["config"]
+        }
+      ],
+      "args": [
+        {
+          "name": "_mint_address",
+          "type": "pubkey"
+        },
+        {
+          "name": "min_deposit_amount",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "max_deposit_amount",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "min_withdraw_amount",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "max_withdraw_amount",
+          "type": {
+            "option": "u64"
+          }
+        },
+        {
+          "name": "fee_bps",
+          "type": {
+            "option": "u16"
+          }
+        },
+        {
+          "name": "min_withdrawal_fee",
+          "type": {
+            "option": "u64"
+          }
+        }
+      ]
     }
   ],
   "accounts": [
+    {
+      "name": "GlobalConfig",
+      "discriminator": [149, 8, 156, 202, 160, 252, 176, 217]
+    },
     {
       "name": "MerkleTreeAccount",
       "discriminator": [147, 200, 34, 248, 131, 187, 248, 253]
@@ -581,68 +760,93 @@
     },
     {
       "code": 6023,
-      "name": "DepositLimitExceeded",
-      "msg": "Deposit limit exceeded"
-    },
-    {
-      "code": 6024,
       "name": "InvalidPublicAmount",
       "msg": "Invalid public amount data"
     },
     {
-      "code": 6025,
+      "code": 6024,
       "name": "InvalidFeeAmount",
       "msg": "Invalid fee amount"
     },
     {
-      "code": 6026,
+      "code": 6025,
       "name": "DuplicateNullifiers",
       "msg": "Duplicate nullifiers detected"
     },
     {
-      "code": 6027,
+      "code": 6026,
       "name": "DuplicateCommitments",
       "msg": "Duplicate output commitments detected"
     },
     {
-      "code": 6028,
+      "code": 6027,
       "name": "MissingTokenAccount",
       "msg": "Token account required for SPL token operations"
     },
     {
-      "code": 6029,
+      "code": 6028,
       "name": "MissingTokenProgram",
       "msg": "Token program required for SPL token operations"
     },
     {
-      "code": 6030,
+      "code": 6029,
       "name": "InvalidTokenAuthority",
       "msg": "Invalid token account authority"
     },
     {
-      "code": 6031,
+      "code": 6030,
       "name": "RelayerMismatch",
       "msg": "Relayer account does not match ext_data.relayer"
     },
     {
-      "code": 6032,
+      "code": 6031,
       "name": "RelayerTokenAccountMismatch",
       "msg": "Relayer token account not owned by ext_data.relayer"
     },
     {
-      "code": 6033,
+      "code": 6032,
       "name": "RecipientTokenAccountMismatch",
       "msg": "Recipient token account not owned by ext_data.recipient"
     },
     {
-      "code": 6034,
+      "code": 6033,
       "name": "DepositorTokenAccountMismatch",
       "msg": "Depositor token account not owned/delegated to relayer"
     },
     {
-      "code": 6035,
+      "code": 6034,
       "name": "InvalidPrivateTransferFee",
       "msg": "Private transfer (public_amount == 0) must have fee == 0 and refund == 0"
+    },
+    {
+      "code": 6035,
+      "name": "DepositBelowMinimum",
+      "msg": "Deposit amount below pool minimum"
+    },
+    {
+      "code": 6036,
+      "name": "DepositLimitExceeded",
+      "msg": "Deposit amount exceeds pool maximum"
+    },
+    {
+      "code": 6037,
+      "name": "WithdrawalBelowMinimum",
+      "msg": "Withdrawal amount below pool minimum"
+    },
+    {
+      "code": 6038,
+      "name": "WithdrawalLimitExceeded",
+      "msg": "Withdrawal amount exceeds pool maximum"
+    },
+    {
+      "code": 6039,
+      "name": "InvalidPoolConfigRange",
+      "msg": "Invalid PoolConfig range (min > max)"
+    },
+    {
+      "code": 6040,
+      "name": "RelayersDisabledGlobally",
+      "msg": "Relayers are globally disabled"
     }
   ],
   "types": [
@@ -706,6 +910,29 @@
             "name": "refund",
             "docs": ["Refund to user in lamports"],
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GlobalConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "docs": ["PDA bump"],
+            "type": "u8"
+          },
+          {
+            "name": "admin",
+            "docs": ["Admin who can configure global settings"],
+            "type": "pubkey"
+          },
+          {
+            "name": "relayer_enabled",
+            "docs": ["Global relayer toggle (emergency kill switch)"],
+            "type": "bool"
           }
         ]
       }
@@ -901,9 +1128,30 @@
             "type": "pubkey"
           },
           {
+            "name": "min_deposit_amount",
+            "docs": [
+              "Minimum amount allowed per deposit (in lamports/token units)"
+            ],
+            "type": "u64"
+          },
+          {
             "name": "max_deposit_amount",
             "docs": [
               "Maximum amount allowed per deposit (in lamports/token units)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "min_withdraw_amount",
+            "docs": [
+              "Minimum amount allowed per withdrawal (in lamports/token units)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "max_withdraw_amount",
+            "docs": [
+              "Maximum amount allowed per withdrawal (in lamports/token units)"
             ],
             "type": "u64"
           },

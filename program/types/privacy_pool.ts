@@ -233,8 +233,77 @@ export type PrivacyPool = {
         {
           name: "mintAddress";
           type: "pubkey";
+        },
+        {
+          name: "minDepositAmount";
+          type: {
+            option: "u64";
+          };
+        },
+        {
+          name: "maxDepositAmount";
+          type: {
+            option: "u64";
+          };
+        },
+        {
+          name: "minWithdrawAmount";
+          type: {
+            option: "u64";
+          };
+        },
+        {
+          name: "maxWithdrawAmount";
+          type: {
+            option: "u64";
+          };
         }
       ];
+    },
+    {
+      name: "initializeGlobalConfig";
+      discriminator: [113, 216, 122, 131, 225, 209, 22, 55];
+      accounts: [
+        {
+          name: "globalConfig";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  95,
+                  118,
+                  49
+                ];
+              }
+            ];
+          };
+        },
+        {
+          name: "admin";
+          writable: true;
+          signer: true;
+        },
+        {
+          name: "systemProgram";
+          address: "11111111111111111111111111111111";
+        }
+      ];
+      args: [];
     },
     {
       name: "setPaused";
@@ -331,6 +400,34 @@ export type PrivacyPool = {
               {
                 kind: "arg";
                 path: "mintAddress";
+              }
+            ];
+          };
+        },
+        {
+          name: "globalConfig";
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  95,
+                  118,
+                  49
+                ];
               }
             ];
           };
@@ -617,9 +714,148 @@ export type PrivacyPool = {
           };
         }
       ];
+    },
+    {
+      name: "updateGlobalConfig";
+      discriminator: [164, 84, 130, 189, 111, 58, 250, 200];
+      accounts: [
+        {
+          name: "globalConfig";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  95,
+                  118,
+                  49
+                ];
+              }
+            ];
+          };
+        },
+        {
+          name: "admin";
+          signer: true;
+          relations: ["globalConfig"];
+        }
+      ];
+      args: [
+        {
+          name: "relayerEnabled";
+          type: {
+            option: "bool";
+          };
+        }
+      ];
+    },
+    {
+      name: "updatePoolConfig";
+      discriminator: [68, 236, 203, 122, 179, 62, 234, 252];
+      accounts: [
+        {
+          name: "config";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  112,
+                  114,
+                  105,
+                  118,
+                  97,
+                  99,
+                  121,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  95,
+                  118,
+                  51
+                ];
+              },
+              {
+                kind: "arg";
+                path: "mintAddress";
+              }
+            ];
+          };
+        },
+        {
+          name: "admin";
+          signer: true;
+          relations: ["config"];
+        }
+      ];
+      args: [
+        {
+          name: "mintAddress";
+          type: "pubkey";
+        },
+        {
+          name: "minDepositAmount";
+          type: {
+            option: "u64";
+          };
+        },
+        {
+          name: "maxDepositAmount";
+          type: {
+            option: "u64";
+          };
+        },
+        {
+          name: "minWithdrawAmount";
+          type: {
+            option: "u64";
+          };
+        },
+        {
+          name: "maxWithdrawAmount";
+          type: {
+            option: "u64";
+          };
+        },
+        {
+          name: "feeBps";
+          type: {
+            option: "u16";
+          };
+        },
+        {
+          name: "minWithdrawalFee";
+          type: {
+            option: "u64";
+          };
+        }
+      ];
     }
   ];
   accounts: [
+    {
+      name: "globalConfig";
+      discriminator: [149, 8, 156, 202, 160, 252, 176, 217];
+    },
     {
       name: "merkleTreeAccount";
       discriminator: [147, 200, 34, 248, 131, 187, 248, 253];
@@ -769,68 +1005,93 @@ export type PrivacyPool = {
     },
     {
       code: 6023;
-      name: "depositLimitExceeded";
-      msg: "Deposit limit exceeded";
-    },
-    {
-      code: 6024;
       name: "invalidPublicAmount";
       msg: "Invalid public amount data";
     },
     {
-      code: 6025;
+      code: 6024;
       name: "invalidFeeAmount";
       msg: "Invalid fee amount";
     },
     {
-      code: 6026;
+      code: 6025;
       name: "duplicateNullifiers";
       msg: "Duplicate nullifiers detected";
     },
     {
-      code: 6027;
+      code: 6026;
       name: "duplicateCommitments";
       msg: "Duplicate output commitments detected";
     },
     {
-      code: 6028;
+      code: 6027;
       name: "missingTokenAccount";
       msg: "Token account required for SPL token operations";
     },
     {
-      code: 6029;
+      code: 6028;
       name: "missingTokenProgram";
       msg: "Token program required for SPL token operations";
     },
     {
-      code: 6030;
+      code: 6029;
       name: "invalidTokenAuthority";
       msg: "Invalid token account authority";
     },
     {
-      code: 6031;
+      code: 6030;
       name: "relayerMismatch";
       msg: "Relayer account does not match ext_data.relayer";
     },
     {
-      code: 6032;
+      code: 6031;
       name: "relayerTokenAccountMismatch";
       msg: "Relayer token account not owned by ext_data.relayer";
     },
     {
-      code: 6033;
+      code: 6032;
       name: "recipientTokenAccountMismatch";
       msg: "Recipient token account not owned by ext_data.recipient";
     },
     {
-      code: 6034;
+      code: 6033;
       name: "depositorTokenAccountMismatch";
       msg: "Depositor token account not owned/delegated to relayer";
     },
     {
-      code: 6035;
+      code: 6034;
       name: "invalidPrivateTransferFee";
       msg: "Private transfer (public_amount == 0) must have fee == 0 and refund == 0";
+    },
+    {
+      code: 6035;
+      name: "depositBelowMinimum";
+      msg: "Deposit amount below pool minimum";
+    },
+    {
+      code: 6036;
+      name: "depositLimitExceeded";
+      msg: "Deposit amount exceeds pool maximum";
+    },
+    {
+      code: 6037;
+      name: "withdrawalBelowMinimum";
+      msg: "Withdrawal amount below pool minimum";
+    },
+    {
+      code: 6038;
+      name: "withdrawalLimitExceeded";
+      msg: "Withdrawal amount exceeds pool maximum";
+    },
+    {
+      code: 6039;
+      name: "invalidPoolConfigRange";
+      msg: "Invalid PoolConfig range (min > max)";
+    },
+    {
+      code: 6040;
+      name: "relayersDisabledGlobally";
+      msg: "Relayers are globally disabled";
     }
   ];
   types: [
@@ -894,6 +1155,29 @@ export type PrivacyPool = {
             name: "refund";
             docs: ["Refund to user in lamports"];
             type: "u64";
+          }
+        ];
+      };
+    },
+    {
+      name: "globalConfig";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "bump";
+            docs: ["PDA bump"];
+            type: "u8";
+          },
+          {
+            name: "admin";
+            docs: ["Admin who can configure global settings"];
+            type: "pubkey";
+          },
+          {
+            name: "relayerEnabled";
+            docs: ["Global relayer toggle (emergency kill switch)"];
+            type: "bool";
           }
         ];
       };
@@ -1089,9 +1373,30 @@ export type PrivacyPool = {
             type: "pubkey";
           },
           {
+            name: "minDepositAmount";
+            docs: [
+              "Minimum amount allowed per deposit (in lamports/token units)"
+            ];
+            type: "u64";
+          },
+          {
             name: "maxDepositAmount";
             docs: [
               "Maximum amount allowed per deposit (in lamports/token units)"
+            ];
+            type: "u64";
+          },
+          {
+            name: "minWithdrawAmount";
+            docs: [
+              "Minimum amount allowed per withdrawal (in lamports/token units)"
+            ];
+            type: "u64";
+          },
+          {
+            name: "maxWithdrawAmount";
+            docs: [
+              "Maximum amount allowed per withdrawal (in lamports/token units)"
             ];
             type: "u64";
           },
