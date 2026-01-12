@@ -36,21 +36,17 @@ export async function syncNotesFromRelayer(
 ) {
   const poseidon = await buildPoseidon();
   try {
-    const lastSyncTimestamp = await getLastSyncTimestamp();
-
     console.log("📡 Syncing notes from relayer...", publicKey);
 
-    // 1. Query new notes
-    // We fetch notes slightly overlapping with last sync to be safe
+    // 1. Query notes by wallet public key (more reliable than timestamp-based sync)
+    // This ensures we always get all notes for this wallet regardless of timing issues
     const response = await queryEncryptedNotes({
-      lastCheckedTimestamp: lastSyncTimestamp
-        ? Math.max(0, lastSyncTimestamp - 10000)
-        : 0,
+      walletPublicKey: publicKey,
       limit: 100,
     });
 
     if (response.notes.length === 0) {
-      console.log("No new notes found.");
+      console.log("No notes found for this wallet.");
       return 0;
     }
 
