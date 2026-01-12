@@ -49,6 +49,7 @@ export interface QueryNotesRequest {
   lastCheckedTimestamp?: number;
   limit?: number;
   offset?: number;
+  walletPublicKey?: string; // Filter notes by recipient wallet
 }
 
 export interface QueryNotesResponse {
