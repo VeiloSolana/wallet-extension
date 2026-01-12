@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/privacy_pool.json`.
  */
 export type PrivacyPool = {
-  address: "25nWpBnbvqh8mQ19SpnkVcDnmm72m3R7YCSh2RAEpLQF";
+  address: "G4jVg1TydNuzQQZojYYVekaGYFZVMAuimC8KWVVKzWfa";
   metadata: {
     name: "privacyPool";
     version: "0.1.0";
