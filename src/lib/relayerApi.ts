@@ -1,4 +1,5 @@
 import nacl from "tweetnacl";
+import crypto from "crypto";
 import util from "tweetnacl-util";
 
 // const RELAYER_API_URL = "http://localhost:8080"; // TODO: Load from config/storage
@@ -236,6 +237,7 @@ export async function submitWithdraw(
     const minifiedData = {
       ...data,
       timestamp: Date.now(), // Add timestamp to prevent replay attacks if not present
+      nonce: crypto.randomBytes(32).toString("hex"), // Add this
     };
     const encryptedPayload = encryptForRelayer(minifiedData);
 
@@ -306,6 +308,7 @@ export async function submitPrivateTransfer(
     const minifiedData = {
       ...data,
       timestamp: Date.now(),
+      nonce: crypto.randomBytes(32).toString("hex"), // Add this
     };
     const encryptedPayload = encryptForRelayer(minifiedData);
 
