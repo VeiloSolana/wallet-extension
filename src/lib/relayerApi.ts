@@ -241,7 +241,7 @@ export async function submitWithdraw(
     };
     const encryptedPayload = encryptForRelayer(minifiedData);
 
-    const response = await fetch(`${RELAYER_API_URL}/api/transact/withdraw`, {
+    const response = await fetch(`${RELAYER_API_URL}/api/transact/withdra`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

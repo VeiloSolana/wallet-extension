@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import * as anchor from "@coral-xyz/anchor";
 import type { Program, Idl } from "@coral-xyz/anchor";
-import { Connection, Keypair } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, Transaction as SolanaTransaction, VersionedTransaction } from "@solana/web3.js";
 import { Buffer } from "buffer";
 import { WalletHeader } from "./components/WalletHeader";
 import { BalanceDisplay } from "./components/BalanceDisplay";
@@ -22,6 +22,7 @@ import { LoginPage } from "./components/LoginPage";
 import { CreateUsernamePage } from "./components/CreateUsernamePage";
 import { OnboardingWalkthrough } from "./components/OnboardingWalkthrough";
 import { RestoreSeedphrasePage } from "./components/RestoreSeedphrasePage";
+import { DAppApprovalPage } from "./components/DAppApprovalPage";
 import { useAuthStore } from "./store/useAuthStore";
 import {
   useRegisterUser,
@@ -49,7 +50,7 @@ import { syncNotesFromRelayer } from "./lib/noteSync";
 import { handleWithdraw } from "./lib/transactions/withdraw";
 import { handleTransfer as handlePrivateTransfer } from "./lib/transactions/transfer";
 import { TOKEN_MINTS, SOL_MINT } from "./lib/transactions/shared";
-import { PublicKey } from "@solana/web3.js";
+
 
 // Devnet RPC endpoint
 const DEVNET_RPC_URL = "https://api.devnet.solana.com";
@@ -101,6 +102,14 @@ interface StoredNote {
   timestamp: number;
 }
 
+// Pending dApp request interface
+interface PendingDAppRequest {
+  id: string;
+  method: string;
+  params: Record<string, unknown>;
+  origin: string;
+}
+
 function App() {
   // Auth state
   const { isAuthenticated, setAuth, user, logout } = useAuthStore();
@@ -128,6 +137,10 @@ function App() {
   // @ts-expect-error - Used by setIsRestoreFlow
   const [isRestoreFlow, setIsRestoreFlow] = useState(false);
   const [restoreMnemonic, setRestoreMnemonic] = useState("");
+
+  // dApp approval state
+  const [pendingDAppRequest, setPendingDAppRequest] = useState<PendingDAppRequest | null>(null);
+  const [isApprovalProcessing, setIsApprovalProcessing] = useState(false);
 
   // Check for existing wallet and session on mount
   useEffect(() => {
@@ -160,6 +173,48 @@ function App() {
       setIsInitialized(true);
     };
     checkWalletAndSession();
+  }, []);
+
+  // Check for pending dApp requests on mount and listen for storage changes
+  // Only runs when in Chrome extension context (not in dev mode)
+  useEffect(() => {
+    // Skip if not in Chrome extension context
+    if (typeof chrome === 'undefined' || !chrome.storage) {
+      console.log('Not in Chrome extension context, skipping dApp request check');
+      return;
+    }
+
+    const checkPendingRequest = () => {
+      chrome.storage.local.get(['pendingRequest'], (result) => {
+        if (result.pendingRequest) {
+          console.log('📱 Found pending dApp request:', result.pendingRequest);
+          setPendingDAppRequest(result.pendingRequest as PendingDAppRequest);
+        } else {
+          setPendingDAppRequest(null);
+        }
+      });
+    };
+
+    // Check immediately
+    checkPendingRequest();
+
+    // Listen for storage changes (in case popup opens after request is made)
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
+      if (areaName === 'local' && changes.pendingRequest) {
+        if (changes.pendingRequest.newValue) {
+          console.log('📱 Storage changed - new pending request:', changes.pendingRequest.newValue);
+          setPendingDAppRequest(changes.pendingRequest.newValue as PendingDAppRequest);
+        } else {
+          setPendingDAppRequest(null);
+        }
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange);
+    };
   }, []);
 
   const [balance, setBalance] = useState(0);
@@ -275,6 +330,11 @@ function App() {
 
       setTokenBalances(balances);
       console.log("📊 Token balances calculated:", balances);
+
+      // Persist balances to chrome.storage for dApp access
+      if (typeof chrome !== "undefined" && chrome.storage) {
+        chrome.storage.local.set({ tokenBalances: balances });
+      }
 
       // Map notes to transactions for history
       const noteTxs: Transaction[] = notes.map((n) => {
@@ -591,6 +651,163 @@ function App() {
     } catch (error) {
       console.error("❌ Transfer failed:", error);
       throw error;
+    }
+  };
+
+  // Handle dApp connection approval
+  const handleDAppApproval = async () => {
+    if (!pendingDAppRequest) return;
+
+    setIsApprovalProcessing(true);
+    try {
+      // Get stored wallet info
+      const storedWallet = await loadWallet();
+      if (!storedWallet) {
+        throw new Error("No wallet found");
+      }
+
+      if (pendingDAppRequest.method === "connect") {
+        // Get public key as array of bytes
+        const publicKeyBytes = Array.from(
+          new PublicKey(storedWallet.publicKey).toBytes()
+        );
+
+        // Add this site to connected sites
+        const result = await chrome.storage.local.get(['connectedSites']);
+        const connectedSites: string[] = (result.connectedSites as string[] | undefined) || [];
+        if (!connectedSites.includes(pendingDAppRequest.origin)) {
+          connectedSites.push(pendingDAppRequest.origin);
+        }
+
+        // Store the wallet public key and connected sites
+        await chrome.storage.local.set({
+          connectedSites,
+          walletPublicKey: publicKeyBytes,
+        });
+
+        // Send approval response to background script
+        await chrome.runtime.sendMessage({
+          type: 'POPUP_RESPONSE',
+          requestId: pendingDAppRequest.id,
+          approved: true,
+          response: { publicKey: publicKeyBytes },
+        });
+      } else if (pendingDAppRequest.method === "signTransaction") {
+        // Sign transaction
+        if (!wallet) {
+          throw new Error("Wallet not unlocked");
+        }
+        const keypair = wallet.payer;
+
+        const txData = pendingDAppRequest.params.transaction as number[];
+        const txBuffer = new Uint8Array(txData);
+        
+        let signedTxBytes: number[];
+        
+        try {
+          // Try to deserialize as Versioned Transaction first
+          const tx = VersionedTransaction.deserialize(txBuffer);
+          tx.sign([keypair]);
+          signedTxBytes = Array.from(tx.serialize());
+        } catch (e) {
+             console.log("Versioned transaction deserialization failed, trying legacy:", e);
+             // Fallback to legacy
+             const tx = SolanaTransaction.from(txBuffer);
+             tx.sign(keypair);
+             signedTxBytes = Array.from(tx.serialize() as Uint8Array);
+        }
+
+        await chrome.runtime.sendMessage({
+          type: 'POPUP_RESPONSE',
+          requestId: pendingDAppRequest.id,
+          approved: true,
+          response: { signedTransaction: signedTxBytes },
+        });
+
+      } else if (pendingDAppRequest.method === "sendShieldedTransaction") {
+        if (!noteManager || !wallet) {
+          throw new Error("Wallet not unlocked");
+        }
+        
+        const { username, amount, mintAddress } = pendingDAppRequest.params as { 
+             username: string;
+             amount: string;
+             mintAddress?: string;
+        };
+        
+        const mint = mintAddress || "So11111111111111111111111111111111111111112";
+        const tokenInfo = getTokenInfo(mint);
+        
+        const notes = await noteManager.getAllNotes();
+        
+        const result = await handlePrivateTransfer(
+             notes,
+             username,
+             parseFloat(amount),
+             wallet.publicKey.toString(), 
+             new PublicKey(mint),
+             tokenInfo.decimals
+        );
+        
+        if (!result.success) throw new Error("Transfer failed");
+        
+        await chrome.runtime.sendMessage({
+          type: 'POPUP_RESPONSE',
+          requestId: pendingDAppRequest.id,
+          approved: true,
+          response: { signature: result.txSignature },
+        });
+
+      } else if (pendingDAppRequest.method === "signAndSendTransaction") {
+        // For signAndSend, we just sign and return signature for now (simpler flow) 
+        // Or strictly follow standard: sign, send, return signature.
+        throw new Error("signAndSendTransaction not fully implemented yet");
+      } else if (pendingDAppRequest.method === "signMessage") {
+         // Handle signMessage
+        throw new Error("signMessage not implemented yet");
+      }
+
+      // Clear pending request
+      await chrome.storage.local.remove('pendingRequest');
+      setPendingDAppRequest(null);
+
+      console.log('✅ dApp request approved');
+    } catch (error) {
+      console.error('Failed to approve dApp request:', error);
+      // Still send error response
+      await chrome.runtime.sendMessage({
+        type: 'POPUP_RESPONSE',
+        requestId: pendingDAppRequest.id,
+        approved: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      await chrome.storage.local.remove('pendingRequest');
+      setPendingDAppRequest(null);
+    } finally {
+      setIsApprovalProcessing(false);
+    }
+  };
+
+  // Handle dApp connection rejection
+  const handleDAppRejection = async () => {
+    if (!pendingDAppRequest) return;
+
+    try {
+      // Send rejection response to background script
+      await chrome.runtime.sendMessage({
+        type: 'POPUP_RESPONSE',
+        requestId: pendingDAppRequest.id,
+        approved: false,
+        error: 'User rejected the request',
+      });
+
+      // Clear pending request
+      await chrome.storage.local.remove('pendingRequest');
+      setPendingDAppRequest(null);
+
+      console.log('❌ dApp connection rejected');
+    } catch (error) {
+      console.error('Failed to reject dApp request:', error);
     }
   };
 
@@ -1077,17 +1294,34 @@ function App() {
 
           // Then sync with relayer for new notes
           const privKeyHex = Buffer.from(secretKey).toString("hex");
-          await syncNotesFromRelayer(
-            accountNoteManager,
-            keypair.publicKey.toString(),
-            privKeyHex,
-            veiloPrivateKey,
-            veiloPublicKey
-          );
+          console.log("🔄 Starting sync with relayer...");
+          console.log("📋 Sync params:", {
+            publicKey: keypair.publicKey.toString(),
+            hasPrivateKey: !!privKeyHex,
+            hasVeiloPrivateKey: !!veiloPrivateKey,
+            hasVeiloPublicKey: !!veiloPublicKey,
+          });
+          
+          try {
+            const syncedCount = await syncNotesFromRelayer(
+              accountNoteManager,
+              keypair.publicKey.toString(),
+              privKeyHex,
+              veiloPrivateKey,
+              veiloPublicKey
+            );
+            console.log(`✅ Sync completed. ${syncedCount} new notes synced.`);
+          } catch (syncError) {
+            console.error("❌ Sync from relayer failed:", syncError);
+            // Don't throw - we still want to show whatever notes we have
+          }
 
           // Reload notes after sync to update balance and transaction history
+          console.log("📊 Reloading notes after sync...");
           const notes = await accountNoteManager.getAllNotes();
+          console.log(`📊 Total notes after sync: ${notes.length}`);
           const balanceBigInt = await accountNoteManager.getBalance();
+          console.log(`💰 Balance after sync: ${Number(balanceBigInt) / 1e9} SOL`);
           setBalance(Number(balanceBigInt) / 1e9);
 
           // Update transaction history
@@ -1237,6 +1471,22 @@ function App() {
       <div className="h-full bg-black flex items-center justify-center">
         <div className="w-full  max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
           <LoginPage error={error} setError={setError} onLogin={handleLogin} />
+        </div>
+      </div>
+    );
+  }
+
+  // Show dApp approval page when there's a pending request
+  if (pendingDAppRequest) {
+    return (
+      <div className="h-full bg-black flex items-center justify-center">
+        <div className="w-full max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
+          <DAppApprovalPage
+            request={pendingDAppRequest}
+            onApprove={handleDAppApproval}
+            onReject={handleDAppRejection}
+            isProcessing={isApprovalProcessing}
+          />
         </div>
       </div>
     );

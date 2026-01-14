@@ -39,8 +39,25 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, "index.html"),
+        injected: path.resolve(__dirname, "src/injected.ts"),
+        content: path.resolve(__dirname, "src/content.ts"),
+        background: path.resolve(__dirname, "src/background.ts"),
+      },
+      output: {
+        entryFileNames: (chunkInfo) => {
+          // Keep injected, content, and background scripts at root level with .js extension
+          if (["injected", "content", "background"].includes(chunkInfo.name)) {
+            return "[name].js";
+          }
+          return "assets/[name]-[hash].js";
+        },
+        chunkFileNames: "assets/[name]-[hash].js",
+        assetFileNames: "assets/[name]-[hash].[ext]",
       },
     },
+    // Don't minify for easier debugging during development
+    minify: false,
   },
   publicDir: "public",
 });
+
