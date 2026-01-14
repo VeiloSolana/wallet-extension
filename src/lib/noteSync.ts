@@ -168,16 +168,6 @@ export async function syncNotesFromRelayer(
 const SYNC_TIME_KEY = "veilo_last_sync_time";
 const isExtension = typeof chrome !== "undefined" && !!chrome.storage;
 
-async function getLastSyncTimestamp(): Promise<number> {
-  if (isExtension) {
-    const res = await chrome.storage.local.get(SYNC_TIME_KEY);
-    return (res[SYNC_TIME_KEY] as number) || 0;
-  } else {
-    const val = localStorage.getItem(SYNC_TIME_KEY);
-    return val ? parseInt(val) : 0;
-  }
-}
-
 async function updateLastSyncTimestamp(ts: number): Promise<void> {
   if (isExtension) {
     await chrome.storage.local.set({ [SYNC_TIME_KEY]: ts });

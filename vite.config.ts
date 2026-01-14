@@ -35,4 +35,12 @@ export default defineConfig({
     },
     include: ["@zkprivacysol/sdk-core"],
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+      },
+    },
+  },
+  publicDir: "public",
 });
