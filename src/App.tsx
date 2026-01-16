@@ -23,6 +23,7 @@ import { CreateUsernamePage } from "./components/CreateUsernamePage";
 import { OnboardingWalkthrough } from "./components/OnboardingWalkthrough";
 import { RestoreSeedphrasePage } from "./components/RestoreSeedphrasePage";
 import { DAppApprovalPage } from "./components/DAppApprovalPage";
+import { ConnectedDAppBar } from "./components/ConnectedDAppBar";
 import { useAuthStore } from "./store/useAuthStore";
 import {
   useRegisterUser,
@@ -1496,6 +1497,7 @@ function App() {
   return (
     <div className="h-full  bg-black flex items-center justify-center">
       <div className="w-full max-w-md h-[600px]  flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
+        <ConnectedDAppBar />
         <WalletHeader
           address={user?.publicKey}
           username={user?.username}
