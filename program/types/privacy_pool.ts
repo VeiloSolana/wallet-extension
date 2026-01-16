@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/privacy_pool.json`.
  */
 export type PrivacyPool = {
-  address: "G4jVg1TydNuzQQZojYYVekaGYFZVMAuimC8KWVVKzWfa";
+  address: "6Cq2rfH7hcreu6Lz4LFoVvZC37Q5uzNq1cStuTnjFdBU";
   metadata: {
     name: "privacyPool";
     version: "0.1.0";
@@ -13,6 +13,106 @@ export type PrivacyPool = {
     description: "Created with Anchor";
   };
   instructions: [
+    {
+      name: "addMerkleTree";
+      discriminator: [199, 97, 38, 35, 140, 113, 187, 30];
+      accounts: [
+        {
+          name: "config";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  112,
+                  114,
+                  105,
+                  118,
+                  97,
+                  99,
+                  121,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  95,
+                  118,
+                  51
+                ];
+              },
+              {
+                kind: "arg";
+                path: "mintAddress";
+              }
+            ];
+          };
+        },
+        {
+          name: "noteTree";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  112,
+                  114,
+                  105,
+                  118,
+                  97,
+                  99,
+                  121,
+                  95,
+                  110,
+                  111,
+                  116,
+                  101,
+                  95,
+                  116,
+                  114,
+                  101,
+                  101,
+                  95,
+                  118,
+                  51
+                ];
+              },
+              {
+                kind: "arg";
+                path: "mintAddress";
+              },
+              {
+                kind: "arg";
+                path: "treeId";
+              }
+            ];
+          };
+        },
+        {
+          name: "payer";
+          writable: true;
+          signer: true;
+        },
+        {
+          name: "systemProgram";
+          address: "11111111111111111111111111111111";
+        }
+      ];
+      args: [
+        {
+          name: "mintAddress";
+          type: "pubkey";
+        },
+        {
+          name: "treeId";
+          type: "u16";
+        }
+      ];
+    },
     {
       name: "addRelayer";
       discriminator: [184, 240, 94, 199, 19, 71, 21, 192];
@@ -142,6 +242,7 @@ export type PrivacyPool = {
         },
         {
           name: "noteTree";
+          docs: ["Initial tree (tree_id = 0)"];
           writable: true;
           pda: {
             seeds: [
@@ -173,6 +274,10 @@ export type PrivacyPool = {
               {
                 kind: "arg";
                 path: "mintAddress";
+              },
+              {
+                kind: "const";
+                value: [0, 0];
               }
             ];
           };
@@ -219,6 +324,7 @@ export type PrivacyPool = {
           name: "admin";
           writable: true;
           signer: true;
+          address: "H6QRuiRsguQgpRSJpP79h75EfDYRS2wN78oj7a4auZtP";
         },
         {
           name: "systemProgram";
@@ -297,6 +403,7 @@ export type PrivacyPool = {
           name: "admin";
           writable: true;
           signer: true;
+          address: "H6QRuiRsguQgpRSJpP79h75EfDYRS2wN78oj7a4auZtP";
         },
         {
           name: "systemProgram";
@@ -306,67 +413,17 @@ export type PrivacyPool = {
       args: [];
     },
     {
-      name: "setPaused";
-      discriminator: [91, 60, 125, 192, 176, 225, 166, 218];
-      accounts: [
-        {
-          name: "config";
-          writable: true;
-          pda: {
-            seeds: [
-              {
-                kind: "const";
-                value: [
-                  112,
-                  114,
-                  105,
-                  118,
-                  97,
-                  99,
-                  121,
-                  95,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103,
-                  95,
-                  118,
-                  51
-                ];
-              },
-              {
-                kind: "arg";
-                path: "mintAddress";
-              }
-            ];
-          };
-        },
-        {
-          name: "admin";
-          writable: true;
-          signer: true;
-          relations: ["config"];
-        }
-      ];
-      args: [
-        {
-          name: "mintAddress";
-          type: "pubkey";
-        },
-        {
-          name: "paused";
-          type: "bool";
-        }
-      ];
-    },
-    {
       name: "transact";
       docs: [
         "Unified UTXO transaction instruction",
         "Circuit equation: sumIns + publicAmount = sumOuts",
-        "Handles deposits (publicAmount > 0), withdrawals (publicAmount < 0), and transfers (publicAmount = 0)"
+        "Handles deposits (publicAmount > 0), withdrawals (publicAmount < 0), and transfers (publicAmount = 0)",
+        "",
+        "Cross-tree transactions:",
+        "- input_tree_id: Tree containing input notes (for root validation)",
+        "- output_tree_id: Tree for new output commitments",
+        "- Can be the same tree or different trees",
+        "- Allows withdrawals even when input tree is full (outputs go to new tree)"
       ];
       discriminator: [217, 149, 130, 143, 221, 52, 252, 119];
       accounts: [
@@ -466,7 +523,10 @@ export type PrivacyPool = {
           };
         },
         {
-          name: "noteTree";
+          name: "inputTree";
+          docs: [
+            "Input tree - where input notes came from (for root validation)"
+          ];
           writable: true;
           pda: {
             seeds: [
@@ -498,6 +558,52 @@ export type PrivacyPool = {
               {
                 kind: "arg";
                 path: "mintAddress";
+              },
+              {
+                kind: "arg";
+                path: "inputTreeId";
+              }
+            ];
+          };
+        },
+        {
+          name: "outputTree";
+          docs: ["Output tree - where new output commitments will be inserted"];
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  112,
+                  114,
+                  105,
+                  118,
+                  97,
+                  99,
+                  121,
+                  95,
+                  110,
+                  111,
+                  116,
+                  101,
+                  95,
+                  116,
+                  114,
+                  101,
+                  101,
+                  95,
+                  118,
+                  51
+                ];
+              },
+              {
+                kind: "arg";
+                path: "mintAddress";
+              },
+              {
+                kind: "arg";
+                path: "outputTreeId";
               }
             ];
           };
@@ -543,7 +649,8 @@ export type PrivacyPool = {
         {
           name: "nullifierMarker0";
           docs: [
-            "First nullifier marker (must not exist - ensures nullifier is fresh)"
+            "First nullifier marker (must not exist for withdrawals - ensures nullifier is fresh)",
+            "For deposits (public_amount > 0), this should be the zero nullifier marker (reusable)"
           ];
           writable: true;
           pda: {
@@ -568,6 +675,10 @@ export type PrivacyPool = {
               {
                 kind: "arg";
                 path: "mintAddress";
+              },
+              {
+                kind: "arg";
+                path: "inputTreeId";
               },
               {
                 kind: "arg";
@@ -579,7 +690,8 @@ export type PrivacyPool = {
         {
           name: "nullifierMarker1";
           docs: [
-            "Second nullifier marker (must not exist - ensures nullifier is fresh)"
+            "Second nullifier marker (must not exist for withdrawals - ensures nullifier is fresh)",
+            "For deposits (public_amount > 0), this should be the zero nullifier marker (reusable)"
           ];
           writable: true;
           pda: {
@@ -604,6 +716,10 @@ export type PrivacyPool = {
               {
                 kind: "arg";
                 path: "mintAddress";
+              },
+              {
+                kind: "arg";
+                path: "inputTreeId";
               },
               {
                 kind: "arg";
@@ -658,6 +774,14 @@ export type PrivacyPool = {
           type: {
             array: ["u8", 32];
           };
+        },
+        {
+          name: "inputTreeId";
+          type: "u16";
+        },
+        {
+          name: "outputTreeId";
+          type: "u16";
         },
         {
           name: "publicAmount";
@@ -754,14 +878,7 @@ export type PrivacyPool = {
           relations: ["globalConfig"];
         }
       ];
-      args: [
-        {
-          name: "relayerEnabled";
-          type: {
-            option: "bool";
-          };
-        }
-      ];
+      args: [];
     },
     {
       name: "updatePoolConfig";
@@ -846,6 +963,12 @@ export type PrivacyPool = {
           name: "minWithdrawalFee";
           type: {
             option: "u64";
+          };
+        },
+        {
+          name: "feeErrorMarginBps";
+          type: {
+            option: "u16";
           };
         }
       ];
@@ -956,7 +1079,7 @@ export type PrivacyPool = {
     {
       code: 6013;
       name: "merkleTreeFull";
-      msg: "Merkle tree is full";
+      msg: "Merkle tree is full - use a different tree_id or add a new tree with add_merkle_tree";
     },
     {
       code: 6014;
@@ -1090,8 +1213,78 @@ export type PrivacyPool = {
     },
     {
       code: 6040;
-      name: "relayersDisabledGlobally";
-      msg: "Relayers are globally disabled";
+      name: "excessiveFeeBps";
+      msg: "Fee basis points exceeds maximum (100 = 1%)";
+    },
+    {
+      code: 6041;
+      name: "excessiveFeeMargin";
+      msg: "Fee error margin exceeds maximum (5000 = 50%)";
+    },
+    {
+      code: 6042;
+      name: "unauthorizedAdmin";
+      msg: "Only authorized admin can initialize";
+    },
+    {
+      code: 6043;
+      name: "unauthorized";
+      msg: "Unauthorized: only admin or relayers can perform this action";
+    },
+    {
+      code: 6044;
+      name: "invalidTreeId";
+      msg: "Invalid tree_id (tree does not exist or exceeds num_trees)";
+    },
+    {
+      code: 6045;
+      name: "tooManyTrees";
+      msg: "Maximum number of Merkle trees reached for this pool";
+    },
+    {
+      code: 6046;
+      name: "invalidNullifiersForDeposit";
+      msg: "Deposits must use zero nullifiers (no notes consumed)";
+    },
+    {
+      code: 6047;
+      name: "zeroNullifier";
+      msg: "Nullifier cannot be zero for withdrawals/transfers";
+    },
+    {
+      code: 6048;
+      name: "zeroCommitment";
+      msg: "Output commitment cannot be zero";
+    },
+    {
+      code: 6049;
+      name: "invalidTokenAccountOwner";
+      msg: "Token account must be owned by SPL Token Program";
+    },
+    {
+      code: 6050;
+      name: "vaultTokenAccountNotAta";
+      msg: "Vault token account must be the canonical Associated Token Account";
+    },
+    {
+      code: 6051;
+      name: "withdrawalTooSmallForMinFee";
+      msg: "Withdrawal amount too small: max fee based on fee_bps would be less than min_withdrawal_fee";
+    },
+    {
+      code: 6052;
+      name: "invalidNullifierMarkerForDeposit";
+      msg: "Nullifier marker account does not correspond to zero nullifier for deposits";
+    },
+    {
+      code: 6053;
+      name: "insufficientDelegation";
+      msg: "Token account delegation amount insufficient for deposit";
+    },
+    {
+      code: 6054;
+      name: "nullifierTreeMismatch";
+      msg: "Nullifier marker tree_id mismatch - nullifier already used in different tree";
     }
   ];
   types: [
@@ -1123,6 +1316,10 @@ export type PrivacyPool = {
           {
             name: "mintAddress";
             type: "pubkey";
+          },
+          {
+            name: "treeId";
+            type: "u16";
           }
         ];
       };
@@ -1173,17 +1370,15 @@ export type PrivacyPool = {
             name: "admin";
             docs: ["Admin who can configure global settings"];
             type: "pubkey";
-          },
-          {
-            name: "relayerEnabled";
-            docs: ["Global relayer toggle (emergency kill switch)"];
-            type: "bool";
           }
         ];
       };
     },
     {
       name: "merkleTreeAccount";
+      docs: [
+        "Layout tests verify 9107 bytes total with 1-byte alignment. Breaking this corrupts all accounts."
+      ];
       serialization: "bytemuckunsafe";
       repr: {
         kind: "rust";
@@ -1232,7 +1427,7 @@ export type PrivacyPool = {
                 {
                   array: ["u8", 32];
                 },
-                16
+                22
               ];
             };
           },
@@ -1244,7 +1439,7 @@ export type PrivacyPool = {
                 {
                   array: ["u8", 32];
                 },
-                32
+                256
               ];
             };
           }
@@ -1273,6 +1468,13 @@ export type PrivacyPool = {
             name: "withdrawalIndex";
             docs: ["Sequential withdrawal index"];
             type: "u32";
+          },
+          {
+            name: "treeId";
+            docs: [
+              "Tree ID this nullifier belongs to (prevents cross-tree double-spend)"
+            ];
+            type: "u16";
           },
           {
             name: "bump";
@@ -1319,6 +1521,10 @@ export type PrivacyPool = {
           {
             name: "mintAddress";
             type: "pubkey";
+          },
+          {
+            name: "treeId";
+            type: "u16";
           }
         ];
       };
@@ -1344,11 +1550,6 @@ export type PrivacyPool = {
             type: "pubkey";
           },
           {
-            name: "paused";
-            docs: ["Is pool paused?"];
-            type: "bool";
-          },
-          {
             name: "feeBps";
             docs: ["Fee in basis points (0–10_000) for withdrawals"];
             type: "u16";
@@ -1359,6 +1560,15 @@ export type PrivacyPool = {
               "Minimum fee for withdrawals (in lamports) to ensure relayer compensation"
             ];
             type: "u64";
+          },
+          {
+            name: "feeErrorMarginBps";
+            docs: [
+              "Fee error margin in basis points (e.g., 500 = 5%)",
+              "Allows fee variance to prevent timing attacks where identical fees",
+              "could correlate deposits/withdrawals"
+            ];
+            type: "u16";
           },
           {
             name: "totalTvl";
@@ -1410,6 +1620,16 @@ export type PrivacyPool = {
             type: {
               array: ["pubkey", 16];
             };
+          },
+          {
+            name: "numTrees";
+            docs: ["Multi-tree support: number of active Merkle trees"];
+            type: "u16";
+          },
+          {
+            name: "nextTreeIndex";
+            docs: ["Suggested tree index for next deposit (round-robin)"];
+            type: "u16";
           }
         ];
       };

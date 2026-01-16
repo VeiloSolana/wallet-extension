@@ -42,7 +42,11 @@ interface PendingRequest {
 class VeiloWalletAccount implements WalletAccount {
   readonly address: string;
   readonly publicKey: Uint8Array;
-  readonly chains = ["solana:mainnet", "solana:devnet", "solana:testnet"] as const;
+  readonly chains = [
+    "solana:mainnet",
+    "solana:devnet",
+    "solana:testnet",
+  ] as const;
   readonly features = [
     SolanaSignAndSendTransaction,
     SolanaSignTransaction,
@@ -55,7 +59,8 @@ class VeiloWalletAccount implements WalletAccount {
   }
 
   private encodeBase58(bytes: Uint8Array): string {
-    const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    const ALPHABET =
+      "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
     let result = "";
     let num = BigInt(0);
     for (const byte of bytes) {
@@ -79,31 +84,48 @@ class VeiloWalletAccount implements WalletAccount {
 class VeiloWallet implements Wallet {
   readonly version = "1.0.0" as const;
   readonly name = "Veilo";
-  readonly icon = VEILO_ICON as `data:image/png;base64,${string}`;
-  readonly chains = ["solana:mainnet", "solana:devnet", "solana:testnet"] as const;
-  
+  readonly icon = VEILO_ICON as `data:image/svg+xml;base64,${string}`;
+  readonly chains = [
+    "solana:mainnet",
+    "solana:devnet",
+    "solana:testnet",
+  ] as const;
+
   private _accounts: VeiloWalletAccount[] = [];
-  private _listeners: Map<WalletEventType, Set<(properties: { accounts: readonly WalletAccount[] }) => void>> = new Map();
+  private _listeners: Map<
+    WalletEventType,
+    Set<(properties: { accounts: readonly WalletAccount[] }) => void>
+  > = new Map();
   private _pendingRequests: Map<string, PendingRequest> = new Map();
 
   constructor() {
+    console.log("[Veilo] Initializing VeiloWallet constructor");
     // Listen for responses from content script
     window.addEventListener("message", (event) => {
       if (event.source !== window) return;
       if (event.data?.source === "veilo-content") {
+        console.log(
+          "[Veilo] Received message from content script:",
+          event.data
+        );
         const { id, result, error } = event.data;
         const pending = this._pendingRequests.get(id);
 
         if (pending) {
           this._pendingRequests.delete(id);
           if (error) {
+            console.error(`[Veilo] Request ${id} failed:`, error);
             pending.reject(new Error(error));
           } else {
+            console.log(`[Veilo] Request ${id} succeeded:`, result);
             pending.resolve(result);
           }
+        } else {
+          console.warn(`[Veilo] No pending request found for id ${id}`);
         }
       }
     });
+    console.log("[Veilo] VeiloWallet constructor complete");
   }
 
   get accounts(): readonly WalletAccount[] {
@@ -147,19 +169,27 @@ class VeiloWallet implements Wallet {
   }
 
   private _connect: StandardConnectMethod = async (input) => {
+    console.log("[Veilo] Connect called with input:", input);
     try {
-      const response = await this._request("connect", input ? { ...input } : {}) as {
+      console.log("[Veilo] Sending connect request to content script...");
+      const response = (await this._request(
+        "connect",
+        input ? { ...input } : {}
+      )) as {
         publicKey: number[];
       };
-      
+
+      console.log("[Veilo] Received connect response:", response);
       const publicKeyBytes = new Uint8Array(response.publicKey);
       const account = new VeiloWalletAccount(publicKeyBytes);
       this._accounts = [account];
-      
+
       this._emitChange();
-      
+
+      console.log("[Veilo] Connected successfully, accounts:", this._accounts);
       return { accounts: this._accounts };
     } catch (error) {
+      console.error("[Veilo] Connect error:", error);
       throw error;
     }
   };
@@ -180,56 +210,66 @@ class VeiloWallet implements Wallet {
       this._listeners.set(eventType, new Set());
     }
     // Cast listener to match our internal type
-    this._listeners.get(eventType)!.add(listener as (properties: { accounts: readonly WalletAccount[] }) => void);
+    this._listeners
+      .get(eventType)!
+      .add(
+        listener as (properties: { accounts: readonly WalletAccount[] }) => void
+      );
 
     return () => {
-      this._listeners.get(eventType)?.delete(listener as (properties: { accounts: readonly WalletAccount[] }) => void);
+      this._listeners
+        .get(eventType)
+        ?.delete(
+          listener as (properties: {
+            accounts: readonly WalletAccount[];
+          }) => void
+        );
     };
   };
 
   private _signTransaction: SolanaSignTransactionMethod = async (...inputs) => {
     const results = [];
-    
+
     for (const input of inputs) {
       const { transaction, account, chain } = input;
-      
+
       if (!this._accounts.find((acc) => acc.address === account.address)) {
         throw new Error("Account not found");
       }
-      
-      const response = await this._request("signTransaction", {
+
+      const response = (await this._request("signTransaction", {
         transaction: Array.from(transaction),
         chain,
-      }) as { signedTransaction: number[] };
-      
+      })) as { signedTransaction: number[] };
+
       results.push({
         signedTransaction: new Uint8Array(response.signedTransaction),
       });
     }
-    
+
     return results;
   };
 
   private _signMessage: SolanaSignMessageMethod = async (...inputs) => {
     const results = [];
-    
+
     for (const input of inputs) {
       const { message, account } = input;
-      
+
       if (!this._accounts.find((acc) => acc.address === account.address)) {
         throw new Error("Account not found");
       }
-      
-      const response = await this._request("signMessage", {
+
+      const response = (await this._request("signMessage", {
         message: Array.from(message),
-      }) as { signature: number[] };
-      
+      })) as { signature: number[] };
+
       results.push({
         signedMessage: message,
         signature: new Uint8Array(response.signature),
       });
     }
-    
+
     return results;
   };
 
@@ -237,28 +277,28 @@ class VeiloWallet implements Wallet {
     ...inputs
   ) => {
     const results = [];
-    
+
     for (const input of inputs) {
       const { transaction, account, chain, options } = input;
-      
+
       if (!this._accounts.find((acc) => acc.address === account.address)) {
         throw new Error("Account not found");
       }
-      
-      const response = await this._request("signAndSendTransaction", {
+
+      const response = (await this._request("signAndSendTransaction", {
         transaction: Array.from(transaction),
         chain,
         options,
-      }) as { signature: string };
-      
+      })) as { signature: string };
+
       // Convert base58 signature to bytes
       const signatureBytes = this._decodeBase58(response.signature);
-      
+
       results.push({
         signature: signatureBytes,
       });
     }
-    
+
     return results;
   };
 
@@ -278,7 +318,7 @@ class VeiloWallet implements Wallet {
   }
 
   /**
-   * Get the shielded balance from the Veilo wallet.  
+   * Get the shielded balance from the Veilo wallet.
    * @param mintAddress - Optional mint address for SPL tokens. Omit for SOL.
    * @returns Promise with balance info { balance: string, decimals: number, symbol: string }
    */
@@ -289,15 +329,18 @@ class VeiloWallet implements Wallet {
     symbol: string;
   }> {
     try {
-      const response = await this._request("getShieldedBalance", { mintAddress }) as {
+      const response = (await this._request("getShieldedBalance", {
+        mintAddress,
+      })) as {
         balance: string;
         decimals: number;
         symbol: string;
       };
-      
+
       return {
         balance: response.balance,
-        balanceFormatted: Number(response.balance) / Math.pow(10, response.decimals),
+        balanceFormatted:
+          Number(response.balance) / Math.pow(10, response.decimals),
         decimals: response.decimals,
         symbol: response.symbol,
       };
@@ -317,18 +360,30 @@ class VeiloWallet implements Wallet {
     veilo: { balance: string; balanceFormatted: number };
   }> {
     try {
-      const response = await this._request("getAllShieldedBalances", {}) as {
+      const response = (await this._request("getAllShieldedBalances", {})) as {
         sol: number;
         usdc: number;
         usdt: number;
         veilo: number;
       };
-      
+
       return {
-        sol: { balance: (response.sol * 1e9).toString(), balanceFormatted: response.sol },
-        usdc: { balance: (response.usdc * 1e6).toString(), balanceFormatted: response.usdc },
-        usdt: { balance: (response.usdt * 1e6).toString(), balanceFormatted: response.usdt },
-        veilo: { balance: (response.veilo * 1e6).toString(), balanceFormatted: response.veilo },
+        sol: {
+          balance: (response.sol * 1e9).toString(),
+          balanceFormatted: response.sol,
+        },
+        usdc: {
+          balance: (response.usdc * 1e6).toString(),
+          balanceFormatted: response.usdc,
+        },
+        usdt: {
+          balance: (response.usdt * 1e6).toString(),
+          balanceFormatted: response.usdt,
+        },
+        veilo: {
+          balance: (response.veilo * 1e6).toString(),
+          balanceFormatted: response.veilo,
+        },
       };
     } catch (error) {
       throw error;
@@ -346,18 +401,25 @@ class VeiloWallet implements Wallet {
     mintAddress?: string;
   }): Promise<{ signature: string }> {
     try {
-      return await this._request("sendShieldedTransaction", params) as { signature: string };
+      return (await this._request("sendShieldedTransaction", params)) as {
+        signature: string;
+      };
     } catch (error) {
       throw error;
     }
   }
 
-  private _request(method: string, params: Record<string, unknown>): Promise<unknown> {
+  private _request(
+    method: string,
+    params: Record<string, unknown>
+  ): Promise<unknown> {
+    console.log(`[Veilo] Making request: ${method}`, params);
     return new Promise((resolve, reject) => {
       const id = `veilo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       this._pendingRequests.set(id, { resolve, reject });
 
+      console.log(`[Veilo] Posting message to window for request ${id}`);
       window.postMessage(
         {
           source: "veilo-injected",
@@ -372,6 +434,7 @@ class VeiloWallet implements Wallet {
       setTimeout(() => {
         if (this._pendingRequests.has(id)) {
           this._pendingRequests.delete(id);
+          console.error(`[Veilo] Request ${id} timed out`);
           reject(new Error("Request timeout"));
         }
       }, 300000);
@@ -379,20 +442,21 @@ class VeiloWallet implements Wallet {
   }
 
   private _decodeBase58(str: string): Uint8Array {
-    const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    const ALPHABET =
+      "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
     let num = BigInt(0);
     for (const char of str) {
       const index = ALPHABET.indexOf(char);
       if (index === -1) throw new Error("Invalid base58 character");
       num = num * BigInt(58) + BigInt(index);
     }
-    
+
     const bytes: number[] = [];
     while (num > 0) {
       bytes.unshift(Number(num % BigInt(256)));
       num = num / BigInt(256);
     }
-    
+
     // Handle leading zeros
     for (const char of str) {
       if (char === "1") {
@@ -401,7 +465,7 @@ class VeiloWallet implements Wallet {
         break;
       }
     }
-    
+
     return new Uint8Array(bytes);
   }
 }
@@ -410,13 +474,18 @@ class VeiloWallet implements Wallet {
 (function () {
   "use strict";
 
+  console.log("[Veilo] Starting wallet initialization...");
+
   // Prevent multiple injections
   if ((window as unknown as { veilo?: VeiloWallet }).veilo) {
+    console.log("[Veilo] Wallet already initialized, skipping");
     return;
   }
 
+  console.log("[Veilo] Creating wallet instance...");
   const veilo = new VeiloWallet();
 
+  console.log("[Veilo] Registering with Wallet Standard...");
   // Register with Wallet Standard
   registerWallet(veilo);
 
@@ -427,5 +496,7 @@ class VeiloWallet implements Wallet {
     configurable: false,
   });
 
-  console.log("Veilo Wallet provider initialized with Wallet Standard");
+  console.log("[Veilo] Wallet provider initialized successfully");
+  console.log("[Veilo] Wallet object:", veilo);
+  console.log("[Veilo] Available at window.veilo");
 })();

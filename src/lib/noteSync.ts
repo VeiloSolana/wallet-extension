@@ -96,7 +96,10 @@ export async function syncNotesFromRelayer(
         );
 
         // 2. Fetch and build merkle tree
-        const merkleTreeResponse = await getMerkleTree(decrypted.mintAddress);
+        const merkleTreeResponse = await getMerkleTree(
+          decrypted.mintAddress,
+          decrypted.treeId
+        );
         const offchainTree = buildMerkleTree(merkleTreeResponse.data, poseidon);
         console.log(
           `🌲 Merkle tree built with ${merkleTreeResponse.data.totalCommitments} commitments`
@@ -123,6 +126,7 @@ export async function syncNotesFromRelayer(
           leafIndex: decrypted.leafIndex,
           timestamp: encryptedNote.timestamp,
           txSignature: encryptedNote.txSignature,
+          treeId: decrypted.treeId,
         });
         // 4. Save to storage
         await noteManager.saveNote({
@@ -139,6 +143,7 @@ export async function syncNotesFromRelayer(
           txSignature: encryptedNote.txSignature,
           spent: encryptedNote.spent ?? false,
           mintAddress: decrypted.mintAddress || "", // Default to empty string if undefined
+          treeId: decrypted.treeId,
         });
         console.log("made it here");
 

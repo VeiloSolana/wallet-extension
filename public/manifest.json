@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Veilo - Privacy layer on solana",
   "version": "1.0.0",
-  "description": "Veilo is a privacy layer on Solana that enables private transactions and interactions on the Solana blockchain.",
+  "description": "Perform private transactions and interactions on the Solana blockchain.",
   "icons": {
     "16": "images/logo-main.png",
     "32": "images/logo-main.png",
@@ -16,7 +16,7 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage"],
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
@@ -36,4 +36,3 @@
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   }
 }
-

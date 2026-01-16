@@ -3,6 +3,8 @@
  * Handles communication between content script and popup
  */
 
+console.log("[Veilo Background] Service worker initialized");
+
 interface VeiloRequest {
   type: string;
   method: string;
@@ -24,17 +26,34 @@ const pendingApprovals: Map<string, PendingApproval> = new Map();
 // Handle messages from content script
 chrome.runtime.onMessage.addListener(
   (
-    message: VeiloRequest | { type: string; requestId: string; approved: boolean; response?: unknown; error?: string },
+    message:
+      | VeiloRequest
+      | {
+          type: string;
+          requestId: string;
+          approved: boolean;
+          response?: unknown;
+          error?: string;
+        },
     sender,
     sendResponse
   ) => {
+    console.log("[Veilo Background] Received message:", message);
     if (message.type === "VEILO_REQUEST") {
       handleWalletRequest(message as VeiloRequest, sender, sendResponse);
       return true; // Keep message channel open for async response
     }
 
     if (message.type === "POPUP_RESPONSE") {
-      handlePopupResponse(message as { type: string; requestId: string; approved: boolean; response?: unknown; error?: string });
+      handlePopupResponse(
+        message as {
+          type: string;
+          requestId: string;
+          approved: boolean;
+          response?: unknown;
+          error?: string;
+        }
+      );
       return false;
     }
 
@@ -54,9 +73,15 @@ async function handleWalletRequest(
     switch (method) {
       case "connect": {
         // Check if already connected
-        const result = await chrome.storage.local.get(["connectedSites", "walletPublicKey"]);
-        const connectedSites: string[] = (result.connectedSites as string[] | undefined) || [];
-        const publicKeyArray: number[] | undefined = result.walletPublicKey as number[] | undefined;
+        const result = await chrome.storage.local.get([
+          "connectedSites",
+          "walletPublicKey",
+        ]);
+        const connectedSites: string[] =
+          (result.connectedSites as string[] | undefined) || [];
+        const publicKeyArray: number[] | undefined = result.walletPublicKey as
+          | number[]
+          | undefined;
 
         if (publicKeyArray && connectedSites.includes(origin)) {
           // Already connected, return stored public key
@@ -71,7 +96,8 @@ async function handleWalletRequest(
       case "disconnect": {
         // Remove site from connected sites
         const result = await chrome.storage.local.get(["connectedSites"]);
-        const connectedSites: string[] = (result.connectedSites as string[] | undefined) || [];
+        const connectedSites: string[] =
+          (result.connectedSites as string[] | undefined) || [];
         const updatedSites = connectedSites.filter((site) => site !== origin);
         await chrome.storage.local.set({ connectedSites: updatedSites });
         sendResponse({ success: true });
@@ -91,36 +117,48 @@ async function handleWalletRequest(
         // Get shielded balance for a specific token
         try {
           const result = await chrome.storage.local.get(["tokenBalances"]);
-          const balances = (result.tokenBalances as { sol: number; usdc: number; usdt: number; veilo: number } | undefined) || {
+          const balances = (result.tokenBalances as
+            | { sol: number; usdc: number; usdt: number; veilo: number }
+            | undefined) || {
             sol: 0,
             usdc: 0,
             usdt: 0,
             veilo: 0,
           };
-          
+
           // For now, default to SOL if no mint specified
           const mintAddress = params.mintAddress as string | undefined;
           let balance = "0";
           let decimals = 9;
           let symbol = "SOL";
-          
-          if (!mintAddress || mintAddress === "So11111111111111111111111111111111111111112") {
+
+          if (
+            !mintAddress ||
+            mintAddress === "So11111111111111111111111111111111111111112"
+          ) {
             balance = (balances.sol * 1e9).toString();
             decimals = 9;
             symbol = "SOL";
-          } else if (mintAddress === "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v") {
+          } else if (
+            mintAddress === "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+          ) {
             balance = (balances.usdc * 1e6).toString();
             decimals = 6;
             symbol = "USDC";
-          } else if (mintAddress === "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB") {
+          } else if (
+            mintAddress === "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+          ) {
             balance = (balances.usdt * 1e6).toString();
             decimals = 6;
             symbol = "USDT";
           }
-          
+
           sendResponse({ balance, decimals, symbol });
         } catch (error) {
-          sendResponse({ error: error instanceof Error ? error.message : "Failed to get balance" });
+          sendResponse({
+            error:
+              error instanceof Error ? error.message : "Failed to get balance",
+          });
         }
         break;
       }
@@ -129,16 +167,21 @@ async function handleWalletRequest(
         // Get all shielded token balances
         try {
           const result = await chrome.storage.local.get(["tokenBalances"]);
-          const balances = (result.tokenBalances as { sol: number; usdc: number; usdt: number; veilo: number } | undefined) || {
+          const balances = (result.tokenBalances as
+            | { sol: number; usdc: number; usdt: number; veilo: number }
+            | undefined) || {
             sol: 0,
             usdc: 0,
             usdt: 0,
             veilo: 0,
           };
-          
+
           sendResponse(balances);
         } catch (error) {
-          sendResponse({ error: error instanceof Error ? error.message : "Failed to get balances" });
+          sendResponse({
+            error:
+              error instanceof Error ? error.message : "Failed to get balances",
+          });
         }
         break;
       }

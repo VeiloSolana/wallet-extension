@@ -13,13 +13,16 @@ Veilo is a privacy-focused browser extension wallet for the Solana blockchain. I
 ## User Flows
 
 ### 1. Onboarding & Account Creation
+
 - **New User:** The user chooses a unique username (e.g., `@satoshi`).
 - **Key Generation:** The wallet generates a Solana Keypair (Public/Private keys) and a specific Privacy Keypair.
 - **Security:** A mnemonic seed phrase is generated. The user sets a password which encrypts these keys in local storage.
 - **Registration:** The username is registered with the backend service to map it to the user's public identity keys for discovery (while preserving transactional privacy).
 
 ### 2. Deposit (Shielding)
-*Flow: Public Address → Shielded Pool*
+
+_Flow: Public Address → Shielded Pool_
+
 1. User selects an amount to deposit from their public Solana balance.
 2. The wallet creates a transaction calling the **Privacy Pool Program**.
 3. Funds are transferred to the program's vault.
@@ -27,7 +30,9 @@ Veilo is a privacy-focused browser extension wallet for the Solana blockchain. I
 5. The user's encrypted local state is updated to include this new Note.
 
 ### 3. Private Transfer
-*Flow: User A (Shielded) → User B (Shielded)*
+
+_Flow: User A (Shielded) → User B (Shielded)_
+
 1. User A enters User B's username and amount.
 2. **Note Selection:** The wallet selects "Notes" from User A's local storage that sum up to the required amount.
 3. **ZK Proof Generation:** The wallet generates a Zero-Knowledge proof locally. This proof asserts:
@@ -38,7 +43,9 @@ Veilo is a privacy-focused browser extension wallet for the Solana blockchain. I
 5. **On-Chain Settlement:** The Relayer submits the transaction. The Program verifies the proof and updates the Merkle Tree with new notes for User B. User A's spent notes are nullified.
 
 ### 4. Withdraw (Unshielding)
-*Flow: Shielded Pool → Public Address*
+
+_Flow: Shielded Pool → Public Address_
+
 1. User selects an amount to withdraw to a public Solana address (their own or external).
 2. Similar to a transfer, the wallet generates a ZK proof proving ownership of funds.
 3. The transaction instructs the Privacy Pool Program to release funds from the vault to the target public address.
@@ -60,3 +67,16 @@ Veilo is a privacy-focused browser extension wallet for the Solana blockchain. I
 ## License
 
 MIT
+
+## Privacy Policy
+
+Please see [PRIVACY_POLICY.md](./PRIVACY_POLICY.md) for details on how Veilo handles your data and protects your privacy.
+
+## Permissions
+
+Veilo requests the following browser permissions:
+
+- **`storage`** - To securely store encrypted wallet data locally
+- **`host_permissions: <all_urls>`** - To inject wallet provider into websites for dApp connectivity (standard for all Web3 wallets)
+
+For detailed justification, see our [Privacy Policy](./PRIVACY_POLICY.md).

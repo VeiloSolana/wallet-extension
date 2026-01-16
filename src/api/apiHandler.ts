@@ -2,9 +2,9 @@ import axios from "axios";
 
 // Create Axios instance with default config
 export const api = axios.create({
-  // baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api",
-  baseURL:
-    import.meta.env.VITE_API_URL || "https://relayer-server.onrender.com/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080/api",
+  // baseURL:
+  //   import.meta.env.VITE_API_URL || "https://relayer-server.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
   },

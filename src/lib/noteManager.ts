@@ -13,6 +13,7 @@ export interface StoredNote {
   spentAt?: number;
   txSignature?: string;
   mintAddress: string; // SPL token mint address (PublicKey.default for SOL)
+  treeId: number; // Merkle tree identifier
   merklePath?: {
     pathElements: bigint[];
     pathIndices: number[];

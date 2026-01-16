@@ -2,8 +2,8 @@ import nacl from "tweetnacl";
 import crypto from "crypto";
 import util from "tweetnacl-util";
 
-// const RELAYER_API_URL = "http://localhost:8080"; // TODO: Load from config/storage
-const RELAYER_API_URL = "https://relayer-server.onrender.com"; // TODO: Load from config/storage
+const RELAYER_API_URL = "http://localhost:8080"; // TODO: Load from config/storage
+// const RELAYER_API_URL = "https://relayer-server.onrender.com"; // TODO: Load from config/storage
 const RELAYER_PUBLIC_KEY = "utVxnA7zax09qJCZ7UJsa8PAOoWLRcCwOkdxg/ZGmD4=";
 
 function encryptForRelayer(data: any): string {
@@ -130,14 +130,18 @@ export interface MerkleRootResponse {
   data: {
     root: string;
     nextIndex: number;
-    treeId: number;
+    treeId: number; // Legacy field for backward compatibility
+    onChainTreeId: number; // New multi-tree field
+    mintAddress: string;
   };
 }
 
 export interface MerkleTreeResponse {
   success: boolean;
   data: {
-    treeId: number;
+    treeId: number; // Legacy field for backward compatibility
+    onChainTreeId: number; // New multi-tree field
+    mintAddress: string;
     height: number;
     nextIndex: number;
     root: string;
@@ -152,19 +156,22 @@ export interface MerkleTreeResponse {
     reconstructionInfo: {
       instructions: string;
       treeHeight: number;
-      hashFunction: string;
+      hashFunction?: string;
     };
   };
 }
 
 export async function getMerkleRoot(
-  mintAddress?: string
+  mintAddress?: string,
+  treeId?: number
 ): Promise<MerkleRootResponse> {
   try {
-    const url = mintAddress
-      ? `${RELAYER_API_URL}/api/merkle/root?mintAddress=${encodeURIComponent(
-          mintAddress
-        )}`
+    const params = new URLSearchParams();
+    if (mintAddress) params.append("mintAddress", mintAddress);
+    if (treeId !== undefined) params.append("treeId", treeId.toString());
+
+    const url = params.toString()
+      ? `${RELAYER_API_URL}/api/merkle/root?${params.toString()}`
       : `${RELAYER_API_URL}/api/merkle/root`;
     const response = await fetch(url);
 
@@ -180,13 +187,16 @@ export async function getMerkleRoot(
 }
 
 export async function getMerkleTree(
-  mintAddress?: string
+  mintAddress?: string,
+  treeId?: number
 ): Promise<MerkleTreeResponse> {
   try {
-    const url = mintAddress
-      ? `${RELAYER_API_URL}/api/merkle/tree?mintAddress=${encodeURIComponent(
-          mintAddress
-        )}`
+    const params = new URLSearchParams();
+    if (mintAddress) params.append("mintAddress", mintAddress);
+    if (treeId !== undefined) params.append("treeId", treeId.toString());
+
+    const url = params.toString()
+      ? `${RELAYER_API_URL}/api/merkle/tree?${params.toString()}`
       : `${RELAYER_API_URL}/api/merkle/tree`;
     const response = await fetch(url);
 

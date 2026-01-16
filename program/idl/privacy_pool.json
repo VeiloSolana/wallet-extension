@@ -1,5 +1,5 @@
 {
-  "address": "G4jVg1TydNuzQQZojYYVekaGYFZVMAuimC8KWVVKzWfa",
+  "address": "6Cq2rfH7hcreu6Lz4LFoVvZC37Q5uzNq1cStuTnjFdBU",
   "metadata": {
     "name": "privacy_pool",
     "version": "0.1.0",
@@ -7,6 +7,73 @@
     "description": "Created with Anchor"
   },
   "instructions": [
+    {
+      "name": "add_merkle_tree",
+      "discriminator": [199, 97, 38, 35, 140, 113, 187, 30],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
+                  103, 95, 118, 51
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
+              }
+            ]
+          }
+        },
+        {
+          "name": "note_tree",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
+                  116, 114, 101, 101, 95, 118, 51
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
+              },
+              {
+                "kind": "arg",
+                "path": "tree_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_mint_address",
+          "type": "pubkey"
+        },
+        {
+          "name": "tree_id",
+          "type": "u16"
+        }
+      ]
+    },
     {
       "name": "add_relayer",
       "discriminator": [184, 240, 94, 199, 19, 71, 21, 192],
@@ -92,6 +159,7 @@
         },
         {
           "name": "note_tree",
+          "docs": ["Initial tree (tree_id = 0)"],
           "writable": true,
           "pda": {
             "seeds": [
@@ -105,6 +173,10 @@
               {
                 "kind": "arg",
                 "path": "mint_address"
+              },
+              {
+                "kind": "const",
+                "value": [0, 0]
               }
             ]
           }
@@ -131,7 +203,8 @@
         {
           "name": "admin",
           "writable": true,
-          "signer": true
+          "signer": true,
+          "address": "H6QRuiRsguQgpRSJpP79h75EfDYRS2wN78oj7a4auZtP"
         },
         {
           "name": "system_program",
@@ -195,7 +268,8 @@
         {
           "name": "admin",
           "writable": true,
-          "signer": true
+          "signer": true,
+          "address": "H6QRuiRsguQgpRSJpP79h75EfDYRS2wN78oj7a4auZtP"
         },
         {
           "name": "system_program",
@@ -205,52 +279,17 @@
       "args": []
     },
     {
-      "name": "set_paused",
-      "discriminator": [91, 60, 125, 192, 176, 225, 166, 218],
-      "accounts": [
-        {
-          "name": "config",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112, 114, 105, 118, 97, 99, 121, 95, 99, 111, 110, 102, 105,
-                  103, 95, 118, 51
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "mint_address"
-              }
-            ]
-          }
-        },
-        {
-          "name": "admin",
-          "writable": true,
-          "signer": true,
-          "relations": ["config"]
-        }
-      ],
-      "args": [
-        {
-          "name": "_mint_address",
-          "type": "pubkey"
-        },
-        {
-          "name": "paused",
-          "type": "bool"
-        }
-      ]
-    },
-    {
       "name": "transact",
       "docs": [
         "Unified UTXO transaction instruction",
         "Circuit equation: sumIns + publicAmount = sumOuts",
-        "Handles deposits (publicAmount > 0), withdrawals (publicAmount < 0), and transfers (publicAmount = 0)"
+        "Handles deposits (publicAmount > 0), withdrawals (publicAmount < 0), and transfers (publicAmount = 0)",
+        "",
+        "Cross-tree transactions:",
+        "- input_tree_id: Tree containing input notes (for root validation)",
+        "- output_tree_id: Tree for new output commitments",
+        "- Can be the same tree or different trees",
+        "- Allows withdrawals even when input tree is full (outputs go to new tree)"
       ],
       "discriminator": [217, 149, 130, 143, 221, 52, 252, 119],
       "accounts": [
@@ -307,7 +346,10 @@
           }
         },
         {
-          "name": "note_tree",
+          "name": "input_tree",
+          "docs": [
+            "Input tree - where input notes came from (for root validation)"
+          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -321,6 +363,36 @@
               {
                 "kind": "arg",
                 "path": "mint_address"
+              },
+              {
+                "kind": "arg",
+                "path": "input_tree_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "output_tree",
+          "docs": [
+            "Output tree - where new output commitments will be inserted"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112, 114, 105, 118, 97, 99, 121, 95, 110, 111, 116, 101, 95,
+                  116, 114, 101, 101, 95, 118, 51
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint_address"
+              },
+              {
+                "kind": "arg",
+                "path": "output_tree_id"
               }
             ]
           }
@@ -347,7 +419,8 @@
         {
           "name": "nullifier_marker_0",
           "docs": [
-            "First nullifier marker (must not exist - ensures nullifier is fresh)"
+            "First nullifier marker (must not exist for withdrawals - ensures nullifier is fresh)",
+            "For deposits (public_amount > 0), this should be the zero nullifier marker (reusable)"
           ],
           "writable": true,
           "pda": {
@@ -361,6 +434,10 @@
               {
                 "kind": "arg",
                 "path": "mint_address"
+              },
+              {
+                "kind": "arg",
+                "path": "input_tree_id"
               },
               {
                 "kind": "arg",
@@ -372,7 +449,8 @@
         {
           "name": "nullifier_marker_1",
           "docs": [
-            "Second nullifier marker (must not exist - ensures nullifier is fresh)"
+            "Second nullifier marker (must not exist for withdrawals - ensures nullifier is fresh)",
+            "For deposits (public_amount > 0), this should be the zero nullifier marker (reusable)"
           ],
           "writable": true,
           "pda": {
@@ -386,6 +464,10 @@
               {
                 "kind": "arg",
                 "path": "mint_address"
+              },
+              {
+                "kind": "arg",
+                "path": "input_tree_id"
               },
               {
                 "kind": "arg",
@@ -442,6 +524,14 @@
           "type": {
             "array": ["u8", 32]
           }
+        },
+        {
+          "name": "input_tree_id",
+          "type": "u16"
+        },
+        {
+          "name": "output_tree_id",
+          "type": "u16"
         },
         {
           "name": "public_amount",
@@ -524,14 +614,7 @@
           "relations": ["global_config"]
         }
       ],
-      "args": [
-        {
-          "name": "relayer_enabled",
-          "type": {
-            "option": "bool"
-          }
-        }
-      ]
+      "args": []
     },
     {
       "name": "update_pool_config",
@@ -601,6 +684,12 @@
           "name": "min_withdrawal_fee",
           "type": {
             "option": "u64"
+          }
+        },
+        {
+          "name": "fee_error_margin_bps",
+          "type": {
+            "option": "u16"
           }
         }
       ]
@@ -711,7 +800,7 @@
     {
       "code": 6013,
       "name": "MerkleTreeFull",
-      "msg": "Merkle tree is full"
+      "msg": "Merkle tree is full - use a different tree_id or add a new tree with add_merkle_tree"
     },
     {
       "code": 6014,
@@ -845,8 +934,78 @@
     },
     {
       "code": 6040,
-      "name": "RelayersDisabledGlobally",
-      "msg": "Relayers are globally disabled"
+      "name": "ExcessiveFeeBps",
+      "msg": "Fee basis points exceeds maximum (100 = 1%)"
+    },
+    {
+      "code": 6041,
+      "name": "ExcessiveFeeMargin",
+      "msg": "Fee error margin exceeds maximum (5000 = 50%)"
+    },
+    {
+      "code": 6042,
+      "name": "UnauthorizedAdmin",
+      "msg": "Only authorized admin can initialize"
+    },
+    {
+      "code": 6043,
+      "name": "Unauthorized",
+      "msg": "Unauthorized: only admin or relayers can perform this action"
+    },
+    {
+      "code": 6044,
+      "name": "InvalidTreeId",
+      "msg": "Invalid tree_id (tree does not exist or exceeds num_trees)"
+    },
+    {
+      "code": 6045,
+      "name": "TooManyTrees",
+      "msg": "Maximum number of Merkle trees reached for this pool"
+    },
+    {
+      "code": 6046,
+      "name": "InvalidNullifiersForDeposit",
+      "msg": "Deposits must use zero nullifiers (no notes consumed)"
+    },
+    {
+      "code": 6047,
+      "name": "ZeroNullifier",
+      "msg": "Nullifier cannot be zero for withdrawals/transfers"
+    },
+    {
+      "code": 6048,
+      "name": "ZeroCommitment",
+      "msg": "Output commitment cannot be zero"
+    },
+    {
+      "code": 6049,
+      "name": "InvalidTokenAccountOwner",
+      "msg": "Token account must be owned by SPL Token Program"
+    },
+    {
+      "code": 6050,
+      "name": "VaultTokenAccountNotATA",
+      "msg": "Vault token account must be the canonical Associated Token Account"
+    },
+    {
+      "code": 6051,
+      "name": "WithdrawalTooSmallForMinFee",
+      "msg": "Withdrawal amount too small: max fee based on fee_bps would be less than min_withdrawal_fee"
+    },
+    {
+      "code": 6052,
+      "name": "InvalidNullifierMarkerForDeposit",
+      "msg": "Nullifier marker account does not correspond to zero nullifier for deposits"
+    },
+    {
+      "code": 6053,
+      "name": "InsufficientDelegation",
+      "msg": "Token account delegation amount insufficient for deposit"
+    },
+    {
+      "code": 6054,
+      "name": "NullifierTreeMismatch",
+      "msg": "Nullifier marker tree_id mismatch - nullifier already used in different tree"
     }
   ],
   "types": [
@@ -878,6 +1037,10 @@
           {
             "name": "mint_address",
             "type": "pubkey"
+          },
+          {
+            "name": "tree_id",
+            "type": "u16"
           }
         ]
       }
@@ -928,17 +1091,15 @@
             "name": "admin",
             "docs": ["Admin who can configure global settings"],
             "type": "pubkey"
-          },
-          {
-            "name": "relayer_enabled",
-            "docs": ["Global relayer toggle (emergency kill switch)"],
-            "type": "bool"
           }
         ]
       }
     },
     {
       "name": "MerkleTreeAccount",
+      "docs": [
+        "Layout tests verify 9107 bytes total with 1-byte alignment. Breaking this corrupts all accounts."
+      ],
       "serialization": "bytemuckunsafe",
       "repr": {
         "kind": "rust",
@@ -987,7 +1148,7 @@
                 {
                   "array": ["u8", 32]
                 },
-                16
+                22
               ]
             }
           },
@@ -999,7 +1160,7 @@
                 {
                   "array": ["u8", 32]
                 },
-                32
+                256
               ]
             }
           }
@@ -1028,6 +1189,13 @@
             "name": "withdrawal_index",
             "docs": ["Sequential withdrawal index"],
             "type": "u32"
+          },
+          {
+            "name": "tree_id",
+            "docs": [
+              "Tree ID this nullifier belongs to (prevents cross-tree double-spend)"
+            ],
+            "type": "u16"
           },
           {
             "name": "bump",
@@ -1074,6 +1242,10 @@
           {
             "name": "mint_address",
             "type": "pubkey"
+          },
+          {
+            "name": "tree_id",
+            "type": "u16"
           }
         ]
       }
@@ -1099,11 +1271,6 @@
             "type": "pubkey"
           },
           {
-            "name": "paused",
-            "docs": ["Is pool paused?"],
-            "type": "bool"
-          },
-          {
             "name": "fee_bps",
             "docs": ["Fee in basis points (0–10_000) for withdrawals"],
             "type": "u16"
@@ -1114,6 +1281,15 @@
               "Minimum fee for withdrawals (in lamports) to ensure relayer compensation"
             ],
             "type": "u64"
+          },
+          {
+            "name": "fee_error_margin_bps",
+            "docs": [
+              "Fee error margin in basis points (e.g., 500 = 5%)",
+              "Allows fee variance to prevent timing attacks where identical fees",
+              "could correlate deposits/withdrawals"
+            ],
+            "type": "u16"
           },
           {
             "name": "total_tvl",
@@ -1165,6 +1341,16 @@
             "type": {
               "array": ["pubkey", 16]
             }
+          },
+          {
+            "name": "num_trees",
+            "docs": ["Multi-tree support: number of active Merkle trees"],
+            "type": "u16"
+          },
+          {
+            "name": "next_tree_index",
+            "docs": ["Suggested tree index for next deposit (round-robin)"],
+            "type": "u16"
           }
         ]
       }
