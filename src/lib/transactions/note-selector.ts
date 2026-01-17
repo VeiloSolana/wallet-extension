@@ -17,45 +17,15 @@ export interface NoteSelectionResult {
 }
 
 /**
- * Select optimal notes for withdrawal
- * Selects the minimum number of notes needed to cover the amount
- * The relayer will handle combining if more than 2 notes are selected
+ * Select optimal notes for withdrawal from a single tree
+ * All selected notes must have the same treeId
  */
-export function selectNotesForWithdrawal(
+function selectNotesFromTree(
+  notesWithBigInt: NoteWithBigInt[],
   notes: StoredNote[],
-  withdrawAmountLamports: bigint
-): NoteSelectionResult {
-  if (notes.length === 0) {
-    return {
-      success: false,
-      selectedNotes: [],
-      totalAmount: 0n,
-      changeAmount: 0n,
-      message: "No notes available",
-    };
-  }
-
-  // Convert string amounts to bigint for calculations
-  const notesWithBigInt: NoteWithBigInt[] = notes.map((n) => ({
-    ...n,
-    amount: BigInt(n.amount),
-  }));
-
-  // Calculate total balance
-  const totalBalance = notesWithBigInt.reduce((sum, n) => sum + n.amount, 0n);
-
-  if (totalBalance < withdrawAmountLamports) {
-    return {
-      success: false,
-      selectedNotes: [],
-      totalAmount: totalBalance,
-      changeAmount: 0n,
-      message: `Insufficient balance. Have ${formatSol(
-        totalBalance
-      )}, need ${formatSol(withdrawAmountLamports)}`,
-    };
-  }
-
+  withdrawAmountLamports: bigint,
+  treeId: number
+): NoteSelectionResult | null {
   // Sort by amount (largest first)
   const sorted = [...notesWithBigInt].sort((a, b) =>
     Number(b.amount - a.amount)
@@ -70,9 +40,9 @@ export function selectNotesForWithdrawal(
         selectedNotes: [notes.find((n) => n.id === note.id)!],
         totalAmount: note.amount,
         changeAmount: change,
-        message: `Using 1 note: ${formatSol(note.amount)}. Change: ${formatSol(
-          change
-        )}`,
+        message: `Using 1 note from tree ${treeId}: ${formatSol(
+          note.amount
+        )}. Change: ${formatSol(change)}`,
       };
     }
   }
@@ -104,7 +74,7 @@ export function selectNotesForWithdrawal(
       ],
       totalAmount,
       changeAmount: lowestChange,
-      message: `Using 2 notes: ${formatSol(
+      message: `Using 2 notes from tree ${treeId}: ${formatSol(
         bestPair.note1.amount
       )} + ${formatSol(bestPair.note2.amount)} = ${formatSol(
         totalAmount
@@ -112,7 +82,7 @@ export function selectNotesForWithdrawal(
     };
   }
 
-  // Strategy 3: Use multiple notes (relayer will combine them)
+  // Strategy 3: Use multiple notes from the same tree (relayer will combine them)
   // Greedy algorithm: take largest notes until we have enough
   const selectedNotes: NoteWithBigInt[] = [];
   let currentTotal = 0n;
@@ -125,6 +95,11 @@ export function selectNotesForWithdrawal(
     }
   }
 
+  // Check if we have enough from this tree
+  if (currentTotal < withdrawAmountLamports) {
+    return null; // This tree doesn't have enough
+  }
+
   const change = currentTotal - withdrawAmountLamports;
   return {
     success: true,
@@ -133,9 +108,117 @@ export function selectNotesForWithdrawal(
     ),
     totalAmount: currentTotal,
     changeAmount: change,
-    message: `Using ${selectedNotes.length} notes totaling ${formatSol(
+    message: `Using ${
+      selectedNotes.length
+    } notes from tree ${treeId} totaling ${formatSol(
       currentTotal
     )}. Relayer will combine before withdrawal. Change: ${formatSol(change)}`,
+  };
+}
+
+/**
+ * Select optimal notes for withdrawal
+ * Selects the minimum number of notes needed to cover the amount
+ * All selected notes must have the same treeId (required by the circuit)
+ * The relayer will handle combining if more than 2 notes are selected
+ */
+export function selectNotesForWithdrawal(
+  notes: StoredNote[],
+  withdrawAmountLamports: bigint
+): NoteSelectionResult {
+  if (notes.length === 0) {
+    return {
+      success: false,
+      selectedNotes: [],
+      totalAmount: 0n,
+      changeAmount: 0n,
+      message: "No notes available",
+    };
+  }
+
+  // Convert string amounts to bigint for calculations
+  const notesWithBigInt: NoteWithBigInt[] = notes.map((n) => ({
+    ...n,
+    amount: BigInt(n.amount),
+  }));
+
+  // Calculate total balance across all trees
+  const totalBalance = notesWithBigInt.reduce((sum, n) => sum + n.amount, 0n);
+
+  if (totalBalance < withdrawAmountLamports) {
+    return {
+      success: false,
+      selectedNotes: [],
+      totalAmount: totalBalance,
+      changeAmount: 0n,
+      message: `Insufficient balance. Have ${formatSol(
+        totalBalance
+      )}, need ${formatSol(withdrawAmountLamports)}`,
+    };
+  }
+
+  // Group notes by treeId
+  const notesByTree = new Map<number, NoteWithBigInt[]>();
+  for (const note of notesWithBigInt) {
+    const treeNotes = notesByTree.get(note.treeId) || [];
+    treeNotes.push(note);
+    notesByTree.set(note.treeId, treeNotes);
+  }
+
+  // Try to find the best selection from each tree
+  // Prefer: 1 note > 2 notes > multiple notes, then lowest change
+  let bestResult: NoteSelectionResult | null = null;
+
+  for (const [treeId, treeNotes] of notesByTree) {
+    const result = selectNotesFromTree(
+      treeNotes,
+      notes,
+      withdrawAmountLamports,
+      treeId
+    );
+
+    if (result) {
+      // Compare with current best
+      if (!bestResult) {
+        bestResult = result;
+      } else {
+        // Prefer fewer notes, then lower change
+        const currentNoteCount = bestResult.selectedNotes.length;
+        const newNoteCount = result.selectedNotes.length;
+
+        if (
+          newNoteCount < currentNoteCount ||
+          (newNoteCount === currentNoteCount &&
+            result.changeAmount < bestResult.changeAmount)
+        ) {
+          bestResult = result;
+        }
+      }
+    }
+  }
+
+  if (bestResult) {
+    return bestResult;
+  }
+
+  // No single tree has enough funds
+  // Calculate balance per tree for error message
+  const treeBalances: string[] = [];
+  for (const [treeId, treeNotes] of notesByTree) {
+    const treeTotal = treeNotes.reduce((sum, n) => sum + n.amount, 0n);
+    treeBalances.push(`Tree ${treeId}: ${formatSol(treeTotal)}`);
+  }
+
+  return {
+    success: false,
+    selectedNotes: [],
+    totalAmount: totalBalance,
+    changeAmount: 0n,
+    message: `Insufficient balance in any single tree. Need ${formatSol(
+      withdrawAmountLamports
+    )} from one tree. Balances: ${treeBalances.join(
+      ", "
+    )}. Total across trees: ${formatSol(totalBalance)}`,
   };
 }
 
