@@ -55,9 +55,13 @@ export const handleTransfer = async (
 
   // Prepare notes for API - remove merklePath as it contains BigInt values
   // The relayer will rebuild the merkle tree anyway
+  // CRITICAL: Ensure treeId is set (defaults to 0 for legacy notes without treeId)
   const notesForApi = selectionResult.selectedNotes.map((note) => {
     const { merklePath, ...noteWithoutPath } = note;
-    return noteWithoutPath;
+    return {
+      ...noteWithoutPath,
+      treeId: noteWithoutPath.treeId ?? 0, // Default to tree 0 for legacy notes
+    };
   });
 
   // Send private transfer request to relayer
@@ -67,10 +71,11 @@ export const handleTransfer = async (
   const result = await submitPrivateTransfer({
     notes: notesForApi,
     recipientUsername,
-    amount,
+    amount: amount.toString(), // CRITICAL: Server expects string, not number
     userPublicKey,
     mintAddress: mintAddress.toBase58(),
   });
+
 
   if (!result.success || !result.data) {
     throw new Error(result.message || "Private transfer failed");

@@ -83,7 +83,6 @@ const SESSION_STORAGE_KEY = "veilo_session";
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
 export interface SessionData {
-  encryptedPassword: string; // Password encrypted with a session key
   timestamp: number;
   publicKey: string;
   username: string;
