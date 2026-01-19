@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { clearWallet } from "../utils/storage";
 // import { clearWallet } from "../utils/storage";
 
 interface LoginPageProps {
@@ -228,7 +229,7 @@ export const LoginPage = ({ onLogin, error, setError }: LoginPageProps) => {
             Sorry, there is no recovery option.
           </p>
 
-          {/* <button
+          <button
             onClick={async () => {
               if (
                 window.confirm(
@@ -242,8 +243,8 @@ export const LoginPage = ({ onLogin, error, setError }: LoginPageProps) => {
             }}
             className="mt-8 text-red-500 text-xs hover:text-red-400 transition-colors underline block w-full"
           >
-            [DEV] Reset Wallet
-          </button> */}
+             Reset Wallet
+          </button>
         </motion.div>
       </div>
 

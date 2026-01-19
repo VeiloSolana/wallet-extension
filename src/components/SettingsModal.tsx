@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { CyberButton } from "./CyberButton";
+import { clearWallet } from "../utils/storage";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -133,6 +134,29 @@ export const SettingsModal = ({
                     REVEAL PRIVATE KEY
                   </CyberButton>
                 </div>
+                 <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.5 }}
+                          className="mt-6 text-center"
+                        >
+                          <button
+                            onClick={async () => {
+                              if (
+                                window.confirm(
+                                  "Are you sure you want to reset everything? This will delete your wallet."
+                                )
+                              ) {
+                                await clearWallet();
+                                localStorage.clear();
+                                window.location.reload();
+                              }
+                            }}
+                            className="mt-8 text-red-500 text-xs hover:text-red-400 transition-colors underline block w-full"
+                          >
+                             Reset Wallet
+                          </button>
+                        </motion.div>
 
                 <div className="pt-1">
                   <p className="text-[10px] text-zinc-500 text-center">
