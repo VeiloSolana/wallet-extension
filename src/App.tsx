@@ -706,7 +706,7 @@ function App() {
         )}
 
         {/* Swap Tab Content */}
-        {activeTab === "swap" && <SwapPage />}
+        {activeTab === "swap" && <SwapPage keypair={wallet?.payer || null} />}
 
         {/* Preferences Tab Content */}
         {activeTab === "preferences" && (
