@@ -643,11 +643,13 @@ function App() {
     <div className="h-full  bg-black flex items-center justify-center">
       <div className="w-full max-w-md h-[600px]  flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
         <ConnectedDAppBar />
-        <WalletHeader
-          address={user?.publicKey}
-          username={user?.username}
-          onSettings={() => setIsSettingsModalOpen(true)}
-        />
+        {activeTab === "private" && (
+          <WalletHeader
+            address={user?.publicKey}
+            username={user?.username}
+            onSettings={() => setIsSettingsModalOpen(true)}
+          />
+        )}
 
         {/* Private Tab Content */}
         {activeTab === "private" && (

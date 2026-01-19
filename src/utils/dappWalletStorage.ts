@@ -11,21 +11,49 @@ export interface DappWallet {
 
 const DAPP_WALLETS_KEY = "veilo_dapp_wallets";
 
+// Helper to check if chrome.storage is available
+const isChromeStorageAvailable = () => {
+  return (
+    typeof chrome !== "undefined" && chrome.storage && chrome.storage.local
+  );
+};
+
+// Fallback to localStorage for development
+const getStorage = async (key: string): Promise<any> => {
+  if (isChromeStorageAvailable()) {
+    const result = await chrome.storage.local.get(key);
+    return result[key];
+  } else {
+    // Fallback to localStorage
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
+  }
+};
+
+const setStorage = async (key: string, value: any): Promise<void> => {
+  if (isChromeStorageAvailable()) {
+    await chrome.storage.local.set({ [key]: value });
+  } else {
+    // Fallback to localStorage
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+};
+
 export const saveDappWallet = async (wallet: DappWallet): Promise<void> => {
   const wallets = await getDappWallets();
   wallets.push(wallet);
-  await chrome.storage.local.set({ [DAPP_WALLETS_KEY]: wallets });
+  await setStorage(DAPP_WALLETS_KEY, wallets);
 };
 
 export const getDappWallets = async (): Promise<DappWallet[]> => {
-  const result = await chrome.storage.local.get(DAPP_WALLETS_KEY);
-  return result[DAPP_WALLETS_KEY] || [];
+  const wallets = await getStorage(DAPP_WALLETS_KEY);
+  return wallets || [];
 };
 
 export const deleteDappWallet = async (id: string): Promise<void> => {
   const wallets = await getDappWallets();
   const filtered = wallets.filter((w) => w.id !== id);
-  await chrome.storage.local.set({ [DAPP_WALLETS_KEY]: filtered });
+  await setStorage(DAPP_WALLETS_KEY, filtered);
 };
 
 export const updateDappWalletBalance = async (
@@ -36,7 +64,7 @@ export const updateDappWalletBalance = async (
   const wallet = wallets.find((w) => w.id === id);
   if (wallet) {
     wallet.balance = balance;
-    await chrome.storage.local.set({ [DAPP_WALLETS_KEY]: wallets });
+    await setStorage(DAPP_WALLETS_KEY, wallets);
   }
 };
 
