@@ -34,6 +34,10 @@ import { OnboardingWalkthrough } from "./components/OnboardingWalkthrough";
 import { RestoreSeedphrasePage } from "./components/RestoreSeedphrasePage";
 import { DAppApprovalPage } from "./components/DAppApprovalPage";
 import { ConnectedDAppBar } from "./components/ConnectedDAppBar";
+import { BottomTabs } from "./components/BottomTabs";
+import { DAppPage } from "./components/DAppPage";
+import { SwapPage } from "./components/SwapPage";
+import { PreferencesPage } from "./components/PreferencesPage";
 import { useAuthStore } from "./store/useAuthStore";
 import {
   useRegisterUser,
@@ -59,11 +63,8 @@ import { NoteManager } from "./lib/noteManager";
 import { syncNotesFromRelayer } from "./lib/noteSync";
 // Note: Transaction handlers and helpers moved to hooks
 
-
 // Devnet RPC endpoint
 const DEVNET_RPC_URL = "https://api.devnet.solana.com";
-
-
 
 interface Transaction {
   id: string;
@@ -87,8 +88,6 @@ interface StoredNote {
 }
 
 // PendingDAppRequest interface is now imported from useDAppRequests hook
-
-
 
 function App() {
   // Auth state
@@ -121,19 +120,23 @@ function App() {
     logout,
   });
 
-
   // dApp approval state will be initialized after noteManager/wallet
 
   // Note: dApp requests useEffect moved to useDAppRequests hook
 
   const [address, setAddress] = useState("");
 
+  // Tab Navigation State
+  const [activeTab, setActiveTab] = useState<
+    "private" | "dapp" | "swap" | "preferences"
+  >("private");
+
   // Navigation State - includes pages for withdraw and transfer
   const [view, setView] = useState<
     "dashboard" | "activity" | "details" | "withdraw" | "transfer"
   >("dashboard");
   const [lastView, setLastView] = useState<"dashboard" | "activity">(
-    "dashboard"
+    "dashboard",
   );
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
@@ -144,7 +147,6 @@ function App() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [password, setPassword] = useState("");
 
-
   // SDK state
   // @ts-expect-error - Used by setConnection
   const [connection, setConnection] = useState<Connection | undefined>();
@@ -154,11 +156,10 @@ function App() {
   // isInitialized now comes from useOnboarding hook
   const [noteManager, setNoteManager] = useState<NoteManager | null>(null);
 
-
   // Notes state (from hook)
   // @ts-expect-error - Used by setStoredNotes
   const [storedNotes, setStoredNotes] = useState<StoredNote[]>([]);
-  
+
   const {
     balance,
     tokenBalances,
@@ -195,7 +196,6 @@ function App() {
     wallet: wallet || null,
   });
 
-
   // Note: handleUsernameSubmit, handlePhraseConfirm, handleWalkthroughComplete,
   // handleStartRestore, handleSeedphraseSubmit now come from useOnboarding hook
 
@@ -224,7 +224,7 @@ function App() {
       const veiloPrivateKeyHex = response.veiloPrivateKey || "";
       const encryptedVeiloPrivateKey = await encrypt(
         veiloPrivateKeyHex,
-        password
+        password,
       );
 
       // 4. Store all encrypted data
@@ -237,7 +237,7 @@ function App() {
           publicKey: response.publicKey,
           username: response.username,
         },
-        response.token
+        response.token,
       );
 
       // 5. Store password in state for session use
@@ -246,7 +246,7 @@ function App() {
       // 6. Initialize NoteManager with account context
       const accountNoteManager = new NoteManager(
         response.publicKey,
-        privateKeyHex
+        privateKeyHex,
       );
       setNoteManager(accountNoteManager);
 
@@ -269,7 +269,7 @@ function App() {
       anchor.setProvider(provider);
       const programInstance = new anchor.Program(
         privacyPoolIdl as Idl,
-        provider
+        provider,
       ) as Program<any>;
       setProgram(programInstance);
 
@@ -284,7 +284,7 @@ function App() {
             response.publicKey,
             privateKeyHex,
             veiloPrivateKeyHex,
-            veiloPublicKey
+            veiloPublicKey,
           );
           // Reload notes after sync
           await loadNotes();
@@ -317,11 +317,11 @@ function App() {
       const encryptedMnemonic = await encrypt(restoreMnemonic, password);
       const encryptedVeiloPublicKey = await encrypt(
         response.veiloPublicKey || "",
-        password
+        password,
       );
       const encryptedVeiloPrivateKey = await encrypt(
         response.veiloPrivateKey || "",
-        password
+        password,
       );
 
       // 4. Store all encrypted data
@@ -334,7 +334,7 @@ function App() {
           publicKey: response.publicKey,
           username: response.username,
         },
-        response.token
+        response.token,
       );
 
       // 5. Store password in state for session use
@@ -343,7 +343,7 @@ function App() {
       // 6. Initialize NoteManager with account context
       const accountNoteManager = new NoteManager(
         response.publicKey,
-        privateKeyHex
+        privateKeyHex,
       );
       setNoteManager(accountNoteManager);
 
@@ -362,7 +362,7 @@ function App() {
       anchor.setProvider(provider);
       const programInstance = new anchor.Program(
         privacyPoolIdl as Idl,
-        provider
+        provider,
       ) as Program<any>;
       setProgram(programInstance);
 
@@ -382,7 +382,7 @@ function App() {
             response.publicKey,
             privateKeyHex,
             veiloPrivateKey,
-            veiloPublicKey
+            veiloPublicKey,
           );
           // Reload notes via hook
           await loadNotes();
@@ -390,7 +390,6 @@ function App() {
           console.error("Initial sync after restore failed:", e);
         }
       }, 500);
-
     } catch (e: any) {
       console.error("Restore failed", e);
       setError(e?.message || "Failed to restore account");
@@ -409,18 +408,18 @@ function App() {
       // Decrypt all sensitive data
       const secretKeyStr = await decrypt(
         storedWallet.encryptedSecretKey,
-        password
+        password,
       );
       const secretKey = new Uint8Array(JSON.parse(secretKeyStr));
       const keypair = Keypair.fromSecretKey(secretKey);
 
       const veiloPublicKey = await decrypt(
         storedWallet.encryptedVeiloPublicKey,
-        password
+        password,
       );
       const veiloPrivateKey = await decrypt(
         storedWallet.encryptedVeiloPrivateKey,
-        password
+        password,
       );
 
       // Store decrypted keys for use in the session
@@ -429,7 +428,7 @@ function App() {
       // Initialize NoteManager with account context
       const accountNoteManager = new NoteManager(
         storedWallet.publicKey,
-        Buffer.from(secretKey).toString("hex")
+        Buffer.from(secretKey).toString("hex"),
       );
       setNoteManager(accountNoteManager);
 
@@ -449,7 +448,7 @@ function App() {
 
       const programInstance = new anchor.Program(
         privacyPoolIdl as Idl,
-        provider
+        provider,
       ) as Program<any>;
       setProgram(programInstance);
 
@@ -467,20 +466,20 @@ function App() {
         username: storedWallet.username || "User",
       });
 
-      // useNotes hook auto-loads notes when isAuthenticated changes  
+      // useNotes hook auto-loads notes when isAuthenticated changes
       // Just trigger a sync with relayer after a short delay
       setTimeout(async () => {
         try {
           const privKeyHex = Buffer.from(secretKey).toString("hex");
           console.log("🔄 Starting sync with relayer...");
-          
+
           try {
             const syncedCount = await syncNotesFromRelayer(
               accountNoteManager,
               keypair.publicKey.toString(),
               privKeyHex,
               veiloPrivateKey,
-              veiloPublicKey
+              veiloPublicKey,
             );
             console.log(`✅ Sync completed. ${syncedCount} new notes synced.`);
           } catch (syncError) {
@@ -493,7 +492,6 @@ function App() {
           console.error("Initial sync failed:", e);
         }
       }, 500);
-
     } catch (e) {
       console.error("Login failed:", e);
       setError("Incorrect Password");
@@ -650,42 +648,68 @@ function App() {
           username={user?.username}
           onSettings={() => setIsSettingsModalOpen(true)}
         />
-        <BalanceDisplay
-          tokenBalances={tokenBalances}
-          // address={user?.publicKey?.toString() || ""}
-          onSend={() => setView("withdraw")}
-          onReceive={() => setIsReceiveModalOpen(true)}
-          onSync={handleSyncNotes}
-          isSyncing={isSyncing}
-        />
 
-        {!isInitialized && (
-          <div className="px-4 py-2 border-b border-white/10">
-            <div className="py-2 px-3 mb-2 border border-neon-green/30 bg-neon-green/10">
-              <p className="text-[10px] font-mono text-center">
-                Initializing connection to devnet...
-              </p>
-            </div>
-          </div>
+        {/* Private Tab Content */}
+        {activeTab === "private" && (
+          <>
+            <BalanceDisplay
+              tokenBalances={tokenBalances}
+              // address={user?.publicKey?.toString() || ""}
+              onSend={() => setView("withdraw")}
+              onReceive={() => setIsReceiveModalOpen(true)}
+              onSync={handleSyncNotes}
+              isSyncing={isSyncing}
+            />
+
+            {!isInitialized && (
+              <div className="px-4 py-2 border-b border-white/10">
+                <div className="py-2 px-3 mb-2 border border-neon-green/30 bg-neon-green/10">
+                  <p className="text-[10px] font-mono text-center">
+                    Initializing connection to devnet...
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <ActionButtons
+              onTransfer={() => setView("transfer")}
+              onDeposit={() => setIsDepositModalOpen(true)}
+              onWithdraw={() => setView("withdraw")}
+            />
+
+            <TransactionList
+              transactions={transactions}
+              onViewAll={() => setView("activity")}
+              onSelectTransaction={(tx) => {
+                setSelectedTransaction(tx);
+                setLastView("dashboard");
+                setView("details");
+              }}
+              tokenBalances={tokenBalances}
+              isLoadingNotes={isLoadingNotes}
+            />
+          </>
         )}
 
-        <ActionButtons
-          onTransfer={() => setView("transfer")}
-          onDeposit={() => setIsDepositModalOpen(true)}
-          onWithdraw={() => setView("withdraw")}
-        />
+        {/* DApp Tab Content */}
+        {activeTab === "dapp" && (
+          <DAppPage
+            availableBalance={balance}
+            password={password}
+            onTransferToWallet={async (toAddress: string, amount: number) => {
+              // Transfer from main wallet to dapp wallet
+              await handleTransfer(toAddress, amount, "SOL");
+            }}
+          />
+        )}
 
-        <TransactionList
-          transactions={transactions}
-          onViewAll={() => setView("activity")}
-          onSelectTransaction={(tx) => {
-            setSelectedTransaction(tx);
-            setLastView("dashboard");
-            setView("details");
-          }}
-          tokenBalances={tokenBalances}
-          isLoadingNotes={isLoadingNotes}
-        />
+        {/* Swap Tab Content */}
+        {activeTab === "swap" && <SwapPage />}
+
+        {/* Preferences Tab Content */}
+        {activeTab === "preferences" && (
+          <PreferencesPage address={address} onLogout={logout} />
+        )}
 
         <AnimatePresence>
           {view === "activity" && (
@@ -727,6 +751,9 @@ function App() {
           onClose={() => setIsSettingsModalOpen(false)}
           address={address}
         />
+
+        {/* Bottom Tab Navigation */}
+        <BottomTabs activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
     </div>
   );
