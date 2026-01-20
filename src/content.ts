@@ -66,7 +66,7 @@ window.addEventListener("message", async (event: MessageEvent) => {
 
       console.log(
         "[Veilo Content] Received response from background:",
-        response
+        response,
       );
 
       // Check if response contains an error (from rejection or failed operation)
@@ -77,7 +77,7 @@ window.addEventListener("message", async (event: MessageEvent) => {
           error: (response as { error: string }).error,
         };
         console.log(
-          "[Veilo Content] Sending error response to injected script"
+          "[Veilo Content] Sending error response to injected script",
         );
         window.postMessage(responseMessage, "*");
       } else {
@@ -88,7 +88,7 @@ window.addEventListener("message", async (event: MessageEvent) => {
           result: response,
         };
         console.log(
-          "[Veilo Content] Sending success response to injected script"
+          "[Veilo Content] Sending success response to injected script",
         );
         window.postMessage(responseMessage, "*");
       }
@@ -113,8 +113,21 @@ chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
         event: message.event,
         data: message.data,
       },
-      "*"
+      "*",
     );
   }
+
+  if (message.type === "WALLET_DISCONNECTED") {
+    // Notify injected script that wallet was disconnected
+    window.postMessage(
+      {
+        source: "veilo-content",
+        event: "disconnect",
+        data: { origin: message.origin },
+      },
+      "*",
+    );
+  }
+
   return false;
 });

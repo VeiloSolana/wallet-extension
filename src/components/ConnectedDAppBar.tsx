@@ -22,7 +22,8 @@ export const ConnectedDAppBar = () => {
 
         // Get connected sites
         const result = await chrome.storage.local.get(["connectedSites"]);
-        const connectedSites: string[] = (result.connectedSites as string[]) || [];
+        const connectedSites: string[] =
+          (result.connectedSites as string[]) || [];
 
         if (connectedSites.includes(origin)) {
           setConnectedOrigin(origin);
@@ -41,12 +42,36 @@ export const ConnectedDAppBar = () => {
   const handleDisconnect = async () => {
     if (!connectedOrigin) return;
     try {
+      // Remove from connected sites
       const result = await chrome.storage.local.get(["connectedSites"]);
-      const connectedSites: string[] = (result.connectedSites as string[]) || [];
+      const connectedSites: string[] =
+        (result.connectedSites as string[]) || [];
       const updatedSites = connectedSites.filter(
-        (site) => site !== connectedOrigin
+        (site) => site !== connectedOrigin,
       );
       await chrome.storage.local.set({ connectedSites: updatedSites });
+
+      // Clear wallet public key to force reconnection
+      await chrome.storage.local.remove("walletPublicKey");
+
+      // Get the active tab
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+
+      if (tab?.id) {
+        // Send message to content script to notify provider of disconnect
+        await chrome.tabs
+          .sendMessage(tab.id, {
+            type: "WALLET_DISCONNECTED",
+            origin: connectedOrigin,
+          })
+          .catch(() => {
+            console.log("Could not send disconnect message to tab");
+          });
+      }
+
       setConnectedOrigin(null);
     } catch (error) {
       console.error("Failed to disconnect:", error);

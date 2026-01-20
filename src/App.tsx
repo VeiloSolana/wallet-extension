@@ -1,5 +1,5 @@
 /// <reference types="chrome"/>
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 import * as anchor from "@coral-xyz/anchor";
 import type { Program, Idl } from "@coral-xyz/anchor";
@@ -24,7 +24,6 @@ import { WithdrawPage } from "./components/WithdrawPage";
 import { ReceiveModal } from "./components/ReceiveModal";
 import { DepositModal } from "./components/DepositModal";
 import { TransferPage } from "./components/TransferPage";
-import { SettingsModal } from "./components/SettingsModal";
 import { WelcomePage } from "./components/WelcomePage";
 import { CreatePasswordPage } from "./components/CreatePasswordPage";
 import { SecretPhrasePage } from "./components/SecretPhrasePage";
@@ -55,7 +54,7 @@ import { encrypt, decrypt } from "./utils/encryption";
 import {
   saveWallet,
   loadWallet,
-  saveSession,
+  saveSessionWithPassword,
   // Note: loadSession, clearSession, isSessionValid moved to useOnboarding hook
 } from "./utils/storage";
 
@@ -97,6 +96,109 @@ function App() {
   const { mutateAsync: restoreAccountApi, isPending: isRestoring } =
     useRestoreAccount();
 
+  // Local error state (shared with useOnboarding)
+  const [localError, setLocalError] = useState("");
+
+  // Handle login for returning users (moved before useOnboarding so it can be passed)
+  const handleLogin = useCallback(
+    async (password: string) => {
+      try {
+        const storedWallet = await loadWallet();
+        if (!storedWallet) {
+          console.error("No wallet found");
+          return;
+        }
+
+        // Decrypt all sensitive data
+        const secretKeyStr = await decrypt(
+          storedWallet.encryptedSecretKey,
+          password,
+        );
+        const secretKey = new Uint8Array(JSON.parse(secretKeyStr));
+        const keypair = Keypair.fromSecretKey(secretKey);
+
+        const veiloPublicKey = await decrypt(
+          storedWallet.encryptedVeiloPublicKey,
+          password,
+        );
+        const veiloPrivateKey = await decrypt(
+          storedWallet.encryptedVeiloPrivateKey,
+          password,
+        );
+
+        // Store decrypted keys for use in the session
+        setPassword(password);
+
+        // Initialize NoteManager with account context
+        const accountNoteManager = new NoteManager(
+          storedWallet.publicKey,
+          Buffer.from(secretKey).toString("hex"),
+        );
+        setNoteManager(accountNoteManager);
+
+        // Initialize Session
+        const walletInstance = new Wallet(keypair);
+        setWallet(walletInstance);
+        setAddress(keypair.publicKey.toString());
+
+        const conn = new Connection(DEVNET_RPC_URL, "confirmed");
+        setConnection(conn);
+
+        const provider = new anchor.AnchorProvider(conn, walletInstance, {
+          commitment: "confirmed",
+          preflightCommitment: "confirmed",
+        });
+        anchor.setProvider(provider);
+
+        const programInstance = new anchor.Program(
+          privacyPoolIdl as Idl,
+          provider,
+        ) as Program<any>;
+        setProgram(programInstance);
+
+        setAuth({
+          username: storedWallet.username || "User",
+          publicKey: keypair.publicKey.toString(),
+        });
+
+        // Save session with password for auto-unlock within timeout window
+        await saveSessionWithPassword(
+          keypair.publicKey.toString(),
+          storedWallet.username || "User",
+          password,
+        );
+
+        // Sync with relayer after a short delay
+        setTimeout(async () => {
+          try {
+            const privKeyHex = Buffer.from(secretKey).toString("hex");
+            console.log("🔄 Starting sync with relayer...");
+            try {
+              const syncedCount = await syncNotesFromRelayer(
+                accountNoteManager,
+                keypair.publicKey.toString(),
+                privKeyHex,
+                veiloPrivateKey,
+                veiloPublicKey,
+              );
+              console.log(
+                `✅ Sync completed. ${syncedCount} new notes synced.`,
+              );
+            } catch (syncError) {
+              console.error("❌ Sync from relayer failed:", syncError);
+            }
+          } catch (e) {
+            console.error("Initial sync failed:", e);
+          }
+        }, 500);
+      } catch (e) {
+        console.error("Login failed:", e);
+        setLocalError("Incorrect Password");
+      }
+    },
+    [setAuth, setLocalError],
+  );
+
   // Onboarding state & handlers (from useOnboarding hook)
   const {
     onboardingStep,
@@ -106,6 +208,7 @@ function App() {
     restoreMnemonic,
     showOnboarding,
     isInitialized,
+    isAutoLoggingIn,
     setOnboardingStep,
     setGeneratedPhrase,
     setError,
@@ -118,6 +221,9 @@ function App() {
   } = useOnboarding({
     isAuthenticated,
     logout,
+    onAutoLogin: handleLogin,
+    externalError: localError,
+    setExternalError: setLocalError,
   });
 
   // dApp approval state will be initialized after noteManager/wallet
@@ -144,7 +250,6 @@ function App() {
   // Modal states (only for modals, not pages)
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [password, setPassword] = useState("");
 
   // SDK state
@@ -194,6 +299,7 @@ function App() {
   } = useDAppRequests({
     noteManager,
     wallet: wallet || null,
+    password,
   });
 
   // Note: handleUsernameSubmit, handlePhraseConfirm, handleWalkthroughComplete,
@@ -396,117 +502,18 @@ function App() {
     }
   };
 
-  // Handle login for returning users
-  const handleLogin = async (password: string) => {
-    try {
-      const storedWallet = await loadWallet();
-      if (!storedWallet) {
-        console.error("No wallet found");
-        return;
-      }
-
-      // Decrypt all sensitive data
-      const secretKeyStr = await decrypt(
-        storedWallet.encryptedSecretKey,
-        password,
-      );
-      const secretKey = new Uint8Array(JSON.parse(secretKeyStr));
-      const keypair = Keypair.fromSecretKey(secretKey);
-
-      const veiloPublicKey = await decrypt(
-        storedWallet.encryptedVeiloPublicKey,
-        password,
-      );
-      const veiloPrivateKey = await decrypt(
-        storedWallet.encryptedVeiloPrivateKey,
-        password,
-      );
-
-      // Store decrypted keys for use in the session
-      setPassword(password); // Keep password in memory for later use
-
-      // Initialize NoteManager with account context
-      const accountNoteManager = new NoteManager(
-        storedWallet.publicKey,
-        Buffer.from(secretKey).toString("hex"),
-      );
-      setNoteManager(accountNoteManager);
-
-      // Initialize Session
-      const walletInstance = new Wallet(keypair);
-      setWallet(walletInstance);
-      setAddress(keypair.publicKey.toString());
-
-      const conn = new Connection(DEVNET_RPC_URL, "confirmed");
-      setConnection(conn);
-
-      const provider = new anchor.AnchorProvider(conn, walletInstance, {
-        commitment: "confirmed",
-        preflightCommitment: "confirmed",
-      });
-      anchor.setProvider(provider);
-
-      const programInstance = new anchor.Program(
-        privacyPoolIdl as Idl,
-        provider,
-      ) as Program<any>;
-      setProgram(programInstance);
-
-      setAuth({
-        username: storedWallet.username || "User",
-        publicKey: keypair.publicKey.toString(),
-      });
-      setPassword(password);
-
-      // Save session for auto-login within timeout window
-      await saveSession({
-        // Do NOT store password in session storage. Password must be memory-only.
-        timestamp: Date.now(),
-        publicKey: keypair.publicKey.toString(),
-        username: storedWallet.username || "User",
-      });
-
-      // useNotes hook auto-loads notes when isAuthenticated changes
-      // Just trigger a sync with relayer after a short delay
-      setTimeout(async () => {
-        try {
-          const privKeyHex = Buffer.from(secretKey).toString("hex");
-          console.log("🔄 Starting sync with relayer...");
-
-          try {
-            const syncedCount = await syncNotesFromRelayer(
-              accountNoteManager,
-              keypair.publicKey.toString(),
-              privKeyHex,
-              veiloPrivateKey,
-              veiloPublicKey,
-            );
-            console.log(`✅ Sync completed. ${syncedCount} new notes synced.`);
-          } catch (syncError) {
-            console.error("❌ Sync from relayer failed:", syncError);
-          }
-
-          // Reload notes via hook
-          await loadNotes();
-        } catch (e) {
-          console.error("Initial sync failed:", e);
-        }
-      }, 500);
-    } catch (e) {
-      console.error("Login failed:", e);
-      setError("Incorrect Password");
-      //  alert("Incorrect password"); // Simple feedback
-    }
-  };
-
   // Loading state
-  if (isRegistering || isRestoring) {
+  if (isRegistering || isRestoring || isAutoLoggingIn) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="w-full max-w-md h-[600px]  flex flex-col items-center justify-center bg-black/90 border border-white/10">
           <div className="w-12 h-12 border-2 border-neon-green/30 border-t-neon-green rounded-full animate-spin" />
           <p className="mt-4 text-zinc-500 font-mono text-sm">
-            {isRestoring ? "Restoring account..." : "Creating account..."}
+            {isAutoLoggingIn
+              ? "Unlocking..."
+              : isRestoring
+                ? "Restoring account..."
+                : "Creating account..."}
           </p>
         </div>
       </div>
@@ -584,27 +591,19 @@ function App() {
   // Returning user login
   if (!isAuthenticated) {
     return (
-      <div className="h-full bg-black flex items-center justify-center">
-        <div className="w-full  max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
-          <LoginPage error={error} setError={setError} onLogin={handleLogin} />
-        </div>
-      </div>
+      <LoginPage error={error} setError={setError} onLogin={handleLogin} />
     );
   }
 
   // Show dApp approval page when there's a pending request
   if (pendingDAppRequest) {
     return (
-      <div className="h-full bg-black flex items-center justify-center">
-        <div className="w-full max-w-md h-[600px] flex flex-col relative overflow-hidden bg-black/90 border border-white/10 shadow-2xl shadow-neon-green/10">
-          <DAppApprovalPage
-            request={pendingDAppRequest}
-            onApprove={handleDAppApproval}
-            onReject={handleDAppRejection}
-            isProcessing={isApprovalProcessing}
-          />
-        </div>
-      </div>
+      <DAppApprovalPage
+        request={pendingDAppRequest}
+        onApprove={handleDAppApproval}
+        onReject={handleDAppRejection}
+        isProcessing={isApprovalProcessing}
+      />
     );
   }
 
@@ -647,7 +646,7 @@ function App() {
           <WalletHeader
             address={user?.publicKey}
             username={user?.username}
-            onSettings={() => setIsSettingsModalOpen(true)}
+            onSettings={() => setActiveTab("preferences")}
           />
         )}
 
@@ -698,9 +697,9 @@ function App() {
           <DAppPage
             availableBalance={balance}
             password={password}
-            onTransferToWallet={async (toAddress: string, amount: number) => {
-              // Transfer from main wallet to dapp wallet
-              await handleTransfer(toAddress, amount, "SOL");
+            onWithdrawToWallet={async (toAddress: string, amount: number) => {
+              // Withdraw from privacy pool to dapp wallet via relayer
+              await handleSend(toAddress, amount, "SOL");
             }}
           />
         )}
@@ -746,12 +745,6 @@ function App() {
           isOpen={isDepositModalOpen}
           onClose={() => setIsDepositModalOpen(false)}
           username={user?.username}
-        />
-
-        <SettingsModal
-          isOpen={isSettingsModalOpen}
-          onClose={() => setIsSettingsModalOpen(false)}
-          address={address}
         />
 
         {/* Bottom Tab Navigation */}

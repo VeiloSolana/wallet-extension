@@ -40,7 +40,7 @@ export const LoginPage = ({ onLogin, error, setError }: LoginPageProps) => {
   };
 
   return (
-    <div className="h-full w-full flex flex-col bg-black relative overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-black relative overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 bg-grid opacity-10" />
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-48 h-48 bg-neon-green/10 rounded-full blur-[80px]" />

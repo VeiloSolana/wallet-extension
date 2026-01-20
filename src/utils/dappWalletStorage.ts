@@ -1,10 +1,11 @@
 import { Keypair } from "@solana/web3.js";
+import type { EncryptedData } from "./encryption";
 
 export interface DappWallet {
   id: string;
   name: string;
   publicKey: string;
-  encryptedPrivateKey: string;
+  encryptedPrivateKey: EncryptedData;
   balance: number;
   createdAt: number;
 }
