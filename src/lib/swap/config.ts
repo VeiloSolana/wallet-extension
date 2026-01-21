@@ -10,19 +10,22 @@ export const SUPPORTED_TOKENS: SwapToken[] = [
     symbol: "SOL",
     mintAddress: SOL_MINT.toString(),
     decimals: 9,
-    logoUri: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+    logoUri:
+      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
   },
   {
     symbol: "USDC",
     mintAddress: USDC_MINT.toString(),
     decimals: 6,
-    logoUri: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+    logoUri:
+      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
   },
   {
     symbol: "USDT",
     mintAddress: USDT_MINT.toString(),
     decimals: 6,
-    logoUri: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.png",
+    logoUri:
+      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.png",
   },
 ];
 
@@ -41,7 +44,7 @@ export const SWAP_CONFIG: SwapConfig = {
   providers: {
     jupiter: {
       enabled: true,
-      apiEndpoint: "https://quote-api.jup.ag/v6",
+      apiEndpoint: "https://lite-api.jup.ag/swap/v1",
     },
     raydium: {
       enabled: false,
@@ -60,14 +63,14 @@ export const SWAP_CONFIG: SwapConfig = {
 // Helper to get token by symbol
 export function getTokenBySymbol(symbol: string): SwapToken | undefined {
   return SUPPORTED_TOKENS.find(
-    (t) => t.symbol.toLowerCase() === symbol.toLowerCase()
+    (t) => t.symbol.toLowerCase() === symbol.toLowerCase(),
   );
 }
 
 // Helper to get token by mint address
 export function getTokenByMint(mintAddress: string): SwapToken | undefined {
   return SUPPORTED_TOKENS.find(
-    (t) => t.mintAddress.toLowerCase() === mintAddress.toLowerCase()
+    (t) => t.mintAddress.toLowerCase() === mintAddress.toLowerCase(),
   );
 }
 

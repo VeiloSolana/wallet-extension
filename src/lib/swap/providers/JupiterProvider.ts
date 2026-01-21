@@ -50,10 +50,24 @@ interface JupiterSwapResponse {
  */
 export class JupiterProvider extends BaseSwapProvider {
   readonly providerType: SwapProviderType = "jupiter";
+  private readonly apiKey: string;
 
   constructor() {
     const config = SWAP_CONFIG.providers.jupiter;
-    super(config.apiEndpoint || "https://quote-api.jup.ag/v6");
+    super(config.apiEndpoint || "https://lite-api.jup.ag/swap/v1");
+
+    const apiKey = import.meta.env.VITE_JUPITER_API_KEY;
+    if (!apiKey) {
+      throw new Error("VITE_JUPITER_API_KEY environment variable is required");
+    }
+    this.apiKey = apiKey;
+  }
+
+  private getHeaders(): HeadersInit {
+    return {
+      "Content-Type": "application/json",
+      "x-api-key": this.apiKey,
+    };
   }
 
   /**
@@ -79,7 +93,9 @@ export class JupiterProvider extends BaseSwapProvider {
       swapMode: "ExactIn",
     });
 
-    const response = await fetch(`${this.apiEndpoint}/quote?${queryParams}`);
+    const response = await fetch(`${this.apiEndpoint}/quote?${queryParams}`, {
+      headers: this.getHeaders(),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -97,7 +113,7 @@ export class JupiterProvider extends BaseSwapProvider {
    */
   async buildSwapTransaction(
     params: SwapParams,
-    quote: SwapQuote
+    quote: SwapQuote,
   ): Promise<VersionedTransaction> {
     if (!quote.rawQuote) {
       throw new Error("Quote does not contain raw Jupiter quote data");
@@ -111,9 +127,7 @@ export class JupiterProvider extends BaseSwapProvider {
 
     const response = await fetch(`${this.apiEndpoint}/swap`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: this.getHeaders(),
       body: JSON.stringify({
         quoteResponse: quote.rawQuote,
         userPublicKey,
@@ -133,7 +147,7 @@ export class JupiterProvider extends BaseSwapProvider {
     // Deserialize the transaction
     const transactionBuffer = Buffer.from(
       swapResponse.swapTransaction,
-      "base64"
+      "base64",
     );
     const transaction = VersionedTransaction.deserialize(transactionBuffer);
 
@@ -145,7 +159,7 @@ export class JupiterProvider extends BaseSwapProvider {
    */
   private convertQuoteResponse(
     response: JupiterQuoteResponse,
-    params: SwapParams
+    params: SwapParams,
   ): SwapQuote {
     // Build route info from Jupiter's route plan
     const routes: SwapRoute[] = [
@@ -153,23 +167,25 @@ export class JupiterProvider extends BaseSwapProvider {
         inAmount: response.inAmount,
         outAmount: response.outAmount,
         priceImpactPct: parseFloat(response.priceImpactPct),
-        marketInfos: response.routePlan.map((plan): SwapRouteHop => ({
-          inputMint: plan.swapInfo.inputMint,
-          outputMint: plan.swapInfo.outputMint,
-          ammKey: plan.swapInfo.ammKey,
-          label: plan.swapInfo.label,
-          inputAmount: plan.swapInfo.inAmount,
-          outputAmount: plan.swapInfo.outAmount,
-          feeAmount: plan.swapInfo.feeAmount,
-          feeMint: plan.swapInfo.feeMint,
-        })),
+        marketInfos: response.routePlan.map(
+          (plan): SwapRouteHop => ({
+            inputMint: plan.swapInfo.inputMint,
+            outputMint: plan.swapInfo.outputMint,
+            ammKey: plan.swapInfo.ammKey,
+            label: plan.swapInfo.label,
+            inputAmount: plan.swapInfo.inAmount,
+            outputAmount: plan.swapInfo.outAmount,
+            feeAmount: plan.swapInfo.feeAmount,
+            feeMint: plan.swapInfo.feeMint,
+          }),
+        ),
       },
     ];
 
     // Calculate minimum received after slippage
     const minimumReceived = this.calculateMinimumReceived(
       response.outAmount,
-      params.slippageBps
+      params.slippageBps,
     );
 
     // Estimate network fee (approximately 5000 lamports for a typical swap)

@@ -37,7 +37,7 @@ export class SwapService {
    * Get the best quote across all enabled providers.
    */
   async getBestQuote(
-    params: SwapParams
+    params: SwapParams,
   ): Promise<{ provider: ISwapProvider; quote: SwapQuote }> {
     return SwapProviderFactory.getBestQuote(params);
   }
@@ -48,7 +48,7 @@ export class SwapService {
   async getRate(
     inputMint: string,
     outputMint: string,
-    amount: string = "1"
+    amount: string = "1",
   ): Promise<string> {
     return this.provider.getRate(inputMint, outputMint, amount);
   }
@@ -78,7 +78,7 @@ export class SwapService {
       console.log("🔨 Building transaction...");
       const transaction = await this.provider.buildSwapTransaction(
         params,
-        quote
+        quote,
       );
 
       // 3. Sign transaction
@@ -117,7 +117,7 @@ export class SwapService {
    */
   async executeSwapWithBestQuote(
     params: SwapParams,
-    keypair: Keypair
+    keypair: Keypair,
   ): Promise<SwapResult> {
     try {
       console.log("🔄 Starting swap with best quote...");
@@ -125,14 +125,11 @@ export class SwapService {
       // 1. Get best quote across all providers
       console.log("📊 Getting best quote across providers...");
       const { provider, quote } = await this.getBestQuote(params);
-      console.log(
-        `📊 Best quote from ${provider.providerType}:`,
-        {
-          inputAmount: quote.inputAmount,
-          outputAmount: quote.outputAmount,
-          priceImpact: quote.priceImpact,
-        }
-      );
+      console.log(`📊 Best quote from ${provider.providerType}:`, {
+        inputAmount: quote.inputAmount,
+        outputAmount: quote.outputAmount,
+        priceImpact: quote.priceImpact,
+      });
 
       // 2. Build transaction using the winning provider
       console.log("🔨 Building transaction...");
