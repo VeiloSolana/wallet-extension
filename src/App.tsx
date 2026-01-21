@@ -32,6 +32,7 @@ import { CreateUsernamePage } from "./components/CreateUsernamePage";
 import { OnboardingWalkthrough } from "./components/OnboardingWalkthrough";
 import { RestoreSeedphrasePage } from "./components/RestoreSeedphrasePage";
 import { DAppApprovalPage } from "./components/DAppApprovalPage";
+import { TransactionApprovalPage } from "./components/TransactionApprovalPage";
 import { ConnectedDAppBar } from "./components/ConnectedDAppBar";
 import { BottomTabs } from "./components/BottomTabs";
 import { DAppPage } from "./components/DAppPage";
@@ -597,6 +598,22 @@ function App() {
 
   // Show dApp approval page when there's a pending request
   if (pendingDAppRequest) {
+    // Use TransactionApprovalPage for signing requests (shows simulation)
+    if (
+      pendingDAppRequest.method === "signTransaction" ||
+      pendingDAppRequest.method === "signAndSendTransaction"
+    ) {
+      return (
+        <TransactionApprovalPage
+          request={pendingDAppRequest}
+          onApprove={handleDAppApproval}
+          onReject={handleDAppRejection}
+          isProcessing={isApprovalProcessing}
+        />
+      );
+    }
+
+    // Use DAppApprovalPage for connection and other requests
     return (
       <DAppApprovalPage
         request={pendingDAppRequest}
