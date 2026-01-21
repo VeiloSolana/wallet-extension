@@ -226,7 +226,7 @@ export const SwapPage = ({ keypair }: SwapPageProps) => {
             </button>
           </div>
 
-            {/* To Input */}
+          {/* To Input */}
             <div className="space-y-2">
               <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest px-1">
                 Receive
@@ -235,7 +235,7 @@ export const SwapPage = ({ keypair }: SwapPageProps) => {
               <div className="bg-black/60 border border-white/10 p-3 hover:border-white/30 transition-colors flex items-center gap-3">
                 <input
                   type="number"
-                  value={toAmount}
+                  value={outputAmount}
                   readOnly
                   placeholder="0.00"
                   className="flex-1 bg-transparent text-2xl font-mono text-zinc-400 outline-none placeholder:text-zinc-700 cursor-default"
@@ -277,7 +277,6 @@ export const SwapPage = ({ keypair }: SwapPageProps) => {
                 )}
               </div>
             </div>
-          </div>
 
           {/* Quote Details */}
           {quote && (
@@ -411,7 +410,7 @@ export const SwapPage = ({ keypair }: SwapPageProps) => {
             </CyberButton>
           </div>
 
-          <CyberButton onClick={handleSwap} disabled={!fromAmount} fullWidth>
+          <CyberButton onClick={handleSwap} disabled={!inputAmount} fullWidth>
             EXECUTE SWAP
           </CyberButton>
         </div>
