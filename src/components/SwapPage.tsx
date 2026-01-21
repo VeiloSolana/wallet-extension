@@ -226,13 +226,21 @@ export const SwapPage = ({ keypair }: SwapPageProps) => {
             </button>
           </div>
 
-          {/* To Token */}
-          <div className="space-y-2 mt-6">
-            <label className="text-xs font-mono text-zinc-400 uppercase tracking-wider">
-              To
-            </label>
-            <div className="bg-black/80 p-4">
-              <div className="flex justify-between items-center mb-3">
+            {/* To Input */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest px-1">
+                Receive
+              </label>
+
+              <div className="bg-black/60 border border-white/10 p-3 hover:border-white/30 transition-colors flex items-center gap-3">
+                <input
+                  type="number"
+                  value={toAmount}
+                  readOnly
+                  placeholder="0.00"
+                  className="flex-1 bg-transparent text-2xl font-mono text-zinc-400 outline-none placeholder:text-zinc-700 cursor-default"
+                />
+                <div className="h-8 w-[1px] bg-white/10" />
                 <select
                   value={outputToken.symbol}
                   onChange={(e) => {
@@ -402,6 +410,10 @@ export const SwapPage = ({ keypair }: SwapPageProps) => {
               )}
             </CyberButton>
           </div>
+
+          <CyberButton onClick={handleSwap} disabled={!fromAmount} fullWidth>
+            EXECUTE SWAP
+          </CyberButton>
         </div>
 
         {/* Provider info */}

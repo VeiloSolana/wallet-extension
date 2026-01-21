@@ -4,6 +4,7 @@ import {
   loadSession,
   clearSession,
   isSessionValid,
+  getSessionPassword,
 } from "../utils/storage";
 
 // ============================================================================
@@ -23,6 +24,9 @@ export type OnboardingStep =
 interface UseOnboardingParams {
   isAuthenticated: boolean;
   logout: () => void;
+  onAutoLogin?: (password: string) => Promise<void>;
+  externalError?: string;
+  setExternalError?: React.Dispatch<React.SetStateAction<string>>;
 }
 
 interface UseOnboardingReturn {
@@ -36,6 +40,7 @@ interface UseOnboardingReturn {
   restoreMnemonic: string;
   showOnboarding: boolean;
   isInitialized: boolean;
+  isAutoLoggingIn: boolean;
 
   // Setters (for external handlers)
   setOnboardingStep: (step: OnboardingStep) => void;
@@ -61,19 +66,27 @@ interface UseOnboardingReturn {
 export function useOnboarding({
   isAuthenticated,
   logout,
+  onAutoLogin,
+  externalError,
+  setExternalError,
 }: UseOnboardingParams): UseOnboardingReturn {
-  
   // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
-  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>("welcome");
+  const [onboardingStep, setOnboardingStep] =
+    useState<OnboardingStep>("welcome");
   const [username, setUsername] = useState("");
   const [generatedPhrase, setGeneratedPhrase] = useState<string[]>([]);
   const [hasWallet, setHasWallet] = useState(false);
-  const [error, setError] = useState("");
+  const [internalError, setInternalError] = useState("");
   const [isRestoreFlow, setIsRestoreFlow] = useState(false);
   const [restoreMnemonic, setRestoreMnemonic] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(false);
+
+  // Use external error state if provided, otherwise use internal
+  const error = externalError !== undefined ? externalError : internalError;
+  const setError = setExternalError || setInternalError;
 
   // ---------------------------------------------------------------------------
   // Check for existing wallet on mount
@@ -87,12 +100,30 @@ export function useOnboarding({
 
         const session = await loadSession();
         if (session && isSessionValid(session)) {
-          console.log("Valid session found, but password is not stored. User must login.");
-          await clearSession();
+          // Try to get the session password for auto-login
+          const sessionPassword = await getSessionPassword();
+          if (sessionPassword && onAutoLogin) {
+            console.log(
+              "Valid session with password found, auto-logging in...",
+            );
+            setIsAutoLoggingIn(true);
+            try {
+              await onAutoLogin(sessionPassword);
+              console.log("Auto-login successful");
+            } catch (e) {
+              console.error("Auto-login failed:", e);
+              await clearSession();
+            } finally {
+              setIsAutoLoggingIn(false);
+            }
+          } else {
+            console.log(
+              "Valid session found but no password, user must login.",
+            );
+          }
         } else if (session) {
-          console.log("Session expired, logging out...");
+          console.log("Session expired, clearing...");
           await clearSession();
-          logout();
         }
       } else {
         console.log("No wallet found, starting onboarding");
@@ -100,7 +131,7 @@ export function useOnboarding({
       setIsInitialized(true);
     };
     checkWalletAndSession();
-  }, [logout]);
+  }, [logout, onAutoLogin]);
 
   // ---------------------------------------------------------------------------
   // Simple navigation handlers
@@ -146,6 +177,7 @@ export function useOnboarding({
     restoreMnemonic,
     showOnboarding,
     isInitialized,
+    isAutoLoggingIn,
 
     // Setters (for external handlers in App.tsx)
     setOnboardingStep,

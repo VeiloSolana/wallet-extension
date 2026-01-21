@@ -36,7 +36,7 @@ chrome.runtime.onMessage.addListener(
           error?: string;
         },
     sender,
-    sendResponse
+    sendResponse,
   ) => {
     console.log("[Veilo Background] Received message:", message);
     if (message.type === "VEILO_REQUEST") {
@@ -52,19 +52,19 @@ chrome.runtime.onMessage.addListener(
           approved: boolean;
           response?: unknown;
           error?: string;
-        }
+        },
       );
       return false;
     }
 
     return false;
-  }
+  },
 );
 
 async function handleWalletRequest(
   message: VeiloRequest,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (response: unknown) => void
+  sendResponse: (response: unknown) => void,
 ): Promise<void> {
   const { method, params, id } = message;
   const origin = sender.tab?.url ? new URL(sender.tab.url).origin : "unknown";
@@ -201,7 +201,7 @@ async function requestUserApproval(
   method: string,
   params: Record<string, unknown>,
   origin: string,
-  sendResponse: (response: unknown) => void
+  sendResponse: (response: unknown) => void,
 ): Promise<void> {
   // Store the pending request
   pendingApprovals.set(requestId, {
@@ -222,16 +222,39 @@ async function requestUserApproval(
     },
   });
 
-  // Open popup for approval
+  // Open popup window for approval
   try {
-    // For action popups, we can use chrome.action.openPopup if available
-    // Otherwise, user needs to click the extension icon
-    if (chrome.action?.openPopup) {
-      await chrome.action.openPopup();
+    const popupUrl = chrome.runtime.getURL("index.html");
+
+    // Get screen dimensions to position on right
+    const displays = await chrome.system?.display?.getInfo();
+    let left = 100;
+    let top = 100;
+
+    if (displays && displays.length > 0) {
+      const primaryDisplay = displays[0];
+      const screenWidth = primaryDisplay.bounds.width;
+      const screenHeight = primaryDisplay.bounds.height;
+      const popupWidth = 400;
+      const popupHeight = 640;
+
+      // Position on right side with some padding
+      left = screenWidth - popupWidth - 20;
+      top = Math.floor((screenHeight - popupHeight) / 2);
     }
+
+    // Create a popup window
+    await chrome.windows.create({
+      url: popupUrl,
+      type: "popup",
+      width: 400,
+      height: 640,
+      left: left + 900,
+      top: top,
+      focused: true,
+    });
   } catch (e) {
-    // openPopup may not be available in all contexts
-    console.log("Could not auto-open popup, user must click extension icon");
+    console.error("Failed to open popup window:", e);
   }
 }
 
@@ -258,6 +281,13 @@ function handlePopupResponse(message: {
   } else {
     pending.reject(new Error(message.error || "User rejected the request"));
   }
+
+  // Close the popup window after response
+  chrome.windows.getCurrent((window) => {
+    if (window?.id && window.type === "popup") {
+      chrome.windows.remove(window.id);
+    }
+  });
 }
 
 // Handle extension install/update

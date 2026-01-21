@@ -1,4 +1,7 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { getDappWallets } from "../utils/dappWalletStorage";
+import { loadWallet } from "../utils/storage";
 
 interface PendingDAppRequest {
   id: string;
@@ -14,43 +17,60 @@ interface DAppApprovalPageProps {
   isProcessing?: boolean;
 }
 
+import { CyberButton } from "./CyberButton";
+import { CyberCard } from "./CyberCard";
+
 export const DAppApprovalPage = ({
   request,
   onApprove,
   onReject,
   isProcessing = false,
 }: DAppApprovalPageProps) => {
+  const [connectingWallet, setConnectingWallet] = useState<{
+    name: string;
+    publicKey: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchConnectingWallet = async () => {
+      try {
+        const storedWallet = await loadWallet();
+        if (!storedWallet) return;
+
+        // Default to main wallet
+        let name = "Main Account";
+        let publicKey = storedWallet.publicKey;
+
+        // Check for DApp wallets
+        const dappWallets = await getDappWallets();
+        if (dappWallets.length > 0) {
+          name = dappWallets[0].name;
+          publicKey = dappWallets[0].publicKey;
+        }
+
+        setConnectingWallet({ name, publicKey });
+      } catch (error) {
+        console.error("Failed to load connecting wallet info", error);
+      }
+    };
+
+    fetchConnectingWallet();
+  }, []);
+
   const getTitle = () => {
     switch (request.method) {
       case "connect":
-        return "Connection Request";
+        return "Connect Wallet";
       case "signTransaction":
         return "Sign Transaction";
       case "signMessage":
         return "Sign Message";
       case "signAndSendTransaction":
-        return "Sign & Send Transaction";
+        return "Sign & Send";
       case "sendShieldedTransaction":
         return "Shielded Transfer";
       default:
-        return "Request";
-    }
-  };
-
-  const getDescription = () => {
-    switch (request.method) {
-      case "connect":
-        return "wants to connect to your Veilo wallet";
-      case "signTransaction":
-        return "wants you to sign a transaction";
-      case "signMessage":
-        return "wants you to sign a message";
-      case "signAndSendTransaction":
-        return "wants you to sign and send a transaction";
-      case "sendShieldedTransaction":
-        return "wants to transfer shielded funds";
-      default:
-        return "is requesting access";
+        return "Access Request";
     }
   };
 
@@ -58,43 +78,61 @@ export const DAppApprovalPage = ({
     switch (request.method) {
       case "connect":
         return [
-          "View your wallet address",
-          "Request transaction signatures",
+          "View your wallet balance and activity",
+          "Request approval for transactions",
         ];
       case "signTransaction":
       case "signAndSendTransaction":
         return [
           "Sign transactions on your behalf",
-          "This may transfer tokens from your wallet",
+          "This action may transfer funds",
         ];
       case "signMessage":
-        return ["Sign messages to verify your identity"];
+        return ["Verify your identity by signing a message"];
       case "sendShieldedTransaction":
-        return [
-          "Transfer shielded funds from your privacy pool",
-          "Send to another Veilo user privately",
-        ];
+        return ["Initiate a private shielded transfer"];
       default:
         return [];
     }
   };
 
   // Extract display-friendly origin
-  const displayOrigin = request.origin.replace(/^https?:\/\//, "");
+  const displayOrigin = request.origin
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "");
+
+  // Format public key
+  const formatAddress = (addr: string) => {
+    return `${addr.slice(0, 4)}...${addr.slice(-4)}`;
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 bg-black flex flex-col"
+      className="h-screen w-screen bg-black flex flex-col font-sans"
     >
+      <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
+
       {/* Header */}
-      <div className="px-6 py-4 border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-neon-green/20 flex items-center justify-center">
+      <div className="relative px-6 py-4 border-b border-white/10 bg-black/40 backdrop-blur-md">
+        <h1 className="text-base font-medium text-white text-center tracking-tight">
+          {getTitle()}
+        </h1>
+      </div>
+
+      {/* Content */}
+      <div className="relative flex-1 flex flex-col px-6 py-6 overflow-y-auto">
+        {/* Origin / Site Info */}
+        <div className="flex flex-col items-center justify-center mb-6">
+          <CyberCard
+            className="w-16 h-16 flex items-center justify-center mb-4 !bg-zinc-900/60 !rounded-xl"
+            hoverable={false}
+          >
+            {/* Fallback Icon for Site */}
             <svg
-              className="w-4 h-4 text-neon-green"
+              className="w-8 h-8 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -102,62 +140,87 @@ export const DAppApprovalPage = ({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                strokeWidth={1.5}
+                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
               />
             </svg>
+          </CyberCard>
+          <h2 className="text-xl font-light text-white mb-2 tracking-tight">
+            {displayOrigin}
+          </h2>
+          <div className="flex items-center gap-2 px-2.5 py-0.5 rounded-full border border-neon-green/20 bg-neon-green/5">
+            <div className="w-1 h-1 rounded-full bg-neon-green shadow-[0_0_8px_#00FF00]" />
+            <span className="text-[10px] font-mono text-neon-green tracking-widest uppercase">
+              Secure Connection
+            </span>
           </div>
-          <h1 className="text-lg font-semibold text-white">{getTitle()}</h1>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 flex flex-col px-6 py-6">
-        {/* Origin Card */}
-        <div className="bg-zinc-900/50 border border-white/10 rounded-lg p-4 mb-6">
+        {/* Connection Details Card */}
+        <CyberCard className="mb-6 !p-3" hoverable={false}>
+          <div className="flex justify-between items-center mb-2 border-b border-white/5 pb-2">
+            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
+              Target Wallet
+            </span>
+          </div>
+
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-md bg-zinc-800 border border-white/10 flex items-center justify-center flex-shrink-0">
               <svg
-                className="w-5 h-5 text-zinc-400"
+                className="w-4 h-4 text-white/80"
                 fill="none"
-                stroke="currentColor"
                 viewBox="0 0 24 24"
+                stroke="currentColor"
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                  strokeWidth={1.5}
+                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
                 />
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white font-medium truncate">{displayOrigin}</p>
-              <p className="text-sm text-zinc-400">{getDescription()}</p>
+              <div className="text-sm font-medium text-white tracking-wide leading-none mb-1">
+                {connectingWallet ? connectingWallet.name : "Loading..."}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-xs text-zinc-400 font-mono leading-none">
+                  {connectingWallet
+                    ? formatAddress(connectingWallet.publicKey)
+                    : "..."}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </CyberCard>
 
-        {/* Permissions */}
-        <div className="mb-6">
-          <p className="text-sm text-zinc-400 mb-3">This site will be able to:</p>
+        {/* Permissions List */}
+        <div className="mb-4 pl-1">
+          <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-3">
+            Access Rights
+          </p>
           <ul className="space-y-2">
             {getPermissions().map((permission, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <svg
-                  className="w-4 h-4 text-neon-green mt-0.5 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                <span className="text-sm text-zinc-300">{permission}</span>
+              <li key={index} className="flex items-start gap-3 group">
+                <div className="mt-1 w-4 h-4 rounded border border-neon-green/30 bg-neon-green/10 flex items-center justify-center flex-shrink-0 group-hover:border-neon-green/60 transition-colors">
+                  <svg
+                    className="w-2.5 h-2.5 text-neon-green"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <span className="text-sm text-zinc-300 font-light tracking-wide">
+                  {permission}
+                </span>
               </li>
             ))}
           </ul>
@@ -165,10 +228,10 @@ export const DAppApprovalPage = ({
 
         {/* Warning for signing requests */}
         {request.method !== "connect" && (
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-6">
-            <div className="flex items-start gap-2">
+          <div className="bg-red-500/5 border border-red-500/20 rounded p-3 mb-6">
+            <div className="flex items-start gap-3">
               <svg
-                className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5"
+                className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -180,8 +243,10 @@ export const DAppApprovalPage = ({
                   d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                 />
               </svg>
-              <p className="text-sm text-yellow-200">
-                Only approve transactions from sites you trust.
+              <p className="text-sm text-red-200/80 font-light">
+                Only sign this if you trust{" "}
+                <span className="text-white font-medium">{displayOrigin}</span>{" "}
+                completely.
               </p>
             </div>
           </div>
@@ -191,28 +256,23 @@ export const DAppApprovalPage = ({
         <div className="flex-1" />
 
         {/* Buttons */}
-        <div className="flex gap-3">
-          <button
+        <div className="flex gap-4 pt-4">
+          <CyberButton
             onClick={onReject}
             disabled={isProcessing}
-            className="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-800/50 text-white font-medium rounded-lg transition-colors disabled:cursor-not-allowed"
+            variant="secondary"
+            fullWidth
           >
             Reject
-          </button>
-          <button
+          </CyberButton>
+          <CyberButton
             onClick={onApprove}
             disabled={isProcessing}
-            className="flex-1 py-3 px-4 bg-white hover:bg-white/90 disabled:bg-white/50 text-black font-medium rounded-lg transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            variant="primary"
+            fullWidth
           >
-            {isProcessing ? (
-              <>
-                <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                Processing...
-              </>
-            ) : (
-              "Approve"
-            )}
-          </button>
+            {isProcessing ? "Processing..." : "Authorize"}
+          </CyberButton>
         </div>
       </div>
     </motion.div>
