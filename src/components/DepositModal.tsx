@@ -41,53 +41,53 @@ export const DepositModal = ({
           >
             {/* Corner brackets */}
             <svg
-              className="absolute top-0 left-0 w-6 h-6 text-neon-green"
-              viewBox="0 0 24 24"
+              className="absolute -top-px -left-px w-3 h-3 text-neon-green"
+              viewBox="0 0 12 12"
             >
               <path
-                d="M0 0 L0 12 M0 0 L12 0"
+                d="M0 0 L0 8 M0 0 L8 0"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="1"
                 fill="none"
               />
             </svg>
             <svg
-              className="absolute top-0 right-0 w-6 h-6 text-neon-green"
-              viewBox="0 0 24 24"
+              className="absolute -top-px -right-px w-3 h-3 text-neon-green"
+              viewBox="0 0 12 12"
             >
               <path
-                d="M24 0 L24 12 M24 0 L12 0"
+                d="M12 0 L12 8 M12 0 L4 0"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="1"
                 fill="none"
               />
             </svg>
             <svg
-              className="absolute bottom-0 left-0 w-6 h-6 text-neon-green"
-              viewBox="0 0 24 24"
+              className="absolute -bottom-px -left-px w-3 h-3 text-neon-green"
+              viewBox="0 0 12 12"
             >
               <path
-                d="M0 24 L0 12 M0 24 L12 24"
+                d="M0 12 L0 4 M0 12 L8 12"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="1"
                 fill="none"
               />
             </svg>
             <svg
-              className="absolute bottom-0 right-0 w-6 h-6 text-neon-green"
-              viewBox="0 0 24 24"
+              className="absolute -bottom-px -right-px w-3 h-3 text-neon-green"
+              viewBox="0 0 12 12"
             >
               <path
-                d="M24 24 L24 12 M24 24 L12 24"
+                d="M12 12 L12 4 M12 12 L4 12"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="1"
                 fill="none"
               />
             </svg>
 
             <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold tracking-tight">
+              <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
+                <h2 className="text-[10px] font-mono font-bold uppercase tracking-widest text-neon-green">
                   DEPOSIT FUNDS
                 </h2>
                 <button
@@ -155,13 +155,13 @@ export const DepositModal = ({
                 <div className="pt-2 flex gap-2">
                   <button
                     onClick={onClose}
-                    className="flex-1 px-3 py-1.5 text-xs font-mono text-zinc-400 hover:text-white border border-white/10 hover:border-white/30 transition-colors"
+                    className="flex-1 px-3 py-1.5 text-[10px] font-mono text-zinc-400 hover:text-white border border-white/10 hover:border-white/30 uppercase tracking-widest transition-colors"
                   >
                     CLOSE
                   </button>
                   <button
                     onClick={handleOpenDepositDapp}
-                    className="flex-1 px-3 py-1.5 text-xs font-mono font-bold text-neon-green border border-neon-green hover:border-neon-green/80 hover:text-neon-green/80 transition-colors"
+                    className="flex-1 px-3 py-1.5 text-[10px] font-mono font-bold text-black bg-white hover:bg-zinc-200 uppercase tracking-widest transition-all"
                   >
                     OPEN DAPP
                   </button>
