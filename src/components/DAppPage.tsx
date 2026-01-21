@@ -31,15 +31,7 @@ import solLogo from "/images/sol-logo.svg";
 import usdcLogo from "/images/usdc-logo.svg";
 import usdtLogo from "/images/usdt-logo.svg";
 
-// Devnet RPC
-const DEVNET_RPC_URL = "https://api.devnet.solana.com";
-
-// Token mint addresses (devnet)
-const TOKEN_MINTS = {
-  usdc: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU", // USDC devnet
-  usdt: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", // USDT (placeholder)
-  veilo: "VeiLoYourTokenMintAddressHere11111111111111", // VEILO (placeholder)
-};
+import { getRpcEndpoint, getTokenMints, getExplorerUrl } from "../lib/network";
 
 interface DAppPageProps {
   availableBalance?: number;
@@ -152,7 +144,7 @@ export const DAppPage = ({
   // Fetch on-chain SOL balance for a single wallet
   const fetchSolBalance = async (publicKeyStr: string): Promise<number> => {
     try {
-      const connection = new Connection(DEVNET_RPC_URL, "confirmed");
+      const connection = new Connection(getRpcEndpoint(), "confirmed");
       const publicKey = new PublicKey(publicKeyStr);
       const solBalance = await connection.getBalance(publicKey);
       return solBalance / LAMPORTS_PER_SOL;
@@ -166,7 +158,7 @@ export const DAppPage = ({
   const fetchHistory = useCallback(async (publicKeyStr: string) => {
     setIsHistoryLoading(true);
     try {
-      const connection = new Connection(DEVNET_RPC_URL, "confirmed");
+      const connection = new Connection(getRpcEndpoint(), "confirmed");
       const publicKey = new PublicKey(publicKeyStr);
       const signatures = await connection.getSignaturesForAddress(publicKey, {
         limit: 20,
@@ -340,7 +332,7 @@ export const DAppPage = ({
       }
 
       // Check token balances
-      const connection = new Connection(DEVNET_RPC_URL, "confirmed");
+      const connection = new Connection(getRpcEndpoint(), "confirmed");
       const publicKey = new PublicKey(wallet.publicKey);
 
       // Check SOL balance
@@ -591,7 +583,7 @@ export const DAppPage = ({
       const secretKey = Uint8Array.from(secretKeyJson);
       const keypair = Keypair.fromSecretKey(secretKey);
 
-      const connection = new Connection(DEVNET_RPC_URL, "confirmed");
+      const connection = new Connection(getRpcEndpoint(), "confirmed");
 
       // Verify destination is valid pubkey
       let toPubkey;
@@ -638,7 +630,7 @@ export const DAppPage = ({
   const fetchWalletBalances = useCallback(async (publicKeyStr: string) => {
     setIsLoadingBalances(true);
     try {
-      const connection = new Connection(DEVNET_RPC_URL, "confirmed");
+      const connection = new Connection(getRpcEndpoint(), "confirmed");
       const publicKey = new PublicKey(publicKeyStr);
 
       // Fetch SOL balance
@@ -660,16 +652,17 @@ export const DAppPage = ({
           },
         );
 
+        const mints = getTokenMints();
         for (const account of tokenAccounts.value) {
           const mintAddress = account.account.data.parsed.info.mint;
           const amount =
             account.account.data.parsed.info.tokenAmount.uiAmount || 0;
 
-          if (mintAddress === TOKEN_MINTS.usdc) {
+          if (mintAddress === mints.USDC_MINT.toString()) {
             usdcBalance = amount;
-          } else if (mintAddress === TOKEN_MINTS.usdt) {
+          } else if (mintAddress === mints.USDT_MINT.toString()) {
             usdtBalance = amount;
-          } else if (mintAddress === TOKEN_MINTS.veilo) {
+          } else if (mintAddress === mints.VEILO_MINT.toString()) {
             veiloBalance = amount;
           }
         }
@@ -1281,7 +1274,7 @@ export const DAppPage = ({
                             {tx.symbol}
                           </p>
                           <a
-                            href={`https://explorer.solana.com/tx/${tx.signature}?cluster=devnet`}
+                            href={getExplorerUrl("tx", tx.signature)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[9px] font-mono text-zinc-600 hover:text-neon-green transition-colors block"

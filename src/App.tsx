@@ -63,8 +63,7 @@ import { NoteManager } from "./lib/noteManager";
 import { syncNotesFromRelayer } from "./lib/noteSync";
 // Note: Transaction handlers and helpers moved to hooks
 
-// Devnet RPC endpoint
-const DEVNET_RPC_URL = "https://api.devnet.solana.com";
+import { getRpcEndpoint } from "./lib/network";
 
 interface Transaction {
   id: string;
@@ -142,7 +141,7 @@ function App() {
         setWallet(walletInstance);
         setAddress(keypair.publicKey.toString());
 
-        const conn = new Connection(DEVNET_RPC_URL, "confirmed");
+        const conn = new Connection(getRpcEndpoint(), "confirmed");
         setConnection(conn);
 
         const provider = new anchor.AnchorProvider(conn, walletInstance, {
@@ -367,7 +366,7 @@ function App() {
       setAddress(keypair.publicKey.toString());
 
       // Setup Provider
-      const conn = new Connection(DEVNET_RPC_URL, "confirmed");
+      const conn = new Connection(getRpcEndpoint(), "confirmed");
       setConnection(conn);
       const provider = new anchor.AnchorProvider(conn, walletInstance, {
         commitment: "confirmed",
@@ -460,7 +459,7 @@ function App() {
       setAddress(keypair.publicKey.toString());
 
       // Setup Provider
-      const conn = new Connection(DEVNET_RPC_URL, "confirmed");
+      const conn = new Connection(getRpcEndpoint(), "confirmed");
       setConnection(conn);
       const provider = new anchor.AnchorProvider(conn, walletInstance, {
         commitment: "confirmed",

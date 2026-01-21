@@ -10,6 +10,7 @@ import { useSwap } from "../hooks/useSwap";
 import { fromRawAmount, getTokenDecimals } from "../lib/swap";
 import { getDappWallets, type DappWallet } from "../utils/dappWalletStorage";
 import { decrypt } from "../utils/encryption";
+import { getRpcEndpoint } from "../lib/network";
 
 interface SwapPageProps {
   keypair: Keypair | null;
@@ -44,10 +45,7 @@ export const SwapPage = ({ keypair, password }: SwapPageProps) => {
         setDappWallets(wallets);
 
         // Fetch balances for all wallets
-        const connection = new Connection(
-          "https://api.mainnet-beta.solana.com",
-          "confirmed",
-        );
+        const connection = new Connection(getRpcEndpoint(), "confirmed");
         const balances: Record<string, number> = {};
 
         // Fetch master wallet balance if available

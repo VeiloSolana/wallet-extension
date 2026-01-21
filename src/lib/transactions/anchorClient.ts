@@ -1,10 +1,11 @@
 import * as anchor from "@coral-xyz/anchor";
 import idl from "../../../program/idl/privacy_pool.json";
-import { clusterApiUrl, Connection, Keypair } from "@solana/web3.js";
+import { Connection, Keypair } from "@solana/web3.js";
 import { Wallet } from "../../utils/wallet";
+import { getRpcEndpoint } from "../network";
 
 export function makeProgram() {
-  const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+  const connection = new Connection(getRpcEndpoint(), "confirmed");
   const kp = Keypair.generate();
   const wallet = new Wallet(kp);
 

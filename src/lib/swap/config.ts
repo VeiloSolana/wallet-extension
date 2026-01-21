@@ -1,64 +1,75 @@
 import type { SwapConfig, SwapToken, SwapProviderType } from "./types";
-import { SOL_MINT, USDC_MINT, USDT_MINT } from "../transactions/shared";
+import { getRpcEndpoint, getTokenMints, getJupiterEndpoint } from "../network";
 
 // Toggle: true = submit via relayer, false = submit directly to RPC
 export const USE_RELAYER_FOR_SUBMISSION = false;
 
-// Supported tokens for swapping
-export const SUPPORTED_TOKENS: SwapToken[] = [
-  {
-    symbol: "SOL",
-    mintAddress: SOL_MINT.toString(),
-    decimals: 9,
-    logoUri:
-      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
-  },
-  {
-    symbol: "USDC",
-    mintAddress: USDC_MINT.toString(),
-    decimals: 6,
-    logoUri:
-      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
-  },
-  {
-    symbol: "USDT",
-    mintAddress: USDT_MINT.toString(),
-    decimals: 6,
-    logoUri:
-      "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.png",
-  },
-];
-
-// Main swap configuration
-export const SWAP_CONFIG: SwapConfig = {
-  defaultProvider: "jupiter" as SwapProviderType,
-  defaultSlippageBps: 50, // 0.5%
-  maxSlippageBps: 500, // 5% max
-  quoteRefreshMs: 10000, // Refresh quote every 10s
-
-  // RPC endpoints
-  rpcEndpoint: "https://api.mainnet-beta.solana.com",
-  relayerEndpoint: "http://localhost:8080",
-
-  // Provider configurations
-  providers: {
-    jupiter: {
-      enabled: true,
-      apiEndpoint: "https://lite-api.jup.ag/swap/v1",
+// Get supported tokens dynamically based on network
+export function getSupportedTokens(): SwapToken[] {
+  const mints = getTokenMints();
+  return [
+    {
+      symbol: "SOL",
+      mintAddress: mints.SOL_MINT.toString(),
+      decimals: 9,
+      logoUri:
+        "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
     },
-    raydium: {
-      enabled: false,
+    {
+      symbol: "USDC",
+      mintAddress: mints.USDC_MINT.toString(),
+      decimals: 6,
+      logoUri:
+        "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
     },
-    orca: {
-      enabled: false,
+    {
+      symbol: "USDT",
+      mintAddress: mints.USDT_MINT.toString(),
+      decimals: 6,
+      logoUri:
+        "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.png",
     },
-    meteora: {
-      enabled: false,
-    },
-  },
+  ];
+}
 
-  supportedTokens: SUPPORTED_TOKENS,
-};
+// Legacy static tokens (mainnet) - prefer getSupportedTokens() for network-aware
+export const SUPPORTED_TOKENS: SwapToken[] = getSupportedTokens();
+
+// Get swap config dynamically based on network
+export function getSwapConfig(): SwapConfig {
+  return {
+    defaultProvider: "jupiter" as SwapProviderType,
+    defaultSlippageBps: 50, // 0.5%
+    maxSlippageBps: 500, // 5% max
+    quoteRefreshMs: 10000, // Refresh quote every 10s
+
+    // RPC endpoints - network-aware
+    rpcEndpoint: getRpcEndpoint(),
+    relayerEndpoint: import.meta.env.VITE_RELAYER_ENDPOINT || "http://localhost:8080",
+
+    // Provider configurations
+    providers: {
+      jupiter: {
+        enabled: true,
+        apiEndpoint: getJupiterEndpoint(),
+      },
+      raydium: {
+        enabled: false,
+      },
+      orca: {
+        enabled: false,
+      },
+      meteora: {
+        enabled: false,
+      },
+    },
+
+    supportedTokens: getSupportedTokens(),
+  };
+}
+
+// Legacy static config - prefer getSwapConfig() for network-aware
+export const SWAP_CONFIG: SwapConfig = getSwapConfig();
 
 // Helper to get token by symbol
 export function getTokenBySymbol(symbol: string): SwapToken | undefined {
