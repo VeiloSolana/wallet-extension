@@ -32,8 +32,9 @@ interface JupiterRoutePlan {
     outputMint: string;
     inAmount: string;
     outAmount: string;
-    feeAmount: string;
-    feeMint: string;
+    feeAmount?: string;
+    feeMint?: string;
+    outAmountAfterSlippage?: string;
   };
   percent: number;
 }
@@ -175,8 +176,8 @@ export class JupiterProvider extends BaseSwapProvider {
             label: plan.swapInfo.label,
             inputAmount: plan.swapInfo.inAmount,
             outputAmount: plan.swapInfo.outAmount,
-            feeAmount: plan.swapInfo.feeAmount,
-            feeMint: plan.swapInfo.feeMint,
+            feeAmount: plan.swapInfo.feeAmount || "0",
+            feeMint: plan.swapInfo.feeMint || plan.swapInfo.inputMint,
           }),
         ),
       },
@@ -193,7 +194,8 @@ export class JupiterProvider extends BaseSwapProvider {
 
     // Calculate protocol fee from route (sum of all swap fees)
     const protocolFee = response.routePlan.reduce((sum, plan) => {
-      return sum + BigInt(plan.swapInfo.feeAmount);
+      const feeAmount = plan.swapInfo.feeAmount || "0";
+      return sum + BigInt(feeAmount);
     }, 0n);
 
     return {
