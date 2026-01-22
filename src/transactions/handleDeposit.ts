@@ -14,12 +14,12 @@ import {
   getOrCreateAssociatedTokenAccount,
 } from "@solana/spl-token";
 import { buildPoseidon } from "circomlibjs";
-import { getMerkleTree } from "./api";
+import { getMerkleTree } from "../lib/api/relayerApi";
 import { buildMerkleTree } from "./merkleTree";
 import { getProgram, type WalletAdapter } from "../../program/program";
 import { groth16 } from "snarkjs";
 import { createEncryptedNoteBlob } from "./ECDH/helpers";
-import { saveEncryptedNoteWithRetry } from "./api";
+import { saveEncryptedNoteWithRetry } from "../lib/api/relayerApi";
 import { getBestTreeForDeposit } from "./treeHelpers";
 import bs58 from "bs58";
 

@@ -13,6 +13,9 @@ export const api = axios.create({
   },
 });
 
+// Export as relayerApiClient for compatibility
+export const relayerApiClient = api;
+
 // Request interceptor (optional: add token if we were storing it in a variable,
 // but we'll likely handle auth via headers automatically or explicit injection)
 // For now, let's keep it simple.
@@ -96,6 +99,7 @@ export interface SaveEncryptedNoteRequest {
   timestamp: number;
   blockHeight?: number;
   txSignature?: string;
+  recipientWalletPublicKey?: string;
 }
 
 export interface SaveEncryptedNoteResponse {
@@ -103,6 +107,7 @@ export interface SaveEncryptedNoteResponse {
   noteId?: string;
   message?: string;
   error?: string;
+  details?: string;
 }
 
 export async function queryEncryptedNotes(
@@ -151,6 +156,36 @@ export async function saveEncryptedNote(
     console.error("Error saving encrypted note:", error);
     throw error;
   }
+}
+
+export async function saveEncryptedNoteWithRetry(
+  payload: SaveEncryptedNoteRequest,
+  maxRetries = 3,
+): Promise<SaveEncryptedNoteResponse> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await saveEncryptedNote(payload);
+    } catch (error) {
+      if (
+        (error as Error).message?.includes("DUPLICATE_COMMITMENT") ||
+        (error as { response?: { data?: { error?: string } } }).response?.data
+          ?.error === "DUPLICATE_COMMITMENT"
+      ) {
+        return { success: true, message: "Note already saved" };
+      }
+
+      if (i === maxRetries - 1) {
+        throw error;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
+      console.log(
+        `Retrying save encrypted note (attempt ${i + 2}/${maxRetries})...`,
+      );
+    }
+  }
+
+  throw new Error("Failed to save encrypted note after retries");
 }
 
 export interface MerkleRootResponse {
