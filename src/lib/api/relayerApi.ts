@@ -34,7 +34,7 @@ api.interceptors.response.use(
 const RELAYER_API_URL = "http://localhost:8080"; // TODO: Load from config/storage
 const RELAYER_PUBLIC_KEY = "utVxnA7zax09qJCZ7UJsa8PAOoWLRcCwOkdxg/ZGmD4=";
 
-function encryptForRelayer(data: any): string {
+function encryptForRelayer(data: unknown): string {
   const relayerPublicKey = util.decodeBase64(RELAYER_PUBLIC_KEY);
   const ephemeralKeyPair = nacl.box.keyPair();
 
@@ -122,7 +122,7 @@ export async function queryEncryptedNotes(
     }
 
     return await response.json();
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error querying encrypted notes:", error);
     throw error;
   }
@@ -147,7 +147,7 @@ export async function saveEncryptedNote(
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error saving encrypted note:", error);
     throw error;
   }
@@ -208,7 +208,7 @@ export async function getMerkleRoot(
     }
 
     return await response.json();
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching merkle root:", error);
     throw error;
   }
@@ -233,14 +233,25 @@ export async function getMerkleTree(
     }
 
     return await response.json();
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching merkle tree:", error);
     throw error;
   }
 }
 
+export interface Note {
+  commitment: string;
+  privateKey: string;
+  publicKey: string;
+  blinding: string;
+  amount: string;
+  nullifier: string;
+  leafIndex?: number;
+  noteId?: string;
+}
+
 export interface WithdrawRequest {
-  notes: any[];
+  notes: Note[];
   recipient: string;
   amount: string;
   userPublicKey: string;
@@ -298,14 +309,14 @@ export async function submitWithdraw(
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error submitting withdrawal:", error);
     throw error;
   }
 }
 
 export interface PrivateTransferRequest {
-  notes: any[];
+  notes: Note[];
   amount: string; // Server expects string, not number
   recipientUsername: string;
   userPublicKey?: string;
@@ -372,7 +383,7 @@ export async function submitPrivateTransfer(
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error submitting private transfer:", error);
     throw error;
   }
@@ -408,7 +419,7 @@ export async function getVeiloPublicKey(
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching Veilo public key:", error);
     throw error;
   }
