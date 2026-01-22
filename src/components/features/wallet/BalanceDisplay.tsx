@@ -1,5 +1,8 @@
 import { motion } from "framer-motion";
-import { useCryptoPrices, usePortfolio24hChange } from "../hooks/useSolPrice";
+import {
+  useCryptoPrices,
+  usePortfolio24hChange,
+} from "../../../hooks/useSolPrice";
 
 interface BalanceDisplayProps {
   tokenBalances?: {
@@ -36,8 +39,9 @@ export const BalanceDisplay = ({
     tokenBalances.veilo * (veilo?.price || 0);
 
   // Use calculated portfolio 24h change
-  const { change24h, isLoading: isChangeLoading } = usePortfolio24hChange(usdBalance);
-  
+  const { change24h, isLoading: isChangeLoading } =
+    usePortfolio24hChange(usdBalance);
+
   const isPositive = change24h >= 0;
 
   return (
@@ -60,7 +64,11 @@ export const BalanceDisplay = ({
           <div
             className={`text-xs font-medium flex items-center gap-1 ${
               // If loading/no data, use neutral color, otherwise green/red
-              isChangeLoading ? "text-zinc-500" : isPositive ? "text-green-500" : "text-red-500"
+              isChangeLoading
+                ? "text-zinc-500"
+                : isPositive
+                  ? "text-green-500"
+                  : "text-red-500"
             }`}
           >
             {isChangeLoading || isPriceLoading ? (

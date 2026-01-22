@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { CyberButton } from "./CyberButton";
+import { CyberButton } from "../../../common/ui/CyberButton";
 
 interface SwapModalProps {
   isOpen: boolean;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { getDappWallets } from "../utils/dappWalletStorage";
-import { loadWallet } from "../utils/storage";
+import { getDappWallets } from "../../../utils/dappWalletStorage";
+import { loadWallet } from "../../../utils/storage";
 
 interface PendingDAppRequest {
   id: string;
@@ -17,8 +17,8 @@ interface DAppApprovalPageProps {
   isProcessing?: boolean;
 }
 
-import { CyberButton } from "./CyberButton";
-import { CyberCard } from "./CyberCard";
+import { CyberButton } from "../../common/ui/CyberButton";
+import { CyberCard } from "../../common/ui/CyberCard";
 
 export const DAppApprovalPage = ({
   request,

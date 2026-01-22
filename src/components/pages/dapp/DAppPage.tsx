@@ -8,24 +8,24 @@ import {
   SystemProgram,
   Keypair,
 } from "@solana/web3.js";
-import type { WalletAdapter } from "../../program/program";
-import { CyberButton } from "./CyberButton";
-import { CreateDappWalletModal } from "./CreateDappWalletModal";
-import { ReceiveModal } from "./ReceiveModal";
-import { DappSendModal } from "./DappSendModal";
-import { DappWalletCard } from "./DappWalletCard";
-import { CustomModal } from "./CustomModal";
-import type { DappWallet } from "../utils/dappWalletStorage";
+import type { WalletAdapter } from "../../../../program/program";
+import { CyberButton } from "../../common/ui/CyberButton";
+import { CreateDappWalletModal } from "../../features/dapp/modals/CreateDappWalletModal";
+import { ReceiveModal } from "../../features/wallet/modals/ReceiveModal";
+import { DappSendModal } from "../../features/dapp/modals/DappSendModal";
+import { DappWalletCard } from "../../features/dapp/DappWalletCard";
+import { CustomModal } from "../../common/ui/CustomModal";
+import type { DappWallet } from "../../../utils/dappWalletStorage";
 import {
   getDappWallets,
   saveDappWallet,
   deleteDappWallet,
   generateDappWalletKeypair,
-} from "../utils/dappWalletStorage";
-import { encrypt, decrypt } from "../utils/encryption";
-import { useCryptoPrices } from "../hooks/useSolPrice";
-import { handleDeposit } from "../transactions/handleDeposit";
-import { loadWallet } from "../utils/storage";
+} from "../../../utils/dappWalletStorage";
+import { encrypt, decrypt } from "../../../utils/encryption";
+import { useCryptoPrices } from "../../../hooks/useSolPrice";
+import { handleDeposit } from "../../../transactions/handleDeposit";
+import { loadWallet } from "../../../utils/storage";
 import bs58 from "bs58";
 import solLogo from "/images/sol-logo.svg";
 import usdcLogo from "/images/usdc-logo.svg";

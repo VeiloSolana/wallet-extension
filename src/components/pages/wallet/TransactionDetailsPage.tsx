@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useCryptoPrices } from "../hooks/useSolPrice";
+import { useCryptoPrices } from "../../../hooks/useSolPrice";
 
 interface Transaction {
   id: string;
@@ -219,7 +219,7 @@ export const TransactionDetailsPage = ({
                 transaction.txSignature &&
                 window.open(
                   `https://explorer.solana.com/tx/${transaction.txSignature}?cluster=devnet`,
-                  "_blank"
+                  "_blank",
                 )
               }
               disabled={!transaction.txSignature}

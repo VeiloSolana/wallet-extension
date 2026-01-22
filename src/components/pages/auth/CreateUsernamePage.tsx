@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useCheckUsername } from "../hooks/queries/useAuthQueries";
+import { useCheckUsername } from "../../../hooks/queries/useAuthQueries";
 
 interface CreateUsernamePageProps {
   onSubmit: (username: string) => void;

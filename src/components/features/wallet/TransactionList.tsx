@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useCryptoPrices } from "../hooks/useSolPrice";
+import { useCryptoPrices } from "../../../hooks/useSolPrice";
 import solLogo from "/images/sol-logo.svg";
 import usdcLogo from "/images/usdc-logo.svg";
 import usdtLogo from "/images/usdt-logo.svg";
@@ -248,7 +248,7 @@ export const TransactionList = ({
                   {isPriceLoading
                     ? "--"
                     : `≈ $${(tokenBalances.usdc * (usdc?.price || 0)).toFixed(
-                        2
+                        2,
                       )}`}
                 </p>
               </div>
@@ -321,7 +321,7 @@ export const TransactionList = ({
                   {isPriceLoading
                     ? "--"
                     : `≈ $${(tokenBalances.usdt * (usdt?.price || 0)).toFixed(
-                        2
+                        2,
                       )}`}
                 </p>
               </div>
@@ -396,7 +396,7 @@ export const TransactionList = ({
                   {isPriceLoading
                     ? "--"
                     : `≈ $${(tokenBalances.veilo * (veilo?.price || 0)).toFixed(
-                        2
+                        2,
                       )}`}
                 </p>
               </div>

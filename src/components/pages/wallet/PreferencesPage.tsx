@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CyberButton } from "./CyberButton";
+import { CyberButton } from "../../common/ui/CyberButton";
 
 interface PreferencesPageProps {
   address?: string;

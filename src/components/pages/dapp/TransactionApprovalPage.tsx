@@ -7,9 +7,9 @@ import {
   VersionedTransaction,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
-import { getDappWallets } from "../utils/dappWalletStorage";
-import { loadWallet } from "../utils/storage";
-import { CyberButton } from "./CyberButton";
+import { getDappWallets } from "../../../utils/dappWalletStorage";
+import { loadWallet } from "../../../utils/storage";
+import { CyberButton } from "../../common/ui/CyberButton";
 
 // ============================================================================
 // Types

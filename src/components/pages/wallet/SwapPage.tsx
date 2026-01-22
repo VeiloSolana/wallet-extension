@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CyberButton } from "./CyberButton";
+import { CyberButton } from "../../common/ui/CyberButton";
 
 export const SwapPage = () => {
   const [fromToken, setFromToken] = useState("SOL");

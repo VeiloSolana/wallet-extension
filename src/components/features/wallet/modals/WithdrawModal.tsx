@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { CyberButton } from "./CyberButton";
+import { CyberButton } from "../../../common/ui/CyberButton";
 import solLogo from "/images/sol-logo.svg";
 import usdcLogo from "/images/usdc-logo.svg";
 import usdtLogo from "/images/usdt-logo.svg";

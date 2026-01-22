@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useCryptoPrices } from "../hooks/useSolPrice";
+import { useCryptoPrices } from "../../../hooks/useSolPrice";
 
 interface Transaction {
   id: string;

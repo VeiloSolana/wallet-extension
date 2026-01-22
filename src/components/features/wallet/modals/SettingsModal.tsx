@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { CyberButton } from "./CyberButton";
+import { CyberButton } from "../../../common/ui/CyberButton";
 import { useState } from "react";
 
 interface SettingsModalProps {

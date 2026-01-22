@@ -1,14 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { CyberButton } from "./CyberButton";
-import { PublicKey } from "@solana/web3.js";
+import { CyberButton } from "../../common/ui/CyberButton";
+import { getVeiloPublicKey } from "../../../lib/relayerApi";
 import solLogo from "/images/sol-logo.svg";
 import usdcLogo from "/images/usdc-logo.svg";
 import usdtLogo from "/images/usdt-logo.svg";
 
-interface WithdrawPageProps {
+interface TransferPageProps {
   onBack: () => void;
-  onSend: (address: string, amount: number, token: string) => void;
+  onTransfer: (username: string, amount: number, token: string) => Promise<any>;
   tokenBalances?: {
     sol: number;
     usdc: number;
@@ -19,55 +19,50 @@ interface WithdrawPageProps {
 
 type TransactionPhase = "idle" | "processing" | "success";
 
-export const WithdrawPage = ({
+export const TransferPage = ({
   onBack,
-  onSend,
+  onTransfer,
   tokenBalances,
-}: WithdrawPageProps) => {
-  const [recipient, setRecipient] = useState("");
+}: TransferPageProps) => {
+  const [username, setUsername] = useState("");
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
-  const [isVerifyingAddress, setIsVerifyingAddress] = useState(false);
-  const [addressValid, setAddressValid] = useState<boolean | null>(null);
+  const [isVerifyingUsername, setIsVerifyingUsername] = useState(false);
+  const [usernameValid, setUsernameValid] = useState<boolean | null>(null);
   const [selectedToken, setSelectedToken] = useState("SOL");
   const [transactionPhase, setTransactionPhase] =
     useState<TransactionPhase>("idle");
 
-  // Debug tokenBalances
+  // Verify username when it changes
   useEffect(() => {
-    console.log("WithdrawPage tokenBalances:", tokenBalances);
-  }, [tokenBalances]);
-
-  // Verify recipient address when it changes
-  useEffect(() => {
-    if (!recipient || recipient.trim().length === 0) {
-      setAddressValid(null);
+    if (!username || username.trim().length === 0) {
+      setUsernameValid(null);
       setError("");
       return;
     }
 
-    const verifyAddress = async () => {
-      setIsVerifyingAddress(true);
+    const verifyUsername = async () => {
+      setIsVerifyingUsername(true);
       try {
-        new PublicKey(recipient.trim());
-        setAddressValid(true);
+        await getVeiloPublicKey(username.trim());
+        setUsernameValid(true);
         setError("");
-      } catch {
-        setAddressValid(false);
-        setError("Invalid Solana address");
+      } catch (err) {
+        setUsernameValid(false);
+        setError(err instanceof Error ? err.message : "User not found");
       } finally {
-        setIsVerifyingAddress(false);
+        setIsVerifyingUsername(false);
       }
     };
 
     const debounceTimer = setTimeout(() => {
-      verifyAddress();
-    }, 300);
+      verifyUsername();
+    }, 500);
 
     return () => clearTimeout(debounceTimer);
-  }, [recipient]);
+  }, [username]);
 
   // Auto-clear error messages after 10 seconds
   useEffect(() => {
@@ -79,9 +74,9 @@ export const WithdrawPage = ({
     }
   }, [error]);
 
-  const handleSend = async () => {
-    if (!recipient || !amount) {
-      setError("Please enter recipient and amount");
+  const handleTransfer = async () => {
+    if (!username || !amount) {
+      setError("Please enter recipient username and amount");
       return;
     }
 
@@ -91,18 +86,18 @@ export const WithdrawPage = ({
       setStatus("");
       setTransactionPhase("processing");
 
-      await onSend(recipient, parseFloat(amount), selectedToken);
+      await onTransfer(username, parseFloat(amount), selectedToken);
 
       setTransactionPhase("success");
-      setStatus("Transaction completed successfully!");
+      setStatus("Transfer completed successfully!");
 
       // Go back after showing success animation
       setTimeout(() => {
         onBack();
       }, 2500);
     } catch (err) {
-      console.error("Send failed:", err);
-      setError(err instanceof Error ? err.message : "Transaction failed");
+      console.error("Transfer failed:", err);
+      setError(err instanceof Error ? err.message : "Transfer failed");
       setIsProcessing(false);
       setTransactionPhase("idle");
     }
@@ -131,7 +126,7 @@ export const WithdrawPage = ({
             />
           </svg>
         </button>
-        <h1 className="text-base font-bold tracking-tight">WITHDRAW</h1>
+        <h1 className="text-base font-bold tracking-tight">PRIVATE TRANSFER</h1>
       </div>
 
       {/* Main content */}
@@ -242,7 +237,7 @@ export const WithdrawPage = ({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={1.5}
-                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                       />
                     </svg>
                   </motion.div>
@@ -256,7 +251,7 @@ export const WithdrawPage = ({
                 transition={{ delay: 0.2 }}
               >
                 <p className="text-sm font-mono text-neon-green tracking-widest">
-                  PROCESSING
+                  ENCRYPTING
                 </p>
                 <motion.div
                   className="flex justify-center gap-1 mt-2"
@@ -295,7 +290,7 @@ export const WithdrawPage = ({
               />
 
               <p className="mt-4 text-xs text-zinc-400 font-mono">
-                Sending {amount} {selectedToken}
+                Private transfer to @{username}
               </p>
             </motion.div>
           )}
@@ -375,7 +370,7 @@ export const WithdrawPage = ({
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.6, type: "spring" }}
                 >
-                  SENT!
+                  TRANSFERRED!
                 </motion.p>
                 <motion.p
                   className="mt-2 text-xs text-zinc-400 font-mono"
@@ -383,7 +378,7 @@ export const WithdrawPage = ({
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.8 }}
                 >
-                  {amount} {selectedToken} transferred successfully
+                  {amount} {selectedToken} sent privately to @{username}
                 </motion.p>
               </motion.div>
 
@@ -429,14 +424,13 @@ export const WithdrawPage = ({
           )}
 
           {/* General Error indicator */}
-          {error &&
-            !error.toLowerCase().includes("invalid solana address") && (
-              <div className="p-2 border border-red-500/30 bg-red-500/10">
-                <p className="text-xs font-mono text-center text-red-400">
-                  {error}
-                </p>
-              </div>
-            )}
+          {error && !error.toLowerCase().includes("user not found") && (
+            <div className="p-2 border border-red-500/30 bg-red-500/10">
+              <p className="text-xs font-mono text-center text-red-400">
+                {error}
+              </p>
+            </div>
+          )}
 
           {/* Available Balance Display */}
           <div className="p-2.5 bg-zinc-900/60 border border-white/10">
@@ -447,10 +441,10 @@ export const WithdrawPage = ({
               {(selectedToken === "SOL"
                 ? tokenBalances?.sol || 0
                 : selectedToken === "USDC"
-                ? tokenBalances?.usdc || 0
-                : selectedToken === "USDT"
-                ? tokenBalances?.usdt || 0
-                : tokenBalances?.veilo || 0
+                  ? tokenBalances?.usdc || 0
+                  : selectedToken === "USDT"
+                    ? tokenBalances?.usdt || 0
+                    : tokenBalances?.veilo || 0
               ).toFixed(4)}{" "}
               {selectedToken}
             </p>
@@ -494,28 +488,28 @@ export const WithdrawPage = ({
             </div>
           </div>
 
-          {/* Recipient Address */}
+          {/* Veilo Username */}
           <div>
             <label className="block text-[10px] text-zinc-400 font-mono tracking-widest mb-1.5">
-              RECIPIENT ADDRESS
+              VEILO USERNAME
             </label>
             <div className="relative">
               <input
                 type="text"
-                value={recipient}
-                onChange={(e) => setRecipient(e.target.value)}
-                placeholder="Enter Solana address"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="@username"
                 disabled={isProcessing}
                 className={`w-full px-3 py-2 pr-8 bg-zinc-900/60 border ${
-                  addressValid === false
+                  usernameValid === false
                     ? "border-red-500/50"
-                    : addressValid === true
-                    ? "border-neon-green/50"
-                    : "border-white/10"
+                    : usernameValid === true
+                      ? "border-neon-green/50"
+                      : "border-white/10"
                 } focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                {isVerifyingAddress && (
+                {isVerifyingUsername && (
                   <svg
                     className="w-4 h-4 text-zinc-400 animate-spin"
                     fill="none"
@@ -536,7 +530,7 @@ export const WithdrawPage = ({
                     />
                   </svg>
                 )}
-                {!isVerifyingAddress && addressValid === true && (
+                {!isVerifyingUsername && usernameValid === true && (
                   <svg
                     className="w-4 h-4 text-neon-green"
                     fill="none"
@@ -551,7 +545,7 @@ export const WithdrawPage = ({
                     />
                   </svg>
                 )}
-                {!isVerifyingAddress && addressValid === false && (
+                {!isVerifyingUsername && usernameValid === false && (
                   <svg
                     className="w-4 h-4 text-red-500"
                     fill="none"
@@ -568,7 +562,7 @@ export const WithdrawPage = ({
                 )}
               </div>
             </div>
-            {addressValid === false && error && (
+            {usernameValid === false && error && (
               <p className="mt-1.5 text-xs text-red-400 font-mono">{error}</p>
             )}
           </div>
@@ -600,18 +594,18 @@ export const WithdrawPage = ({
               CANCEL
             </CyberButton>
             <CyberButton
-              onClick={handleSend}
+              onClick={handleTransfer}
               variant="primary"
               fullWidth
               disabled={
-                !recipient ||
+                !username ||
                 !amount ||
                 isProcessing ||
-                isVerifyingAddress ||
-                addressValid !== true
+                isVerifyingUsername ||
+                usernameValid !== true
               }
             >
-              {isProcessing ? "PROCESSING..." : "SEND"}
+              {isProcessing ? "PROCESSING..." : "TRANSFER"}
             </CyberButton>
           </div>
         </div>
