@@ -1,4 +1,4 @@
-import { type MerkleTreeResponse } from "../lib/api/relayerApi";
+import { type MerkleTreeResponse } from "../../lib/api/relayerApi";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PoseidonHash = any;
