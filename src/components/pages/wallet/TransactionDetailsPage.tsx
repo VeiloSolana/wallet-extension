@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { useCryptoPrices } from "../../../hooks/useSolPrice";
+import { useCryptoPrices } from "../hooks/useSolPrice";
+import { getExplorerUrl } from "../lib/network";
 
 interface Transaction {
   id: string;
@@ -218,7 +219,7 @@ export const TransactionDetailsPage = ({
               onClick={() =>
                 transaction.txSignature &&
                 window.open(
-                  `https://explorer.solana.com/tx/${transaction.txSignature}?cluster=devnet`,
+                  getExplorerUrl("tx", transaction.txSignature),
                   "_blank",
                 )
               }

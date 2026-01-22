@@ -20,7 +20,7 @@ export interface AuthResponse {
 export const authService = {
   checkUsername: async (username: string): Promise<CheckUsernameResponse> => {
     const response = await api.get<CheckUsernameResponse>(
-      `/auth/checkUsername`,
+      `/api/auth/checkUsername`,
       {
         params: { username },
       },
@@ -29,14 +29,14 @@ export const authService = {
   },
 
   register: async (username: string): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>("/auth/createAccount", {
+    const response = await api.post<AuthResponse>("/api/auth/createAccount", {
       username,
     });
     return response.data;
   },
 
   restore: async (mnemonic: string): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>("/auth/restoreAccount", {
+    const response = await api.post<AuthResponse>("/api/auth/restoreAccount", {
       mnemonic,
     });
     return response.data;

@@ -1,5 +1,10 @@
-import { useState } from "react";
-import { CyberButton } from "../../common/ui/CyberButton";
+import { useState, useEffect } from "react";
+import { CyberButton } from "./CyberButton";
+import {
+  type NetworkType,
+  getSelectedNetwork,
+  setSelectedNetwork,
+} from "../lib/network";
 
 interface PreferencesPageProps {
   address?: string;
@@ -11,6 +16,29 @@ export const PreferencesPage = ({
   onLogout,
 }: PreferencesPageProps) => {
   const [copied, setCopied] = useState(false);
+  const [network, setNetwork] = useState<NetworkType>(getSelectedNetwork());
+
+  useEffect(() => {
+    const handleNetworkChange = (e: CustomEvent<NetworkType>) => {
+      setNetwork(e.detail);
+    };
+    window.addEventListener(
+      "networkChanged",
+      handleNetworkChange as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "networkChanged",
+        handleNetworkChange as EventListener,
+      );
+  }, []);
+
+  const handleNetworkToggle = () => {
+    const newNetwork = network === "devnet" ? "mainnet" : "devnet";
+    setSelectedNetwork(newNetwork);
+    setNetwork(newNetwork);
+    window.location.reload();
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(address);
@@ -35,7 +63,10 @@ export const PreferencesPage = ({
           <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest pl-1">
             Active Network
           </label>
-          <div className="flex items-center justify-between p-3 bg-zinc-900/40 border border-white/10 relative group overflow-hidden">
+          <button
+            onClick={handleNetworkToggle}
+            className="w-full flex items-center justify-between p-3 bg-zinc-900/40 border border-white/10 hover:border-white/30 relative group overflow-hidden transition-colors cursor-pointer"
+          >
             {/* Corner Accents */}
             <div className="absolute top-0 left-0 w-1.5 h-1.5 border-l border-t border-white/20 group-hover:border-neon-green/50 transition-colors" />
             <div className="absolute top-0 right-0 w-1.5 h-1.5 border-r border-t border-white/20 group-hover:border-neon-green/50 transition-colors" />
@@ -44,17 +75,51 @@ export const PreferencesPage = ({
 
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="w-2 h-2 rounded-full bg-neon-green animate-pulse" />
-                <div className="absolute inset-0 rounded-full bg-neon-green/50 animate-ping" />
+                <div
+                  className={`w-2 h-2 rounded-full animate-pulse ${
+                    network === "mainnet" ? "bg-orange-500" : "bg-neon-green"
+                  }`}
+                />
+                <div
+                  className={`absolute inset-0 rounded-full animate-ping ${
+                    network === "mainnet"
+                      ? "bg-orange-500/50"
+                      : "bg-neon-green/50"
+                  }`}
+                />
               </div>
               <span className="text-xs font-mono text-white tracking-wide">
-                Solana Devnet
+                Solana {network === "mainnet" ? "Mainnet" : "Devnet"}
               </span>
             </div>
-            <span className="text-[9px] font-mono text-neon-green bg-neon-green/10 px-1.5 py-0.5 rounded border border-neon-green/20">
-              RPC OK
-            </span>
-          </div>
+            <div className="flex items-center gap-2">
+              <span
+                className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
+                  network === "mainnet"
+                    ? "text-orange-500 bg-orange-500/10 border-orange-500/20"
+                    : "text-neon-green bg-neon-green/10 border-neon-green/20"
+                }`}
+              >
+                {network === "mainnet" ? "MAINNET" : "DEVNET"}
+              </span>
+              <svg
+                className="w-3 h-3 text-zinc-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 9l4-4 4 4m0 6l-4 4-4-4"
+                />
+              </svg>
+            </div>
+          </button>
+          <p className="text-[9px] font-mono text-zinc-600 pl-1">
+            Tap to switch networks
+          </p>
         </div>
 
         {/* Account Security Section */}

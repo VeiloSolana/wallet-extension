@@ -14,6 +14,7 @@ import { handleTransfer as handlePrivateTransfer } from "../lib/transactions/tra
 import { TOKEN_MINTS, SOL_MINT } from "../lib/transactions/shared";
 import { loadWallet } from "../utils/storage";
 import { Wallet } from "../utils/wallet";
+import { getRpcEndpoint } from "../lib/network";
 
 // ============================================================================
 // Types
@@ -293,10 +294,7 @@ export function useDAppRequests({
         const txBuffer = new Uint8Array(txData);
 
         // Setup connection
-        const connection = new Connection(
-          "https://api.devnet.solana.com",
-          "confirmed",
-        );
+        const connection = new Connection(getRpcEndpoint(), "confirmed");
 
         let signature: string;
 

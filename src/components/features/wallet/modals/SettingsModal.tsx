@@ -1,6 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { CyberButton } from "../../../common/ui/CyberButton";
-import { useState } from "react";
+import { CyberButton } from "./CyberButton";
+import { useState, useEffect } from "react";
+import {
+  type NetworkType,
+  getSelectedNetwork,
+  setSelectedNetwork,
+} from "../lib/network";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -14,6 +19,30 @@ export const SettingsModal = ({
   address,
 }: SettingsModalProps) => {
   const [copied, setCopied] = useState(false);
+  const [network, setNetwork] = useState<NetworkType>(getSelectedNetwork());
+
+  useEffect(() => {
+    const handleNetworkChange = (e: CustomEvent<NetworkType>) => {
+      setNetwork(e.detail);
+    };
+    window.addEventListener(
+      "networkChanged",
+      handleNetworkChange as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "networkChanged",
+        handleNetworkChange as EventListener,
+      );
+  }, []);
+
+  const handleNetworkToggle = () => {
+    const newNetwork = network === "devnet" ? "mainnet" : "devnet";
+    setSelectedNetwork(newNetwork);
+    setNetwork(newNetwork);
+    // Reload to apply network change across all components
+    window.location.reload();
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(address);
@@ -79,17 +108,50 @@ export const SettingsModal = ({
                   <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
                     Active Network
                   </label>
-                  <div className="flex items-center justify-between p-3 bg-zinc-900/40 border border-white/10">
+                  <button
+                    onClick={handleNetworkToggle}
+                    className="w-full flex items-center justify-between p-3 bg-zinc-900/40 border border-white/10 hover:border-white/30 transition-colors cursor-pointer"
+                  >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-neon-green shadow-[0_0_8px_rgba(0,255,163,0.5)] animate-pulse" />
+                      <div
+                        className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                          network === "mainnet"
+                            ? "bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]"
+                            : "bg-neon-green shadow-[0_0_8px_rgba(0,255,163,0.5)]"
+                        }`}
+                      />
                       <span className="text-xs font-mono text-white">
-                        Solana Devnet
+                        Solana {network === "mainnet" ? "Mainnet" : "Devnet"}
                       </span>
                     </div>
-                    <span className="text-[9px] font-mono text-neon-green bg-neon-green/10 px-1.5 py-0.5 rounded border border-neon-green/20">
-                      RPC OK
-                    </span>
-                  </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
+                          network === "mainnet"
+                            ? "text-orange-500 bg-orange-500/10 border-orange-500/20"
+                            : "text-neon-green bg-neon-green/10 border-neon-green/20"
+                        }`}
+                      >
+                        {network === "mainnet" ? "MAINNET" : "DEVNET"}
+                      </span>
+                      <svg
+                        className="w-3 h-3 text-zinc-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 9l4-4 4 4m0 6l-4 4-4-4"
+                        />
+                      </svg>
+                    </div>
+                  </button>
+                  <p className="text-[9px] font-mono text-zinc-600">
+                    Tap to switch networks
+                  </p>
                 </div>
 
                 {/* Security Section */}

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-// import { clearWallet } from "../../../utils/storage";
+import { clearWallet } from "../utils/storage";
+// import { clearWallet } from "../utils/storage";
 
 interface LoginPageProps {
   onLogin: (password: string) => void;
@@ -228,11 +229,11 @@ export const LoginPage = ({ onLogin, error, setError }: LoginPageProps) => {
             Sorry, there is no recovery option.
           </p>
 
-          {/* <button
+          <button
             onClick={async () => {
               if (
                 window.confirm(
-                  "Are you sure you want to reset everything? This will delete your wallet."
+                  "Are you sure you want to reset everything? This will delete your wallet.",
                 )
               ) {
                 await clearWallet();
@@ -242,8 +243,8 @@ export const LoginPage = ({ onLogin, error, setError }: LoginPageProps) => {
             }}
             className="mt-8 text-red-500 text-xs hover:text-red-400 transition-colors underline block w-full"
           >
-            [DEV] Reset Wallet
-          </button> */}
+            Reset Wallet
+          </button>
         </motion.div>
       </div>
 

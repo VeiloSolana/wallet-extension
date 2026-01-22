@@ -60,7 +60,7 @@ const KNOWN_PROGRAMS: Record<string, string> = {
   "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin": "Serum DEX v3",
 };
 
-const DEVNET_RPC_URL = "https://api.devnet.solana.com";
+import { getRpcEndpoint, getExplorerUrl } from "../lib/network";
 
 // ============================================================================
 // Component
@@ -166,7 +166,7 @@ export const TransactionApprovalPage = ({
     txBuffer: Uint8Array,
   ) => {
     try {
-      const connection = new Connection(DEVNET_RPC_URL, "confirmed");
+      const connection = new Connection(getRpcEndpoint(), "confirmed");
       let transaction: VersionedTransaction | SolanaTransaction;
       let isVersioned = false;
 
@@ -416,7 +416,7 @@ export const TransactionApprovalPage = ({
                           {formatAddress(ix.programId)}
                         </span>
                         <a
-                          href={`https://explorer.solana.com/address/${ix.programId}?cluster=devnet`}
+                          href={getExplorerUrl("address", ix.programId)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-zinc-600 hover:text-[#00FF00] transition-colors"
