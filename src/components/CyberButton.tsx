@@ -27,12 +27,12 @@ export const CyberButton = ({
       whileHover={!disabled ? { scale: 1.02 } : {}}
       whileTap={!disabled ? { scale: 0.98 } : {}}
       className={`
-        relative overflow-hidden px-6 py-3 font-medium tracking-wide
+        relative overflow-hidden px-4 py-2 font-mono text-[10px] uppercase tracking-widest
         transition-all duration-300 group
         ${fullWidth ? "w-full" : ""}
         ${
           isPrimary
-            ? "bg-white text-black hover:bg-white/90"
+            ? "bg-white text-black hover:bg-zinc-200"
             : "bg-transparent text-white border border-white/20 hover:border-white/40"
         }
         ${disabled ? "opacity-70 cursor-not-allowed" : "cursor-pointer"}

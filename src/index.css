@@ -1,6 +1,99 @@
 @import "tailwindcss";
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+/* Nohemi Font Family */
+@font-face {
+  font-family: "Nohemi";
+  src:
+    url("/nohemi-font-family/Nohemi-Thin-BF6438cc57e2011.woff") format("woff"),
+    url("/nohemi-font-family/Nohemi-Thin-BF6438cc5896c67.ttf")
+      format("truetype");
+  font-weight: 100;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Nohemi";
+  src:
+    url("/nohemi-font-family/Nohemi-ExtraLight-BF6438cc581502c.woff")
+      format("woff"),
+    url("/nohemi-font-family/Nohemi-ExtraLight-BF6438cc58a2634.ttf")
+      format("truetype");
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Nohemi";
+  src:
+    url("/nohemi-font-family/Nohemi-Light-BF6438cc5702321.woff") format("woff"),
+    url("/nohemi-font-family/Nohemi-Light-BF6438cc5899919.ttf")
+      format("truetype");
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Nohemi";
+  src:
+    url("/nohemi-font-family/Nohemi-Regular-BF6438cc579d934.woff")
+      format("woff"),
+    url("/nohemi-font-family/Nohemi-Regular-BF6438cc4d0e493.ttf")
+      format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Nohemi";
+  src:
+    url("/nohemi-font-family/Nohemi-Medium-BF6438cc57ddecd.woff") format("woff"),
+    url("/nohemi-font-family/Nohemi-Medium-BF6438cc5883899.ttf")
+      format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Nohemi";
+  src:
+    url("/nohemi-font-family/Nohemi-SemiBold-BF6438cc57db2ff.woff")
+      format("woff"),
+    url("/nohemi-font-family/Nohemi-SemiBold-BF6438cc588a48a.ttf")
+      format("truetype");
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Nohemi";
+  src:
+    url("/nohemi-font-family/Nohemi-Bold-BF6438cc577b524.woff") format("woff"),
+    url("/nohemi-font-family/Nohemi-Bold-BF6438cc587b5b5.ttf")
+      format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Nohemi";
+  src:
+    url("/nohemi-font-family/Nohemi-ExtraBold-BF6438cc5761ae2.woff")
+      format("woff"),
+    url("/nohemi-font-family/Nohemi-ExtraBold-BF6438cc5881baf.ttf")
+      format("truetype");
+  font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Nohemi";
+  src:
+    url("/nohemi-font-family/Nohemi-Black-BF6438cc565e67b.woff") format("woff"),
+    url("/nohemi-font-family/Nohemi-Black-BF6438cc58744d4.ttf")
+      format("truetype");
+  font-weight: 900;
+  font-style: normal;
+}
 
 @layer base {
   * {
@@ -24,11 +117,8 @@
 @layer utilities {
   .bg-grid {
     background-size: 50px 50px;
-    background-image: linear-gradient(
-        to right,
-        rgba(255, 255, 255, 0.05) 1px,
-        transparent 1px
-      ),
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   }
 

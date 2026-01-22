@@ -2,8 +2,8 @@ import nacl from "tweetnacl";
 import crypto from "crypto";
 import util from "tweetnacl-util";
 
-// const RELAYER_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
-const RELAYER_API_URL = "http://localhost:8080"; // TODO: Load from config/storage
+const RELAYER_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+// const RELAYER_API_URL = "http://localhost:8080"; // TODO: Load from config/storage
 const RELAYER_PUBLIC_KEY = "utVxnA7zax09qJCZ7UJsa8PAOoWLRcCwOkdxg/ZGmD4=";
 
 function encryptForRelayer(data: any): string {
@@ -18,18 +18,18 @@ function encryptForRelayer(data: any): string {
     messageUint8,
     nonce,
     relayerPublicKey,
-    ephemeralKeyPair.secretKey
+    ephemeralKeyPair.secretKey,
   );
 
   const fullPayload = new Uint8Array(
-    ephemeralKeyPair.publicKey.length + nonce.length + encryptedBox.length
+    ephemeralKeyPair.publicKey.length + nonce.length + encryptedBox.length,
   );
 
   fullPayload.set(ephemeralKeyPair.publicKey, 0);
   fullPayload.set(nonce, ephemeralKeyPair.publicKey.length);
   fullPayload.set(
     encryptedBox,
-    ephemeralKeyPair.publicKey.length + nonce.length
+    ephemeralKeyPair.publicKey.length + nonce.length,
   );
 
   return util.encodeBase64(fullPayload);
@@ -78,7 +78,7 @@ export interface SaveEncryptedNoteResponse {
 }
 
 export async function queryEncryptedNotes(
-  params: QueryNotesRequest = {}
+  params: QueryNotesRequest = {},
 ): Promise<QueryNotesResponse> {
   try {
     const response = await fetch(`${RELAYER_API_URL}/api/notes/query`, {
@@ -101,7 +101,7 @@ export async function queryEncryptedNotes(
 }
 
 export async function saveEncryptedNote(
-  data: SaveEncryptedNoteRequest
+  data: SaveEncryptedNoteRequest,
 ): Promise<SaveEncryptedNoteResponse> {
   try {
     const response = await fetch(`${RELAYER_API_URL}/api/notes/save`, {
@@ -163,7 +163,7 @@ export interface MerkleTreeResponse {
 
 export async function getMerkleRoot(
   mintAddress?: string,
-  treeId?: number
+  treeId?: number,
 ): Promise<MerkleRootResponse> {
   try {
     const params = new URLSearchParams();
@@ -188,7 +188,7 @@ export async function getMerkleRoot(
 
 export async function getMerkleTree(
   mintAddress?: string,
-  treeId?: number
+  treeId?: number,
 ): Promise<MerkleTreeResponse> {
   try {
     const params = new URLSearchParams();
@@ -240,7 +240,7 @@ export interface WithdrawResponse {
 }
 
 export async function submitWithdraw(
-  data: WithdrawRequest
+  data: WithdrawRequest,
 ): Promise<WithdrawResponse> {
   try {
     // Encrypt the payload before sending
@@ -284,7 +284,6 @@ export interface PrivateTransferRequest {
   mintAddress?: string;
 }
 
-
 export interface PrivateTransferResponse {
   success: boolean;
   message: string;
@@ -312,7 +311,7 @@ export interface PrivateTransferResponse {
 }
 
 export async function submitPrivateTransfer(
-  data: PrivateTransferRequest
+  data: PrivateTransferRequest,
 ): Promise<PrivateTransferResponse> {
   try {
     // Encrypt the payload before sending
@@ -332,7 +331,7 @@ export async function submitPrivateTransfer(
         },
         // Backend expects: { encryptedPayload: "base64..." }
         body: JSON.stringify({ encryptedPayload }),
-      }
+      },
     );
 
     const result = await response.json();
@@ -359,19 +358,19 @@ export interface VeiloPublicKeyResponse {
 }
 
 export async function getVeiloPublicKey(
-  username: string
+  username: string,
 ): Promise<VeiloPublicKeyResponse> {
   try {
     const response = await fetch(
       `${RELAYER_API_URL}/api/auth/veiloPublicKey?username=${encodeURIComponent(
-        username
+        username,
       )}`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     const result = await response.json();

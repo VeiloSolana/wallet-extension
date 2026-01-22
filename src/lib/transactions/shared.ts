@@ -161,8 +161,12 @@ export async function generateTransactionProof(inputs: {
   return convertProofToBytes(proof);
 }
 
-// Token mint addresses
-// Native SOL wrapped token mint address
+// Token mint addresses - use getTokenMints() for network-aware values
+// These are kept for backward compatibility but prefer getTokenMints() from network config
+import { getTokenMints } from "../network";
+
+// Legacy exports - these point to mainnet by default
+// For network-aware mints, use getTokenMints() instead
 export const SOL_MINT = PublicKey.default;
 export const USDC_MINT = new PublicKey(
   "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
@@ -173,6 +177,9 @@ export const USDT_MINT = new PublicKey(
 export const VEILO_MINT = new PublicKey(
   "A4jyQhHNRW5kFAdGN8ZnXB8HHW5kXJU4snGddS5UpdSq"
 ); // VEILO token
+
+// Network-aware token getter
+export { getTokenMints };
 
 // Token mint mapping
 export const TOKEN_MINTS: Record<string, PublicKey> = {

@@ -106,7 +106,7 @@ class VeiloWallet implements Wallet {
       if (event.data?.source === "veilo-content") {
         console.log(
           "[Veilo] Received message from content script:",
-          event.data
+          event.data,
         );
         const { id, result, error } = event.data;
         const pending = this._pendingRequests.get(id);
@@ -174,7 +174,7 @@ class VeiloWallet implements Wallet {
       console.log("[Veilo] Sending connect request to content script...");
       const response = (await this._request(
         "connect",
-        input ? { ...input } : {}
+        input ? { ...input } : {},
       )) as {
         publicKey: number[];
       };
@@ -213,7 +213,9 @@ class VeiloWallet implements Wallet {
     this._listeners
       .get(eventType)!
       .add(
-        listener as (properties: { accounts: readonly WalletAccount[] }) => void
+        listener as (properties: {
+          accounts: readonly WalletAccount[];
+        }) => void,
       );
 
     return () => {
@@ -222,7 +224,7 @@ class VeiloWallet implements Wallet {
         ?.delete(
           listener as (properties: {
             accounts: readonly WalletAccount[];
-          }) => void
+          }) => void,
         );
     };
   };
@@ -411,7 +413,7 @@ class VeiloWallet implements Wallet {
 
   private _request(
     method: string,
-    params: Record<string, unknown>
+    params: Record<string, unknown>,
   ): Promise<unknown> {
     console.log(`[Veilo] Making request: ${method}`, params);
     return new Promise((resolve, reject) => {
@@ -427,7 +429,7 @@ class VeiloWallet implements Wallet {
           params,
           id,
         },
-        "*"
+        "*",
       );
 
       // Timeout after 5 minutes for transaction approvals
@@ -494,6 +496,19 @@ class VeiloWallet implements Wallet {
     value: veilo,
     writable: false,
     configurable: false,
+  });
+
+  // Listen for disconnect events from extension
+  window.addEventListener("message", (event) => {
+    if (event.source !== window) return;
+    const data = event.data;
+
+    if (data?.source === "veilo-content" && data?.event === "disconnect") {
+      console.log("[Veilo] Disconnect event received, clearing accounts");
+      // Clear accounts to trigger disconnect
+      (veilo as any)._accounts = [];
+      (veilo as any)._emitChange();
+    }
   });
 
   console.log("[Veilo] Wallet provider initialized successfully");

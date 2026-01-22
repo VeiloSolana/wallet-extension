@@ -1,6 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { CyberButton } from "./CyberButton";
-import { clearWallet } from "../utils/storage";
+import { useState, useEffect } from "react";
+import {
+  type NetworkType,
+  getSelectedNetwork,
+  setSelectedNetwork,
+} from "../lib/network";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -13,6 +18,38 @@ export const SettingsModal = ({
   onClose,
   address,
 }: SettingsModalProps) => {
+  const [copied, setCopied] = useState(false);
+  const [network, setNetwork] = useState<NetworkType>(getSelectedNetwork());
+
+  useEffect(() => {
+    const handleNetworkChange = (e: CustomEvent<NetworkType>) => {
+      setNetwork(e.detail);
+    };
+    window.addEventListener(
+      "networkChanged",
+      handleNetworkChange as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "networkChanged",
+        handleNetworkChange as EventListener,
+      );
+  }, []);
+
+  const handleNetworkToggle = () => {
+    const newNetwork = network === "devnet" ? "mainnet" : "devnet";
+    setSelectedNetwork(newNetwork);
+    setNetwork(newNetwork);
+    // Reload to apply network change across all components
+    window.location.reload();
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -29,63 +66,27 @@ export const SettingsModal = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 bg-black border border-white/10 shadow-lg shadow-neon-green/5 z-50 max-w-md mx-auto"
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-sm mx-auto"
           >
-            {/* Corner brackets */}
-            <svg
-              className="absolute top-0 left-0 w-6 h-6 text-neon-green"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M0 0 L0 12 M0 0 L12 0"
-                stroke="currentColor"
-                strokeWidth="2"
-                fill="none"
-              />
-            </svg>
-            <svg
-              className="absolute top-0 right-0 w-6 h-6 text-neon-green"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M24 0 L24 12 M24 0 L12 0"
-                stroke="currentColor"
-                strokeWidth="2"
-                fill="none"
-              />
-            </svg>
-            <svg
-              className="absolute bottom-0 left-0 w-6 h-6 text-neon-green"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M0 24 L0 12 M0 24 L12 24"
-                stroke="currentColor"
-                strokeWidth="2"
-                fill="none"
-              />
-            </svg>
-            <svg
-              className="absolute bottom-0 right-0 w-6 h-6 text-neon-green"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M24 24 L24 12 M24 24 L12 24"
-                stroke="currentColor"
-                strokeWidth="2"
-                fill="none"
-              />
-            </svg>
+            {/* Main Container */}
+            <div className="relative bg-black border border-white/10 overflow-hidden group shadow-2xl shadow-black/50">
+              {/* Tech Corners */}
+              <div className="absolute top-0 left-0 w-2 h-2 border-l border-t border-neon-green/50" />
+              <div className="absolute top-0 right-0 w-2 h-2 border-r border-t border-neon-green/50" />
+              <div className="absolute bottom-0 left-0 w-2 h-2 border-l border-b border-neon-green/50" />
+              <div className="absolute bottom-0 right-0 w-2 h-2 border-r border-b border-neon-green/50" />
 
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold tracking-tight">SETTINGS</h2>
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-zinc-900/40">
+                <h2 className="text-sm font-mono font-bold tracking-widest text-white uppercase">
+                  System Settings
+                </h2>
                 <button
                   onClick={onClose}
-                  className="text-zinc-400 hover:text-white transition-colors"
+                  className="text-zinc-500 hover:text-white transition-colors p-1"
                 >
                   <svg
-                    className="w-4 h-4"
+                    className="w-5 h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -93,74 +94,141 @@ export const SettingsModal = ({
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
+                      strokeWidth="1.5"
                       d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <p className="text-[10px] text-zinc-400 font-mono tracking-widest">
-                    NETWORK
-                  </p>
-                  <div className="flex items-center justify-between p-2.5 bg-zinc-900/60 border border-white/10">
-                    <span className="text-xs">Solana Devnet</span>
-                    <span className="w-2 h-2 rounded-full bg-neon-green shadow-neon-sm"></span>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <p className="text-[10px] text-zinc-400 font-mono tracking-widest">
-                    WALLET ADDRESS
-                  </p>
-                  <div className="p-2.5 bg-zinc-900/60 border border-white/10 break-all text-[10px] font-mono text-zinc-300">
-                    {address}
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <p className="text-[10px] text-zinc-400 font-mono tracking-widest">
-                    PRIVATE KEY
-                  </p>
-                  <CyberButton
-                    onClick={() => {}}
-                    variant="secondary"
-                    fullWidth
-                    className="text-xs py-1.5 opacity-50 cursor-not-allowed"
-                    disabled
+              {/* Body */}
+              <div className="p-5 space-y-6">
+                {/* Network Status */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
+                    Active Network
+                  </label>
+                  <button
+                    onClick={handleNetworkToggle}
+                    className="w-full flex items-center justify-between p-3 bg-zinc-900/40 border border-white/10 hover:border-white/30 transition-colors cursor-pointer"
                   >
-                    REVEAL PRIVATE KEY
-                  </CyberButton>
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                          network === "mainnet"
+                            ? "bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]"
+                            : "bg-neon-green shadow-[0_0_8px_rgba(0,255,163,0.5)]"
+                        }`}
+                      />
+                      <span className="text-xs font-mono text-white">
+                        Solana {network === "mainnet" ? "Mainnet" : "Devnet"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
+                          network === "mainnet"
+                            ? "text-orange-500 bg-orange-500/10 border-orange-500/20"
+                            : "text-neon-green bg-neon-green/10 border-neon-green/20"
+                        }`}
+                      >
+                        {network === "mainnet" ? "MAINNET" : "DEVNET"}
+                      </span>
+                      <svg
+                        className="w-3 h-3 text-zinc-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 9l4-4 4 4m0 6l-4 4-4-4"
+                        />
+                      </svg>
+                    </div>
+                  </button>
+                  <p className="text-[9px] font-mono text-zinc-600">
+                    Tap to switch networks
+                  </p>
                 </div>
-                 <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.5 }}
-                          className="mt-6 text-center"
-                        >
-                          <button
-                            onClick={async () => {
-                              if (
-                                window.confirm(
-                                  "Are you sure you want to reset everything? This will delete your wallet."
-                                )
-                              ) {
-                                await clearWallet();
-                                localStorage.clear();
-                                window.location.reload();
-                              }
-                            }}
-                            className="mt-8 text-red-500 text-xs hover:text-red-400 transition-colors underline block w-full"
-                          >
-                             Reset Wallet
-                          </button>
-                        </motion.div>
 
-                <div className="pt-1">
-                  <p className="text-[10px] text-zinc-500 text-center">
-                    Version 0.1.0 Beta
+                {/* Security Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                    <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
+                      Security
+                    </label>
+                  </div>
+
+                  {/* Address */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono text-zinc-400">
+                      Main Account Address
+                    </label>
+                    <div
+                      onClick={handleCopy}
+                      className="relative group/copy cursor-pointer p-3 bg-zinc-900/40 border border-white/10 hover:border-white/30 transition-colors"
+                    >
+                      <p className="text-[11px] font-mono text-zinc-300 break-all select-all font-light tracking-tight">
+                        {address}
+                      </p>
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-zinc-800 p-1.5 rounded opacity-0 group-hover/copy:opacity-100 transition-opacity border border-white/10">
+                        {copied ? (
+                          <svg
+                            className="w-3.5 h-3.5 text-neon-green"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            className="w-3.5 h-3.5 text-zinc-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Private Key Button */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono text-zinc-400">
+                      Private Keys
+                    </label>
+                    <CyberButton
+                      onClick={() => {}}
+                      disabled
+                      fullWidth
+                      className="text-xs py-2 opacity-50 cursor-not-allowed border-dashed bg-transparent hover:bg-transparent"
+                      variant="secondary"
+                    >
+                      REVEAL PRIVATE KEY
+                    </CyberButton>
+                  </div>
+                </div>
+
+                {/* Footer / Version */}
+                <div className="pt-2 flex justify-center border-t border-white/5 mt-4">
+                  <p className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest mt-4">
+                    Veilo Client v0.1.0-beta
                   </p>
                 </div>
               </div>

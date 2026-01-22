@@ -7,8 +7,8 @@ export default {
         "neon-green": "#00FF00",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["Geist Mono", "monospace"],
+        sans: ["Nohemi", "system-ui", "sans-serif"],
+        mono: ["Nohemi", "Geist Mono", "monospace"],
       },
       boxShadow: {
         neon: "0 0 10px rgba(0, 255, 0, 0.5)",
