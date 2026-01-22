@@ -8,6 +8,7 @@ import type {
   SwapRouteHop,
 } from "../types";
 import { SWAP_CONFIG, getTokenDecimals, toRawAmount } from "../config";
+import { getSelectedNetwork } from "../../network/config";
 
 // Jupiter API response types
 interface JupiterQuoteResponse {
@@ -77,6 +78,40 @@ export class JupiterProvider extends BaseSwapProvider {
   async getQuote(params: SwapParams): Promise<SwapQuote> {
     const { inputMint, outputMint, amount, slippageBps } = params;
 
+    // --- DEVNET MOCK HANDLING ---
+    const network = getSelectedNetwork();
+    if (network === "devnet") {
+      console.log("⚠️ JupiterProvider: Devnet detected, returning mock quote.");
+      
+      const inputDecimals = getTokenDecimals(inputMint);
+      const outputDecimals = getTokenDecimals(outputMint);
+      
+      // Mock exchange rate logic
+      let rate = 1;
+      const isSolInput = inputMint.includes("11111111");
+      const isSolOutput = outputMint.includes("11111111");
+      
+      // Very simple mock: 1 SOL = 150 USDC
+      if (isSolInput && !isSolOutput) rate = 150; 
+      if (!isSolInput && isSolOutput) rate = 1/150;
+      
+      const outAmountFloat = parseFloat(amount) * rate;
+      const rawOutAmount = toRawAmount(outAmountFloat.toFixed(6), outputDecimals);
+      const rawInAmount = toRawAmount(amount, inputDecimals);
+
+      return {
+        inputAmount: rawInAmount,
+        outputAmount: rawOutAmount,
+        minimumReceived: rawOutAmount, // Ignore slippage for mock
+        priceImpact: 0.1,
+        route: [],
+        provider: "jupiter",
+        fees: { networkFee: "5000", protocolFee: "0" },
+        rawQuote: { mocked: true }
+      };
+    }
+    // ---------------------------
+
     // Convert human-readable amount to raw amount
     const inputDecimals = getTokenDecimals(inputMint);
     const rawAmount = toRawAmount(amount, inputDecimals);
@@ -116,6 +151,13 @@ export class JupiterProvider extends BaseSwapProvider {
     params: SwapParams,
     quote: SwapQuote,
   ): Promise<VersionedTransaction> {
+    // --- DEVNET CHECK ---
+    const network = getSelectedNetwork();
+    if (network === "devnet") {
+        throw new Error("Jupiter swaps are not available on Devnet. Switch to Mainnet to execute active trades.");
+    }
+    // ------------------
+
     if (!quote.rawQuote) {
       throw new Error("Quote does not contain raw Jupiter quote data");
     }

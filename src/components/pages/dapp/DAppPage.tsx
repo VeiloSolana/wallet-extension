@@ -630,6 +630,115 @@ export const DAppPage = ({
     }
   };
 
+  const handleFundDeposit = async () => {
+    if (!selectedWallet) return;
+
+    const amount = prompt(`Deposit to Veilo (SOL):`);
+    if (!amount || parseFloat(amount) <= 0) return;
+
+    try {
+      showLoading("Depositing", "Depositing SOL to your Veilo account...");
+
+      // Load main wallet to get recipient public key
+      const mainWallet = await loadWallet();
+      if (!mainWallet) {
+        hideModal();
+        setTimeout(() => {
+          showAlert(
+            "Error",
+            "Failed to load main wallet for deposit.",
+            "danger",
+          );
+        }, 100);
+        return;
+      }
+
+      // Decrypt the veilo public key
+      const veiloPublicKeyStr = await decrypt(
+        mainWallet.encryptedVeiloPublicKey,
+        password,
+      );
+
+      // Decrypt the dapp wallet's private key
+      let encryptedData = selectedWallet.encryptedPrivateKey;
+      if (typeof (encryptedData as unknown) === "string") {
+        try {
+          encryptedData = JSON.parse(encryptedData as unknown as string);
+        } catch (e) {
+          console.error("Failed to parse encrypted data", e);
+        }
+      }
+
+      const decryptedKeyStr = await decrypt(encryptedData, password);
+      const secretKeyJson = JSON.parse(decryptedKeyStr);
+      const secretKey = Uint8Array.from(secretKeyJson);
+      const dappKeypair = Keypair.fromSecretKey(secretKey);
+
+      // Create a Wallet adapter for the dapp keypair
+      const dappWallet: WalletAdapter = {
+        publicKey: dappKeypair.publicKey,
+        payer: dappKeypair,
+        signTransaction: async (tx) => {
+          if ("partialSign" in tx && typeof tx.partialSign === "function") {
+            tx.partialSign(dappKeypair);
+          } else if ("sign" in tx && typeof tx.sign === "function") {
+            (tx as any).sign(dappKeypair);
+          }
+          return tx;
+        },
+        signAllTransactions: async (txs) => {
+          txs.forEach((tx) => {
+            if ("partialSign" in tx && typeof tx.partialSign === "function") {
+              tx.partialSign(dappKeypair);
+            } else if ("sign" in tx && typeof tx.sign === "function") {
+              (tx as any).sign(dappKeypair);
+            }
+          });
+          return txs;
+        },
+      };
+
+      const connection = new Connection(getRpcEndpoint(), "confirmed");
+      const depositAmountLamports = BigInt(
+        Math.floor(parseFloat(amount) * LAMPORTS_PER_SOL),
+      );
+
+      await handleDeposit({
+        connection,
+        depositor: dappWallet,
+        depositAmount: depositAmountLamports,
+        recipientPublicKey: BigInt(veiloPublicKeyStr),
+        pubKey: new PublicKey(mainWallet.publicKey),
+      });
+
+      hideModal();
+
+      // Refresh balances
+      fetchWalletBalances(selectedWallet.publicKey);
+      if (activeDetailTab === "history") {
+        fetchHistory(selectedWallet.publicKey);
+      }
+
+      setTimeout(() => {
+        showAlert(
+          "Success",
+          `Successfully deposited ${amount} SOL to your Veilo account!`,
+          "default",
+        );
+      }, 100);
+    } catch (error: any) {
+      console.error("Deposit failed:", error);
+      hideModal();
+      setTimeout(() => {
+        showAlert(
+          "Deposit Failed",
+          `Failed to deposit: ${error.message}`,
+          "danger",
+        );
+      }, 100);
+    }
+  };
+
   // Fetch on-chain balances for selected wallet
   const fetchWalletBalances = useCallback(async (publicKeyStr: string) => {
     setIsLoadingBalances(true);
@@ -910,17 +1019,7 @@ export const DAppPage = ({
             </CyberButton>
 
             <CyberButton
-              onClick={() => {
-                if (onWithdrawToWallet) {
-                  const amount = prompt(`Fund ${selectedWallet.name} (SOL):`);
-                  if (amount && parseFloat(amount) > 0) {
-                    onWithdrawToWallet(
-                      selectedWallet.publicKey,
-                      parseFloat(amount),
-                    );
-                  }
-                }
-              }}
+              onClick={handleFundDeposit}
               variant="secondary"
               className="flex flex-col items-center gap-1.5 py-2 h-auto"
             >
