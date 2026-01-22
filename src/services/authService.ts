@@ -1,4 +1,4 @@
-import { api } from "../api/apiHandler";
+import { api } from "../lib/api/relayerApi";
 
 export interface CheckUsernameResponse {
   available: boolean;
@@ -23,7 +23,7 @@ export const authService = {
       `/auth/checkUsername`,
       {
         params: { username },
-      }
+      },
     );
     return response.data;
   },

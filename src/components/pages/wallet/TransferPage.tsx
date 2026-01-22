@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { CyberButton } from "../../common/ui/CyberButton";
-import { getVeiloPublicKey } from "../../../lib/relayerApi";
+import { getVeiloPublicKey } from "../../../lib/api/relayerApi";
 import solLogo from "/images/sol-logo.svg";
 import usdcLogo from "/images/usdc-logo.svg";
 import usdtLogo from "/images/usdt-logo.svg";

@@ -1,7 +1,7 @@
 import type { StoredNote } from "../noteManager";
 import { selectNotesForWithdrawal } from "./note-selector";
 import { PublicKey } from "@solana/web3.js";
-import { submitWithdraw } from "../relayerApi";
+import { submitWithdraw } from "../api/relayerApi";
 
 export const handleWithdraw = async (
   notes: StoredNote[],
@@ -9,10 +9,10 @@ export const handleWithdraw = async (
   amount: number,
   userPublicKey: string,
   mintAddress: PublicKey,
-  decimals: number
+  decimals: number,
 ) => {
   console.log(
-    `Withdrawing ${amount} SOL to ${recipient} from ${notes.length} notes`
+    `Withdrawing ${amount} SOL to ${recipient} from ${notes.length} notes`,
   );
 
   // Filter unspent notes
@@ -25,18 +25,18 @@ export const handleWithdraw = async (
   console.log(
     "Withdrawal initiated with",
     unspentNotes.length,
-    "unspent notes"
+    "unspent notes",
   );
 
   // Convert amount to smallest unit (using token's decimals)
   const withdrawAmountSmallestUnit = BigInt(
-    Math.floor(amount * Math.pow(10, decimals))
+    Math.floor(amount * Math.pow(10, decimals)),
   );
 
   // Select the optimal notes for this withdrawal
   const selectionResult = selectNotesForWithdrawal(
     unspentNotes,
-    withdrawAmountSmallestUnit
+    withdrawAmountSmallestUnit,
   );
 
   if (!selectionResult.success) {
@@ -45,12 +45,12 @@ export const handleWithdraw = async (
 
   console.log(`✓ ${selectionResult.message}`);
   console.log(
-    `Selected ${selectionResult.selectedNotes.length} note(s) for withdrawal`
+    `Selected ${selectionResult.selectedNotes.length} note(s) for withdrawal`,
   );
   console.log(
     `Change: ${
       Number(selectionResult.changeAmount) / Math.pow(10, decimals)
-    } tokens`
+    } tokens`,
   );
 
   // Prepare notes for API - remove merklePath as it contains BigInt values
@@ -76,7 +76,7 @@ export const handleWithdraw = async (
 
   console.log("✅ Withdrawal successful!");
   console.log(
-    `Withdrew ${result.data.withdrawAmount} SOL to ${result.data.withdrawRecipient}`
+    `Withdrew ${result.data.withdrawAmount} SOL to ${result.data.withdrawRecipient}`,
   );
   console.log(`Change: ${result.data.changeAmount} SOL`);
 
@@ -89,4 +89,3 @@ export const handleWithdraw = async (
     txSignature: result.data.txSignature,
   };
 };
-

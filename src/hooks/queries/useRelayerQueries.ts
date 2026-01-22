@@ -8,7 +8,7 @@ import {
   type QueryNotesRequest,
   type SaveEncryptedNoteRequest,
   type WithdrawRequest,
-} from "../../lib/relayerApi";
+} from "../../lib/api/relayerApi";
 
 // Query encrypted notes
 export const useQueryNotes = (params?: QueryNotesRequest, enabled = true) => {

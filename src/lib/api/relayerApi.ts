@@ -1,6 +1,34 @@
+import axios from "axios";
 import nacl from "tweetnacl";
 import crypto from "crypto";
 import util from "tweetnacl-util";
+
+// Create Axios instance with default config
+export const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080/api",
+  // baseURL:
+  //   import.meta.env.VITE_API_URL || "https://relayer-server.onrender.com/api",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Request interceptor (optional: add token if we were storing it in a variable,
+// but we'll likely handle auth via headers automatically or explicit injection)
+// For now, let's keep it simple.
+
+// Response interceptor for global error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Standardize error format
+    const message =
+      error.response?.data?.error ||
+      error.message ||
+      "An unexpected error occurred";
+    return Promise.reject(new Error(message));
+  },
+);
 
 // const RELAYER_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const RELAYER_API_URL = "http://localhost:8080"; // TODO: Load from config/storage
@@ -18,18 +46,18 @@ function encryptForRelayer(data: any): string {
     messageUint8,
     nonce,
     relayerPublicKey,
-    ephemeralKeyPair.secretKey
+    ephemeralKeyPair.secretKey,
   );
 
   const fullPayload = new Uint8Array(
-    ephemeralKeyPair.publicKey.length + nonce.length + encryptedBox.length
+    ephemeralKeyPair.publicKey.length + nonce.length + encryptedBox.length,
   );
 
   fullPayload.set(ephemeralKeyPair.publicKey, 0);
   fullPayload.set(nonce, ephemeralKeyPair.publicKey.length);
   fullPayload.set(
     encryptedBox,
-    ephemeralKeyPair.publicKey.length + nonce.length
+    ephemeralKeyPair.publicKey.length + nonce.length,
   );
 
   return util.encodeBase64(fullPayload);
@@ -78,7 +106,7 @@ export interface SaveEncryptedNoteResponse {
 }
 
 export async function queryEncryptedNotes(
-  params: QueryNotesRequest = {}
+  params: QueryNotesRequest = {},
 ): Promise<QueryNotesResponse> {
   try {
     const response = await fetch(`${RELAYER_API_URL}/api/notes/query`, {
@@ -101,7 +129,7 @@ export async function queryEncryptedNotes(
 }
 
 export async function saveEncryptedNote(
-  data: SaveEncryptedNoteRequest
+  data: SaveEncryptedNoteRequest,
 ): Promise<SaveEncryptedNoteResponse> {
   try {
     const response = await fetch(`${RELAYER_API_URL}/api/notes/save`, {
@@ -163,7 +191,7 @@ export interface MerkleTreeResponse {
 
 export async function getMerkleRoot(
   mintAddress?: string,
-  treeId?: number
+  treeId?: number,
 ): Promise<MerkleRootResponse> {
   try {
     const params = new URLSearchParams();
@@ -188,7 +216,7 @@ export async function getMerkleRoot(
 
 export async function getMerkleTree(
   mintAddress?: string,
-  treeId?: number
+  treeId?: number,
 ): Promise<MerkleTreeResponse> {
   try {
     const params = new URLSearchParams();
@@ -240,7 +268,7 @@ export interface WithdrawResponse {
 }
 
 export async function submitWithdraw(
-  data: WithdrawRequest
+  data: WithdrawRequest,
 ): Promise<WithdrawResponse> {
   try {
     // Encrypt the payload before sending
@@ -284,7 +312,6 @@ export interface PrivateTransferRequest {
   mintAddress?: string;
 }
 
-
 export interface PrivateTransferResponse {
   success: boolean;
   message: string;
@@ -312,7 +339,7 @@ export interface PrivateTransferResponse {
 }
 
 export async function submitPrivateTransfer(
-  data: PrivateTransferRequest
+  data: PrivateTransferRequest,
 ): Promise<PrivateTransferResponse> {
   try {
     // Encrypt the payload before sending
@@ -332,7 +359,7 @@ export async function submitPrivateTransfer(
         },
         // Backend expects: { encryptedPayload: "base64..." }
         body: JSON.stringify({ encryptedPayload }),
-      }
+      },
     );
 
     const result = await response.json();
@@ -359,19 +386,19 @@ export interface VeiloPublicKeyResponse {
 }
 
 export async function getVeiloPublicKey(
-  username: string
+  username: string,
 ): Promise<VeiloPublicKeyResponse> {
   try {
     const response = await fetch(
       `${RELAYER_API_URL}/api/auth/veiloPublicKey?username=${encodeURIComponent(
-        username
+        username,
       )}`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     const result = await response.json();

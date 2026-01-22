@@ -1,7 +1,7 @@
 import type { StoredNote } from "../noteManager";
 import { selectNotesForWithdrawal } from "./note-selector";
 import { PublicKey } from "@solana/web3.js";
-import { submitPrivateTransfer } from "../relayerApi";
+import { submitPrivateTransfer } from "../api/relayerApi";
 
 export const handleTransfer = async (
   notes: StoredNote[],
@@ -9,10 +9,10 @@ export const handleTransfer = async (
   amount: number,
   userPublicKey: string,
   mintAddress: PublicKey,
-  decimals: number
+  decimals: number,
 ) => {
   console.log(
-    `Transferring ${amount} SOL privately to ${recipientUsername} from ${notes.length} notes`
+    `Transferring ${amount} SOL privately to ${recipientUsername} from ${notes.length} notes`,
   );
 
   // Filter unspent notes
@@ -25,18 +25,18 @@ export const handleTransfer = async (
   console.log(
     "Private transfer initiated with",
     unspentNotes.length,
-    "unspent notes"
+    "unspent notes",
   );
 
   // Convert amount to smallest unit (using token's decimals)
   const transferAmountSmallestUnit = BigInt(
-    Math.floor(amount * Math.pow(10, decimals))
+    Math.floor(amount * Math.pow(10, decimals)),
   );
 
   // Select the optimal notes for this transfer
   const selectionResult = selectNotesForWithdrawal(
     unspentNotes,
-    transferAmountSmallestUnit
+    transferAmountSmallestUnit,
   );
 
   if (!selectionResult.success) {
@@ -45,12 +45,12 @@ export const handleTransfer = async (
 
   console.log(`✓ ${selectionResult.message}`);
   console.log(
-    `Selected ${selectionResult.selectedNotes.length} note(s) for transfer`
+    `Selected ${selectionResult.selectedNotes.length} note(s) for transfer`,
   );
   console.log(
     `Change: ${
       Number(selectionResult.changeAmount) / Math.pow(10, decimals)
-    } tokens`
+    } tokens`,
   );
 
   // Prepare notes for API - remove merklePath as it contains BigInt values
@@ -66,7 +66,7 @@ export const handleTransfer = async (
 
   // Send private transfer request to relayer
   console.log(
-    `Sending private transfer request to relayer for ${recipientUsername}...`
+    `Sending private transfer request to relayer for ${recipientUsername}...`,
   );
   const result = await submitPrivateTransfer({
     notes: notesForApi,
@@ -76,14 +76,13 @@ export const handleTransfer = async (
     mintAddress: mintAddress.toBase58(),
   });
 
-
   if (!result.success || !result.data) {
     throw new Error(result.message || "Private transfer failed");
   }
 
   console.log("✅ Private transfer successful!");
   console.log(
-    `Transferred ${result.data.transferAmount} SOL to ${result.data.recipient}`
+    `Transferred ${result.data.transferAmount} SOL to ${result.data.recipient}`,
   );
   console.log(`Change: ${result.data.senderChangeAmount} SOL`);
   console.log(`Transaction: ${result.data.txSignature}`);

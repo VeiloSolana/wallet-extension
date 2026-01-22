@@ -1,4 +1,4 @@
-import { type MerkleTreeResponse } from "./relayerApi";
+import { type MerkleTreeResponse } from "./api/relayerApi";
 
 function bytesToBigIntBE(bytes: Uint8Array): bigint {
   return BigInt("0x" + Buffer.from(bytes).toString("hex"));
@@ -91,7 +91,7 @@ export class OffchainMerkleTree {
 
 export function buildMerkleTree(
   treeData: MerkleTreeResponse["data"],
-  poseidon: any
+  poseidon: any,
 ): OffchainMerkleTree {
   const tree = new OffchainMerkleTree(treeData.height, poseidon);
 

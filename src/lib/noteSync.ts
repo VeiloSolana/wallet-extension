@@ -1,4 +1,4 @@
-import { queryEncryptedNotes, getMerkleTree } from "./relayerApi";
+import { queryEncryptedNotes, getMerkleTree } from "./api/relayerApi";
 import { decryptNoteBlob } from "./helper";
 import { NoteManager } from "./noteManager";
 import { buildPoseidon } from "circomlibjs";
@@ -12,7 +12,7 @@ function computeNullifier(
   poseidon: any,
   commitment: Uint8Array,
   leafIndex: number,
-  privateKey: Uint8Array
+  privateKey: Uint8Array,
 ): Uint8Array {
   const commitmentField = poseidon.F.e(bytesToBigIntBE(commitment));
   const indexField = poseidon.F.e(BigInt(leafIndex));
@@ -32,7 +32,7 @@ export async function syncNotesFromRelayer(
   publicKey: string,
   privateKey: string,
   veiloPrivateKey: string,
-  veiloPublicKey: string
+  veiloPublicKey: string,
 ) {
   const poseidon = await buildPoseidon();
   try {
@@ -59,7 +59,7 @@ export async function syncNotesFromRelayer(
       try {
         // Check if we already have this note
         const existing = await noteManager.getNoteByCommitment(
-          encryptedNote.commitment
+          encryptedNote.commitment,
         );
         if (existing) {
           // Update spent status if it differs from relayer
@@ -68,10 +68,10 @@ export async function syncNotesFromRelayer(
             if (relayerSpent) {
               await noteManager.markAsSpent(
                 existing.id,
-                encryptedNote.txSignature || "unknown"
+                encryptedNote.txSignature || "unknown",
               );
               console.log(
-                `✓ Marked note as spent: ${existing.commitment.slice(0, 8)}...`
+                `✓ Marked note as spent: ${existing.commitment.slice(0, 8)}...`,
               );
             }
             // Note: We don't unmark spent notes since that shouldn't happen in normal flow
@@ -81,7 +81,7 @@ export async function syncNotesFromRelayer(
 
         const ephemeralPubKey = Buffer.from(
           encryptedNote.ephemeralPublicKey,
-          "base64"
+          "base64",
         );
 
         // Decrypt
@@ -92,17 +92,17 @@ export async function syncNotesFromRelayer(
         const decrypted = await decryptNoteBlob(
           privKeyBuffer,
           ephemeralPubKey,
-          encryptedNote.encryptedBlob
+          encryptedNote.encryptedBlob,
         );
 
         // 2. Fetch and build merkle tree
         const merkleTreeResponse = await getMerkleTree(
           decrypted.mintAddress,
-          decrypted.treeId
+          decrypted.treeId,
         );
         const offchainTree = buildMerkleTree(merkleTreeResponse.data, poseidon);
         console.log(
-          `🌲 Merkle tree built with ${merkleTreeResponse.data.totalCommitments} commitments`
+          `🌲 Merkle tree built with ${merkleTreeResponse.data.totalCommitments} commitments`,
         );
         // Get merkle proof for this note's leaf index
         const merklePath = offchainTree.getMerkleProof(decrypted.leafIndex);
@@ -112,7 +112,7 @@ export async function syncNotesFromRelayer(
           poseidon,
           decrypted.commitment,
           decrypted.leafIndex,
-          veiloPrivKeyBuffer
+          veiloPrivKeyBuffer,
         );
         console.log({
           amount: decrypted.amount.toString(),
@@ -152,7 +152,7 @@ export async function syncNotesFromRelayer(
         // Decryption failed = not our note. Ignore.
         console.log(
           "Note decryption failed (likely not our note):",
-          (error as Error).message
+          (error as Error).message,
         );
       }
     }
