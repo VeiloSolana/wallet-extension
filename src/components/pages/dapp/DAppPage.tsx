@@ -13,6 +13,7 @@ import { CyberButton } from "../../common/ui/CyberButton";
 import { CreateDappWalletModal } from "../../features/dapp/modals/CreateDappWalletModal";
 import { ReceiveModal } from "../../features/wallet/modals/ReceiveModal";
 import { DappSendModal } from "../../features/dapp/modals/DappSendModal";
+import { DappFundModal } from "../../features/dapp/modals/DappFundModal";
 import { DappWalletCard } from "../../features/dapp/DappWalletCard";
 import { CustomModal } from "../../common/ui/CustomModal";
 import type { DappWallet } from "../../../utils/dappWalletStorage";
@@ -57,6 +58,7 @@ export const DAppPage = ({
   >("balances");
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+  const [isFundModalOpen, setIsFundModalOpen] = useState(false);
   const [deletingWalletId, setDeletingWalletId] = useState<string | null>(null);
 
   // Custom modal state
@@ -630,112 +632,21 @@ export const DAppPage = ({
     }
   };
 
-  const handleFundDeposit = async () => {
-    if (!selectedWallet) return;
-
-    const amount = prompt(`Deposit to Veilo (SOL):`);
-    if (!amount || parseFloat(amount) <= 0) return;
+  const handleFundDeposit = async (amount: number) => {
+    if (!selectedWallet || !onWithdrawToWallet) return;
 
     try {
-      showLoading("Depositing", "Depositing SOL to your Veilo account...");
-
-      // Load main wallet to get recipient public key
-      const mainWallet = await loadWallet();
-      if (!mainWallet) {
-        hideModal();
-        setTimeout(() => {
-          showAlert(
-            "Error",
-            "Failed to load main wallet for deposit.",
-            "danger",
-          );
-        }, 100);
-        return;
-      }
-
-      // Decrypt the veilo public key
-      const veiloPublicKeyStr = await decrypt(
-        mainWallet.encryptedVeiloPublicKey,
-        password,
-      );
-
-      // Decrypt the dapp wallet's private key
-      let encryptedData = selectedWallet.encryptedPrivateKey;
-      if (typeof (encryptedData as unknown) === "string") {
-        try {
-          encryptedData = JSON.parse(encryptedData as unknown as string);
-        } catch (e) {
-          console.error("Failed to parse encrypted data", e);
-        }
-      }
-
-      const decryptedKeyStr = await decrypt(encryptedData, password);
-      const secretKeyJson = JSON.parse(decryptedKeyStr);
-      const secretKey = Uint8Array.from(secretKeyJson);
-      const dappKeypair = Keypair.fromSecretKey(secretKey);
-
-      // Create a Wallet adapter for the dapp keypair
-      const dappWallet: WalletAdapter = {
-        publicKey: dappKeypair.publicKey,
-        payer: dappKeypair,
-        signTransaction: async (tx) => {
-          if ("partialSign" in tx && typeof tx.partialSign === "function") {
-            tx.partialSign(dappKeypair);
-          } else if ("sign" in tx && typeof tx.sign === "function") {
-            (tx as any).sign(dappKeypair);
-          }
-          return tx;
-        },
-        signAllTransactions: async (txs) => {
-          txs.forEach((tx) => {
-            if ("partialSign" in tx && typeof tx.partialSign === "function") {
-              tx.partialSign(dappKeypair);
-            } else if ("sign" in tx && typeof tx.sign === "function") {
-              (tx as any).sign(dappKeypair);
-            }
-          });
-          return txs;
-        },
-      };
-
-      const connection = new Connection(getRpcEndpoint(), "confirmed");
-      const depositAmountLamports = BigInt(
-        Math.floor(parseFloat(amount) * LAMPORTS_PER_SOL),
-      );
-
-      await handleDeposit({
-        connection,
-        depositor: dappWallet,
-        depositAmount: depositAmountLamports,
-        recipientPublicKey: BigInt(veiloPublicKeyStr),
-        pubKey: new PublicKey(mainWallet.publicKey),
-      });
-
-      hideModal();
+      // Withdraw from Veilo privacy pool to dapp wallet
+      await onWithdrawToWallet(selectedWallet.publicKey, amount);
 
       // Refresh balances
       fetchWalletBalances(selectedWallet.publicKey);
       if (activeDetailTab === "history") {
         fetchHistory(selectedWallet.publicKey);
       }
-
-      setTimeout(() => {
-        showAlert(
-          "Success",
-          `Successfully deposited ${amount} SOL to your Veilo account!`,
-          "default",
-        );
-      }, 100);
     } catch (error: any) {
-      console.error("Deposit failed:", error);
-      hideModal();
-      setTimeout(() => {
-        showAlert(
-          "Deposit Failed",
-          `Failed to deposit: ${error.message}`,
-          "danger",
-        );
-      }, 100);
+      console.error("Fund failed:", error);
+      throw error;
     }
   };
 
@@ -1019,7 +930,7 @@ export const DAppPage = ({
             </CyberButton>
 
             <CyberButton
-              onClick={handleFundDeposit}
+              onClick={() => setIsFundModalOpen(true)}
               variant="secondary"
               className="flex flex-col items-center gap-1.5 py-2 h-auto"
             >
@@ -1502,6 +1413,14 @@ export const DAppPage = ({
         onClose={() => setIsSendModalOpen(false)}
         onSend={handleSendFunds}
         balance={walletBalances.sol}
+      />
+
+      <DappFundModal
+        isOpen={isFundModalOpen}
+        onClose={() => setIsFundModalOpen(false)}
+        onFund={handleFundDeposit}
+        availableBalance={availableBalance}
+        walletName={selectedWallet?.name || ""}
       />
 
       <CustomModal
