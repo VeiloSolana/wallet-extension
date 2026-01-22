@@ -50,11 +50,9 @@ function encryptForRelayer(data: unknown): string {
     nonce,
     relayerPublicKey,
     ephemeralKeyPair.secretKey,
-    ephemeralKeyPair.secretKey,
   );
 
   const fullPayload = new Uint8Array(
-    ephemeralKeyPair.publicKey.length + nonce.length + encryptedBox.length,
     ephemeralKeyPair.publicKey.length + nonce.length + encryptedBox.length,
   );
 
@@ -62,7 +60,6 @@ function encryptForRelayer(data: unknown): string {
   fullPayload.set(nonce, ephemeralKeyPair.publicKey.length);
   fullPayload.set(
     encryptedBox,
-    ephemeralKeyPair.publicKey.length + nonce.length,
     ephemeralKeyPair.publicKey.length + nonce.length,
   );
 
@@ -115,7 +112,6 @@ export interface SaveEncryptedNoteResponse {
 
 export async function queryEncryptedNotes(
   params: QueryNotesRequest = {},
-  params: QueryNotesRequest = {},
 ): Promise<QueryNotesResponse> {
   try {
     const response = await fetch(`${RELAYER_API_URL}/api/notes/query`, {
@@ -138,7 +134,6 @@ export async function queryEncryptedNotes(
 }
 
 export async function saveEncryptedNote(
-  data: SaveEncryptedNoteRequest,
   data: SaveEncryptedNoteRequest,
 ): Promise<SaveEncryptedNoteResponse> {
   try {
@@ -232,7 +227,6 @@ export interface MerkleTreeResponse {
 export async function getMerkleRoot(
   mintAddress?: string,
   treeId?: number,
-  treeId?: number,
 ): Promise<MerkleRootResponse> {
   try {
     const params = new URLSearchParams();
@@ -257,7 +251,6 @@ export async function getMerkleRoot(
 
 export async function getMerkleTree(
   mintAddress?: string,
-  treeId?: number,
   treeId?: number,
 ): Promise<MerkleTreeResponse> {
   try {
@@ -321,7 +314,6 @@ export interface WithdrawResponse {
 }
 
 export async function submitWithdraw(
-  data: WithdrawRequest,
   data: WithdrawRequest,
 ): Promise<WithdrawResponse> {
   try {
@@ -394,7 +386,6 @@ export interface PrivateTransferResponse {
 
 export async function submitPrivateTransfer(
   data: PrivateTransferRequest,
-  data: PrivateTransferRequest,
 ): Promise<PrivateTransferResponse> {
   try {
     // Encrypt the payload before sending
@@ -414,7 +405,6 @@ export async function submitPrivateTransfer(
         },
         // Backend expects: { encryptedPayload: "base64..." }
         body: JSON.stringify({ encryptedPayload }),
-      },
       },
     );
 
@@ -443,12 +433,10 @@ export interface VeiloPublicKeyResponse {
 
 export async function getVeiloPublicKey(
   username: string,
-  username: string,
 ): Promise<VeiloPublicKeyResponse> {
   try {
     const response = await fetch(
       `${RELAYER_API_URL}/api/auth/veiloPublicKey?username=${encodeURIComponent(
-        username,
         username,
       )}`,
       {
@@ -456,7 +444,6 @@ export async function getVeiloPublicKey(
         headers: {
           "Content-Type": "application/json",
         },
-      },
       },
     );
 

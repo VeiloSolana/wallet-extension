@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { clearWallet } from "../utils/storage";
-// import { clearWallet } from "../utils/storage";
+import { clearWallet } from "../../../utils/storage";
 
 interface LoginPageProps {
   onLogin: (password: string) => void;

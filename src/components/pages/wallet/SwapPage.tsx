@@ -5,12 +5,15 @@ import {
   PublicKey,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
-import { CyberButton } from "./CyberButton";
-import { useSwap } from "../hooks/useSwap";
-import { fromRawAmount, getTokenDecimals } from "../lib/swap";
-import { getDappWallets, type DappWallet } from "../utils/dappWalletStorage";
-import { decrypt } from "../utils/encryption";
-import { getRpcEndpoint } from "../lib/network";
+import { CyberButton } from "../../common/ui/CyberButton";
+import { useSwap } from "../../../hooks/useSwap";
+import { fromRawAmount, getTokenDecimals } from "../../../lib/swap";
+import {
+  getDappWallets,
+  type DappWallet,
+} from "../../../utils/dappWalletStorage";
+import { decrypt } from "../../../utils/encryption";
+import { getRpcEndpoint } from "../../../lib/network";
 
 interface SwapPageProps {
   keypair: Keypair | null;

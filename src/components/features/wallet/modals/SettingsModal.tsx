@@ -1,11 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { CyberButton } from "./CyberButton";
+import { CyberButton } from "../../../common/ui/CyberButton";
 import { useState, useEffect } from "react";
 import {
   type NetworkType,
   getSelectedNetwork,
   setSelectedNetwork,
-} from "../lib/network";
+} from "../../../../lib/network";
 
 interface SettingsModalProps {
   isOpen: boolean;

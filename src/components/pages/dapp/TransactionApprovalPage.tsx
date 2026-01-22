@@ -60,7 +60,7 @@ const KNOWN_PROGRAMS: Record<string, string> = {
   "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin": "Serum DEX v3",
 };
 
-import { getRpcEndpoint, getExplorerUrl } from "../lib/network";
+import { getRpcEndpoint, getExplorerUrl } from "../../../lib/network";
 
 // ============================================================================
 // Component

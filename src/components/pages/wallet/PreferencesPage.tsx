@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { CyberButton } from "./CyberButton";
+import { CyberButton } from "../../common/ui/CyberButton";
 import {
   type NetworkType,
   getSelectedNetwork,
   setSelectedNetwork,
-} from "../lib/network";
+} from "../../../lib/network";
 
 interface PreferencesPageProps {
   address?: string;

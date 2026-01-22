@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import { useCryptoPrices } from "../hooks/useSolPrice";
-import { getExplorerUrl } from "../lib/network";
+import { useCryptoPrices } from "../../../hooks/useSolPrice";
+import { getExplorerUrl } from "../../../lib/network";
 
 interface Transaction {
   id: string;

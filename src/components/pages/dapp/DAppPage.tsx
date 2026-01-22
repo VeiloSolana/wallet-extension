@@ -31,7 +31,11 @@ import solLogo from "/images/sol-logo.svg";
 import usdcLogo from "/images/usdc-logo.svg";
 import usdtLogo from "/images/usdt-logo.svg";
 
-import { getRpcEndpoint, getTokenMints, getExplorerUrl } from "../lib/network";
+import {
+  getRpcEndpoint,
+  getTokenMints,
+  getExplorerUrl,
+} from "../../../lib/network";
 
 interface DAppPageProps {
   availableBalance?: number;
