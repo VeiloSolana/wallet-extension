@@ -2,7 +2,7 @@ import { queryEncryptedNotes, getMerkleTree } from "./api/relayerApi";
 import { decryptNoteBlob } from "./helper";
 import { NoteManager } from "./noteManager";
 import { buildPoseidon } from "circomlibjs";
-import { buildMerkleTree } from "../utils/merkleTree/index";
+import { buildMerkleTree } from "../utils/merkletree/index";
 
 function bytesToBigIntBE(bytes: Uint8Array): bigint {
   return BigInt("0x" + Buffer.from(bytes).toString("hex"));

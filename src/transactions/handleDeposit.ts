@@ -15,7 +15,7 @@ import {
 } from "@solana/spl-token";
 import { buildPoseidon } from "circomlibjs";
 import { getMerkleTree } from "../lib/api/relayerApi";
-import { buildMerkleTree } from "../utils/merkleTree/index";
+import { buildMerkleTree } from "../utils/merkletree/index";
 import { getProgram, type WalletAdapter } from "../../program/program";
 import { groth16 } from "snarkjs";
 import { createEncryptedNoteBlob } from "./ECDH/helpers";
@@ -449,7 +449,7 @@ export const handleDeposit = async ({
 
   const offchainTree = treeResponse?.data
     ? buildMerkleTree(treeResponse.data, poseidon)
-    : new (await import("../utils/merkleTree/index")).OffchainMerkleTree(
+    : new (await import("../utils/merkletree/index")).OffchainMerkleTree(
         TREE_HEIGHT,
         poseidon,
       );
