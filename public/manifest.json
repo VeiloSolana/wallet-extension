@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Veilo - Privacy layer on solana",
-  "version": "1.0.0",
-  "description": "Perform private transactions and interactions on the Solana blockchain.",
+  "name": "Veilo - Privacy Wallet for Solana",
+  "version": "1.0.1",
+  "description": "Non-custodial privacy wallet for Solana blockchain. Make shielded transactions using zero-knowledge proofs. Your keys, your crypto.",
   "icons": {
     "16": "images/logo-main.png",
     "32": "images/logo-main.png",
@@ -10,7 +10,8 @@
     "128": "images/logo-main.png"
   },
   "action": {
-    "default_popup": "index.html"
+    "default_popup": "index.html",
+    "default_title": "Veilo Wallet"
   },
   "background": {
     "service_worker": "background.js",
@@ -23,7 +24,7 @@
       "matches": ["<all_urls>"],
       "js": ["content.js"],
       "run_at": "document_start",
-      "all_frames": true
+      "all_frames": false
     }
   ],
   "web_accessible_resources": [
