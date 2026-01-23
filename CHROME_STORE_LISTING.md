@@ -109,16 +109,30 @@ English
 https://raw.githubusercontent.com/VeiloSolana/wallet-extension/master/PRIVACY_POLICY.md
 (Or host it on your website)
 
+## Single Purpose Description
+
+Veilo is a privacy-focused cryptocurrency wallet for the Solana blockchain. Its single purpose is to enable users to securely manage their digital assets and interact with decentralized applications (dApps) using privacy-preserving zero-knowledge proof technology.
+
+Users need this extension to:
+
+1. Create and manage a non-custodial Solana wallet.
+2. Hold and transfer assets privately using shielded transactions.
+3. Inject a wallet provider into websites to connect with Web3 dApps (requires access to all sites to detect and facilitate these connections).
+
 ## Justification for Permissions (For Reviewer Notes)
 
 ### host_permissions: <all_urls>
 
-**Required for:** Web3 wallet functionality (industry standard for ALL blockchain wallets)
+The extension requires access to all URLs (<all_urls>) to inject the bundled wallet provider (content.js and injected.js) into the DOM at 'document_start'.
 
-- Injects Wallet Standard provider for dApp compatibility
-- Does NOT access user data from websites
-- Only responds to explicit wallet connection requests
-- Standard practice for MetaMask, Phantom, Coinbase Wallet, etc.
+This is a functional requirement for the Solana Wallet Standard. Decentralized applications (dApps) running on arbitrary web domains need to detect 'window.solana' immediately upon page load to initialize.
+
+Security limitations:
+
+- The content script (content.js) ignores all page content.
+- It does not read cookies, input forms, or DOM elements.
+- It functions solely as a communication bridge between the dApp and the extension background process.
+- No user data is transmitted unless the user explicitly clicks "Connect" in the extension UI.
 
 ### storage permission
 
