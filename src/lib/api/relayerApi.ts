@@ -5,9 +5,9 @@ import util from "tweetnacl-util";
 
 // Create Axios instance with default config
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080/api",
-  // baseURL:
-  //   import.meta.env.VITE_API_URL || "https://relayer-server.onrender.com/api",
+  // baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080/api",
+  baseURL:
+    import.meta.env.VITE_API_URL || "https://relayer-server.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -33,8 +33,8 @@ api.interceptors.response.use(
   },
 );
 
-// const RELAYER_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
-const RELAYER_API_URL = "http://localhost:8080"; // TODO: Load from config/storage
+const RELAYER_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+// const RELAYER_API_URL = "http://localhost:8080"; // TODO: Load from config/storage
 const RELAYER_PUBLIC_KEY = "utVxnA7zax09qJCZ7UJsa8PAOoWLRcCwOkdxg/ZGmD4=";
 
 function encryptForRelayer(data: unknown): string {
