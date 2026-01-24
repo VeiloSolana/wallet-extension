@@ -36,133 +36,127 @@ export async function syncNotesFromRelayer(
 ) {
   const poseidon = await buildPoseidon();
   try {
-    console.log("📡 Syncing notes from relayer...", publicKey);
+    console.log("📡 Syncing notes from relayer...");
 
-    // 1. Query notes by wallet public key (more reliable than timestamp-based sync)
-    // This ensures we always get all notes for this wallet regardless of timing issues
+    // 1. Query notes by wallet public key
     const response = await queryEncryptedNotes({
       walletPublicKey: publicKey,
       limit: 100,
     });
 
     if (response.notes.length === 0) {
-      console.log("No notes found for this wallet.");
       return 0;
     }
 
     console.log(`📬 Found ${response.notes.length} candidate notes.`);
 
-    let decryptedCount = 0;
+    // Cache for merkle trees by mint+treeId to avoid rebuilding
+    const merkleTreeCache = new Map<string, any>();
 
-    // 3. Try to decrypt each note
-    for (const encryptedNote of response.notes) {
-      try {
-        // Check if we already have this note
-        const existing = await noteManager.getNoteByCommitment(
-          encryptedNote.commitment,
-        );
-        if (existing) {
-          // Update spent status if it differs from relayer
-          const relayerSpent = encryptedNote.spent ?? false;
-          if (relayerSpent !== existing.spent) {
-            if (relayerSpent) {
-              await noteManager.markAsSpent(
-                existing.id,
-                encryptedNote.txSignature || "unknown",
-              );
-              console.log(
-                `✓ Marked note as spent: ${existing.commitment.slice(0, 8)}...`,
-              );
+    // Batch notes to save
+    const notesToSave: Array<Parameters<typeof noteManager.saveNote>[0]> = [];
+    const privKeyBuffer = Buffer.from(privateKey, "hex");
+    const veiloPrivKeyBuffer = Buffer.from(veiloPrivateKey, "hex");
+
+    // Process notes in parallel batches for decryption
+    // Batch size balances parallelism (faster) vs memory usage
+    // 10-15 is optimal for crypto operations without overwhelming the browser
+    const batchSize = 10;
+    for (let i = 0; i < response.notes.length; i += batchSize) {
+      const batch = response.notes.slice(i, i + batchSize);
+
+      await Promise.all(
+        batch.map(async (encryptedNote) => {
+          try {
+            // Check if we already have this note
+            const existing = await noteManager.getNoteByCommitment(
+              encryptedNote.commitment,
+            );
+            if (existing) {
+              // Update spent status if it differs
+              const relayerSpent = encryptedNote.spent ?? false;
+              if (relayerSpent && !existing.spent) {
+                await noteManager.markAsSpent(
+                  existing.id,
+                  encryptedNote.txSignature || "unknown",
+                );
+              }
+              return;
             }
-            // Note: We don't unmark spent notes since that shouldn't happen in normal flow
+
+            const ephemeralPubKey = Buffer.from(
+              encryptedNote.ephemeralPublicKey,
+              "base64",
+            );
+
+            // Decrypt note
+            const decrypted = await decryptNoteBlob(
+              privKeyBuffer,
+              ephemeralPubKey,
+              encryptedNote.encryptedBlob,
+            );
+
+            // Get or build merkle tree (cached by mint+treeId)
+            const cacheKey = `${decrypted.mintAddress}_${decrypted.treeId}`;
+            let offchainTree = merkleTreeCache.get(cacheKey);
+
+            if (!offchainTree) {
+              const merkleTreeResponse = await getMerkleTree(
+                decrypted.mintAddress,
+                decrypted.treeId,
+              );
+              offchainTree = buildMerkleTree(merkleTreeResponse.data, poseidon);
+              merkleTreeCache.set(cacheKey, offchainTree);
+            }
+
+            // Get merkle proof
+            const merklePath = offchainTree.getMerkleProof(decrypted.leafIndex);
+
+            // Compute nullifier
+            const nullifier = computeNullifier(
+              poseidon,
+              decrypted.commitment,
+              decrypted.leafIndex,
+              veiloPrivKeyBuffer,
+            );
+
+            // Add to batch
+            notesToSave.push({
+              amount: decrypted.amount.toString(),
+              commitment: Buffer.from(decrypted.commitment).toString("hex"),
+              root: Buffer.from(offchainTree.getRoot()).toString("hex"),
+              nullifier: Buffer.from(nullifier).toString("hex"),
+              blinding: Buffer.from(decrypted.blinding).toString("hex"),
+              privateKey: veiloPrivateKey,
+              publicKey: veiloPublicKey,
+              merklePath: merklePath,
+              leafIndex: decrypted.leafIndex,
+              timestamp: encryptedNote.timestamp,
+              txSignature: encryptedNote.txSignature,
+              spent: encryptedNote.spent ?? false,
+              mintAddress: decrypted.mintAddress || "",
+              treeId: decrypted.treeId,
+            });
+          } catch (error) {
+            // Decryption failed = not our note. Ignore silently.
           }
-          continue;
-        }
-
-        const ephemeralPubKey = Buffer.from(
-          encryptedNote.ephemeralPublicKey,
-          "base64",
-        );
-
-        // Decrypt
-        // Note: privateKey string should be converted to Uint8Array/Buffer
-        // We assume privateKey input is hex string or similar normal format
-        const privKeyBuffer = Buffer.from(privateKey, "hex"); // Adjust if input is different
-
-        const decrypted = await decryptNoteBlob(
-          privKeyBuffer,
-          ephemeralPubKey,
-          encryptedNote.encryptedBlob,
-        );
-
-        // 2. Fetch and build merkle tree
-        const merkleTreeResponse = await getMerkleTree(
-          decrypted.mintAddress,
-          decrypted.treeId,
-        );
-        const offchainTree = buildMerkleTree(merkleTreeResponse.data, poseidon);
-        console.log(
-          `🌲 Merkle tree built with ${merkleTreeResponse.data.totalCommitments} commitments`,
-        );
-        // Get merkle proof for this note's leaf index
-        const merklePath = offchainTree.getMerkleProof(decrypted.leafIndex);
-
-        const veiloPrivKeyBuffer = Buffer.from(veiloPrivateKey, "hex");
-        const nullifier = computeNullifier(
-          poseidon,
-          decrypted.commitment,
-          decrypted.leafIndex,
-          veiloPrivKeyBuffer,
-        );
-        console.log({
-          amount: decrypted.amount.toString(),
-          commitment: Buffer.from(decrypted.commitment).toString("hex"),
-          root: Buffer.from(offchainTree.getRoot()).toString("hex"),
-          nullifier: Buffer.from(nullifier).toString("hex"),
-          blinding: Buffer.from(decrypted.blinding).toString("hex"),
-          privateKey: veiloPrivateKey,
-          publicKey: veiloPublicKey,
-          merklePath: merklePath,
-          leafIndex: decrypted.leafIndex,
-          timestamp: encryptedNote.timestamp,
-          txSignature: encryptedNote.txSignature,
-          treeId: decrypted.treeId,
-        });
-        // 4. Save to storage
-        await noteManager.saveNote({
-          amount: decrypted.amount.toString(),
-          commitment: Buffer.from(decrypted.commitment).toString("hex"),
-          root: Buffer.from(offchainTree.getRoot()).toString("hex"),
-          nullifier: Buffer.from(nullifier).toString("hex"),
-          blinding: Buffer.from(decrypted.blinding).toString("hex"),
-          privateKey: veiloPrivateKey,
-          publicKey: veiloPublicKey,
-          merklePath: merklePath,
-          leafIndex: decrypted.leafIndex,
-          timestamp: encryptedNote.timestamp,
-          txSignature: encryptedNote.txSignature,
-          spent: encryptedNote.spent ?? false,
-          mintAddress: decrypted.mintAddress || "", // Default to empty string if undefined
-          treeId: decrypted.treeId,
-        });
-        console.log("made it here");
-
-        decryptedCount++;
-      } catch (error) {
-        // Decryption failed = not our note. Ignore.
-        console.log(
-          "Note decryption failed (likely not our note):",
-          (error as Error).message,
-        );
-      }
+        }),
+      );
     }
 
-    console.log(`✅ Sync complete. ${decryptedCount} new notes saved.`);
+    // Batch save all notes at once
+    let savedIds: string[] = [];
+    if (notesToSave.length > 0) {
+      savedIds = await noteManager.saveNotesBatch(notesToSave);
+      console.log(`✅ Sync complete. ${savedIds.length} new notes saved.`);
+    } else {
+      console.log("✅ Sync complete. No new notes.");
+    }
 
     // Update last sync timestamp
     await updateLastSyncTimestamp(Date.now());
 
-    return decryptedCount;
+    return savedIds.length;
   } catch (error) {
     console.error("Note sync failed:", error);
     throw error;

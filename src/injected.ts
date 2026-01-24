@@ -102,7 +102,11 @@ class VeiloWallet implements Wallet {
     console.log("[Veilo] Initializing VeiloWallet constructor");
     // Listen for responses from content script
     window.addEventListener("message", (event) => {
+      // Only accept messages from same window (not iframes)
       if (event.source !== window) return;
+      // Validate origin to prevent iframe attacks
+      if (event.origin !== window.location.origin) return;
+
       if (event.data?.source === "veilo-content") {
         console.log(
           "[Veilo] Received message from content script:",
@@ -429,7 +433,7 @@ class VeiloWallet implements Wallet {
           params,
           id,
         },
-        "*",
+        window.location.origin,
       );
 
       // Timeout after 5 minutes for transaction approvals
