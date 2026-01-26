@@ -45,8 +45,11 @@ interface VeiloResponse {
 
 // Listen for messages from the injected script
 window.addEventListener("message", async (event: MessageEvent) => {
-  // Only accept messages from the same window
+  // Only accept messages from the same window (not from iframes)
   if (event.source !== window) return;
+
+  // Validate origin matches current page to prevent iframe attacks
+  if (event.origin !== window.location.origin) return;
 
   const data = event.data as VeiloMessage;
 
@@ -79,7 +82,7 @@ window.addEventListener("message", async (event: MessageEvent) => {
         console.log(
           "[Veilo Content] Sending error response to injected script",
         );
-        window.postMessage(responseMessage, "*");
+        window.postMessage(responseMessage, window.location.origin);
       } else {
         // Send success response back to the injected script
         const responseMessage: VeiloResponse = {
@@ -90,7 +93,7 @@ window.addEventListener("message", async (event: MessageEvent) => {
         console.log(
           "[Veilo Content] Sending success response to injected script",
         );
-        window.postMessage(responseMessage, "*");
+        window.postMessage(responseMessage, window.location.origin);
       }
     } catch (error) {
       console.error("[Veilo Content] Error handling request:", error);
@@ -99,7 +102,7 @@ window.addEventListener("message", async (event: MessageEvent) => {
         id,
         error: error instanceof Error ? error.message : "Unknown error",
       };
-      window.postMessage(responseMessage, "*");
+      window.postMessage(responseMessage, window.location.origin);
     }
   }
 });
@@ -113,7 +116,7 @@ chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
         event: message.event,
         data: message.data,
       },
-      "*",
+      window.location.origin,
     );
   }
 
@@ -125,7 +128,7 @@ chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
         event: "disconnect",
         data: { origin: message.origin },
       },
-      "*",
+      window.location.origin,
     );
   }
 

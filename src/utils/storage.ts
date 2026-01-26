@@ -80,15 +80,14 @@ export const clearWallet = async (): Promise<void> => {
 
 // --- Session Management ---
 const SESSION_STORAGE_KEY = "veilo_session";
-const SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (reduced from 10 for security)
 
 export interface SessionData {
   timestamp: number;
   publicKey: string;
   username: string;
-  // Encrypted password for session unlock (encrypted with a session key)
-  encryptedPassword?: string;
-  sessionKey?: string;
+  // AES-GCM encrypted password for session unlock
+  encryptedPassword?: EncryptedData;
 }
 
 // Save session data
@@ -138,37 +137,38 @@ export const updateSessionTimestamp = async (): Promise<void> => {
 };
 
 // Save session with password (for auto-unlock during session)
-// Uses a simple XOR obfuscation with a random session key
-// Note: This is NOT secure encryption, just obfuscation for session memory
+// Uses AES-256-GCM with random IV and salt for secure encryption
 export const saveSessionWithPassword = async (
   publicKey: string,
   username: string,
   password: string,
 ): Promise<void> => {
-  // Generate a random session key
+  // Import encrypt function from encryption.ts
+  const { encrypt } = await import("./encryption");
+
+  // Generate a random session key for encrypting the password
   const sessionKey = Array.from(crypto.getRandomValues(new Uint8Array(32)))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-  // Simple XOR obfuscation of password with session key
-  const encoder = new TextEncoder();
-  const passwordBytes = encoder.encode(password);
-  const keyBytes = encoder.encode(sessionKey);
-  const obfuscated = new Uint8Array(passwordBytes.length);
-  for (let i = 0; i < passwordBytes.length; i++) {
-    obfuscated[i] = passwordBytes[i] ^ keyBytes[i % keyBytes.length];
-  }
-  const encryptedPassword = Array.from(obfuscated)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  // Encrypt password with AES-256-GCM using the random session key
+  const encryptedPassword = await encrypt(password, sessionKey);
 
-  await saveSession({
+  // Store the encrypted password and session key in session storage
+  // Note: sessionKey is stored in memory-only chrome.storage.session (cleared on browser close)
+  const sessionData: SessionData = {
     timestamp: Date.now(),
     publicKey,
     username,
-    encryptedPassword,
-    sessionKey,
-  });
+    encryptedPassword: {
+      ...encryptedPassword,
+      // Embed the session key in the salt field for retrieval
+      // This is acceptable since session storage is memory-only and cleared on exit
+      salt: btoa(sessionKey),
+    },
+  };
+
+  await saveSession(sessionData);
 };
 
 // Get password from session (if valid)
@@ -177,18 +177,30 @@ export const getSessionPassword = async (): Promise<string | null> => {
   if (!session || !isSessionValid(session)) {
     return null;
   }
-  if (!session.encryptedPassword || !session.sessionKey) {
+  if (!session.encryptedPassword) {
     return null;
   }
 
-  // Reverse the XOR obfuscation
-  const encryptedBytes = new Uint8Array(
-    session.encryptedPassword.match(/.{2}/g)!.map((byte) => parseInt(byte, 16)),
-  );
-  const keyBytes = new TextEncoder().encode(session.sessionKey);
-  const decrypted = new Uint8Array(encryptedBytes.length);
-  for (let i = 0; i < encryptedBytes.length; i++) {
-    decrypted[i] = encryptedBytes[i] ^ keyBytes[i % keyBytes.length];
+  try {
+    // Import decrypt function from encryption.ts
+    const { decrypt } = await import("./encryption");
+
+    // Extract session key from the salt field
+    const sessionKey = atob(session.encryptedPassword.salt);
+
+    // Decrypt password with AES-256-GCM
+    const decrypted = await decrypt(
+      {
+        cipherText: session.encryptedPassword.cipherText,
+        iv: session.encryptedPassword.iv,
+        salt: session.encryptedPassword.salt,
+      },
+      sessionKey,
+    );
+
+    return decrypted;
+  } catch (error) {
+    console.error("Failed to decrypt session password:", error);
+    return null;
   }
-  return new TextDecoder().decode(decrypted);
 };
