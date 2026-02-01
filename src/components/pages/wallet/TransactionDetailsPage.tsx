@@ -1,18 +1,7 @@
 import { motion } from "framer-motion";
 import { useCryptoPrices } from "../../../hooks/useSolPrice";
 import { getExplorerUrl } from "../../../lib/network";
-
-interface Transaction {
-  id: string;
-  type: "send" | "receive";
-  amount: number;
-  timestamp: number;
-  status: "confirmed" | "pending";
-  address: string;
-  txSignature?: string;
-  token: string;
-  mintAddress: string;
-}
+import type { Transaction } from "../../../types/transaction";
 
 interface TransactionDetailsPageProps {
   onBack: () => void;
@@ -229,6 +218,74 @@ export const TransactionDetailsPage = ({
               VIEW ON EXPLORER
             </button>
           </div>
+
+          {/* Note Breakdown — only show when transaction has multiple notes */}
+          {transaction.notes && transaction.notes.length > 1 && (
+            <div className="pt-4">
+              <p className="text-[10px] text-zinc-500 font-mono tracking-widest mb-2">
+                NOTE BREAKDOWN
+              </p>
+              <div className="space-y-1.5">
+                {transaction.notes.map((note) => (
+                  <div
+                    key={note.id}
+                    className="flex items-center justify-between p-2 bg-zinc-900/60 border border-white/10"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                          note.spent
+                            ? "bg-red-500/10 border border-red-500/30"
+                            : "bg-neon-green/10 border border-neon-green/30"
+                        }`}
+                      >
+                        {note.spent ? (
+                          <svg
+                            className="w-2 h-2 text-red-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 10l7-7m0 0l7 7m-7-7v18"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            className="w-2 h-2 text-neon-green"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-zinc-400 font-mono">
+                        {note.spent ? "Spent" : "Received"}
+                      </span>
+                    </div>
+                    <span
+                      className={`text-xs font-mono ${
+                        note.spent ? "text-red-500" : "text-neon-green"
+                      }`}
+                    >
+                      {note.spent ? "-" : "+"}
+                      {note.amount} {note.token}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

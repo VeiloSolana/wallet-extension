@@ -1,17 +1,6 @@
 import { motion } from "framer-motion";
 import { useCryptoPrices } from "../../../hooks/useSolPrice";
-
-interface Transaction {
-  id: string;
-  type: "send" | "receive";
-  amount: number;
-  timestamp: number;
-  status: "confirmed" | "pending";
-  address: string;
-  txSignature?: string;
-  token: string;
-  mintAddress: string;
-}
+import type { Transaction } from "../../../types/transaction";
 
 interface ActivityPageProps {
   onBack: () => void;

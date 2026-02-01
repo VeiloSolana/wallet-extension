@@ -9,22 +9,10 @@ import { syncNotesFromRelayer } from "../lib/noteSync";
 import { loadWallet } from "../utils/storage";
 import { decrypt } from "../utils/encryption";
 import { TOKEN_MINTS, SOL_MINT } from "../lib/transactions/shared";
+import type { Transaction, NoteDetail } from "../types/transaction";
 
-// ============================================================================
-// Types
-// ============================================================================
-
-export interface Transaction {
-  id: string;
-  type: "send" | "receive";
-  amount: number;
-  timestamp: number;
-  status: "confirmed" | "pending";
-  address: string;
-  txSignature?: string;
-  token: string;
-  mintAddress: string;
-}
+// Re-export so existing consumers that import from useNotes still work
+export type { Transaction } from "../types/transaction";
 
 export interface TokenBalances {
   sol: number;
@@ -147,31 +135,92 @@ export function useNotes({
         chrome.storage.local.set({ tokenBalances: balances });
       }
 
-      // Map notes to transactions for history
-      const noteTxs: Transaction[] = notes.map((n) => {
+      // Build NoteDetail for each note
+      const noteDetails: (NoteDetail & { onchainId?: string; spent: boolean })[] = notes.map((n) => {
         const tokenInfo = getTokenInfo(n.mintAddress || SOL_MINT.toString());
         return {
           id: n.id || n.commitment.slice(0, 8),
-          txSignature: n.txSignature,
-          type: n.spent ? "send" : "receive",
           amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
+          rawAmount: n.amount,
+          commitment: n.commitment,
+          spent: n.spent,
           timestamp: n.timestamp,
-          status: "confirmed",
-          address: "Shielded Pool",
-          token: tokenInfo.symbol,
+          txSignature: n.txSignature,
           mintAddress: n.mintAddress || SOL_MINT.toString(),
+          token: tokenInfo.symbol,
+          onchainId: n.onchainId,
         };
       });
 
-      // Merge and sort: unspent notes first, then by timestamp
+      // Partition: notes with onchainId (grouped) vs without (legacy/ungrouped)
+      const grouped = new Map<string, typeof noteDetails>();
+      const ungrouped: typeof noteDetails = [];
+
+      for (const nd of noteDetails) {
+        if (nd.onchainId) {
+          const key = `${nd.onchainId}_${nd.mintAddress}`;
+          const arr = grouped.get(key);
+          if (arr) {
+            arr.push(nd);
+          } else {
+            grouped.set(key, [nd]);
+          }
+        } else {
+          ungrouped.push(nd);
+        }
+      }
+
+      const noteTxs: Transaction[] = [];
+
+      // Process grouped notes: compute net change
+      for (const [, group] of grouped) {
+        const received = group.filter((n) => !n.spent).reduce((sum, n) => sum + n.amount, 0);
+        const spent = group.filter((n) => n.spent).reduce((sum, n) => sum + n.amount, 0);
+        const netChange = received - spent;
+        const type = netChange < 0 ? "send" : "receive";
+        const amount = Math.abs(netChange);
+        const latest = group.reduce((a, b) => (b.timestamp > a.timestamp ? b : a));
+        const first = group[0];
+
+        noteTxs.push({
+          id: first.onchainId!,
+          txSignature: latest.txSignature,
+          type: type as "send" | "receive",
+          amount,
+          timestamp: latest.timestamp,
+          status: "confirmed",
+          address: "Shielded Pool",
+          token: first.token,
+          mintAddress: first.mintAddress,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          notes: group.map(({ onchainId: _onchainId, ...rest }) => rest),
+          noteCount: group.length,
+        });
+      }
+
+      // Process ungrouped notes: each becomes its own transaction
+      for (const nd of ungrouped) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { onchainId: _onchainId, ...detail } = nd;
+        noteTxs.push({
+          id: nd.id,
+          txSignature: nd.txSignature,
+          type: nd.spent ? "send" : "receive",
+          amount: nd.amount,
+          timestamp: nd.timestamp,
+          status: "confirmed",
+          address: "Shielded Pool",
+          token: nd.token,
+          mintAddress: nd.mintAddress,
+          notes: [detail],
+          noteCount: 1,
+        });
+      }
+
+      // Sort by timestamp descending (newest first)
       setTransactions((prev) =>
         [...prev.filter((t) => t.address !== "Shielded Pool"), ...noteTxs].sort(
-          (a, b) => {
-            if (a.type !== b.type) {
-              return a.type === "receive" ? -1 : 1;
-            }
-            return b.timestamp - a.timestamp;
-          }
+          (a, b) => b.timestamp - a.timestamp
         )
       );
     } catch (e) {

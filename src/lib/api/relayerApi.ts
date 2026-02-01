@@ -75,6 +75,7 @@ export interface EncryptedNote {
   blockHeight?: number;
   txSignature?: string;
   spent?: boolean; // Whether this note has been spent
+  onchainId?: string; // Groups notes belonging to the same on-chain transaction
 }
 
 export interface QueryNotesRequest {
