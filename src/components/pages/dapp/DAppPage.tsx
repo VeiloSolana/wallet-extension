@@ -30,6 +30,7 @@ import { loadWallet } from "../../../utils/storage";
 import bs58 from "bs58";
 import solLogo from "/images/sol-logo.svg";
 import usdcLogo from "/images/usdc-logo.svg";
+import usd1Logo from "/images/usd1-logo.png";
 import usdtLogo from "/images/usdt-logo.svg";
 
 import {
@@ -1122,6 +1123,42 @@ export const DAppPage = ({
                         </p>
                         <p className="text-[9px] text-zinc-500 uppercase tracking-widest">
                           Tether
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-mono text-white tracking-tight">
+                        {isLoadingBalances
+                          ? "..."
+                          : walletBalances.usdt.toFixed(2)}
+                      </p>
+                      <p className="text-[10px] font-mono text-zinc-500">
+                        {isPriceLoading || isLoadingBalances
+                          ? "--"
+                          : `≈ $${(walletBalances.usdt * (usdt?.price || 1)).toFixed(2)}`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="relative p-3 bg-zinc-900/20 border border-white/5 hover:border-white/20 hover:bg-zinc-900/40 transition-all group">
+                  <div className="absolute top-0 left-0 w-1.5 h-1.5 border-l border-t border-white/10 group-hover:border-neon-green/50 transition-colors" />
+                  <div className="absolute top-0 right-0 w-1.5 h-1.5 border-r border-t border-white/10 group-hover:border-neon-green/50 transition-colors" />
+                  <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-l border-b border-white/10 group-hover:border-neon-green/50 transition-colors" />
+                  <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-r border-b border-white/10 group-hover:border-neon-green/50 transition-colors" />
+
+                  <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={usd1Logo}
+                        alt="USD1"
+                        className="w-8 h-8 opacity-80 group-hover:opacity-100 transition-opacity"
+                      />
+                      <div>
+                        <p className="text-sm font-mono text-white font-bold group-hover:text-neon-green transition-colors">
+                          USD1
+                        </p>
+                        <p className="text-[9px] text-zinc-500 uppercase tracking-widest">
+                          USD One
                         </p>
                       </div>
                     </div>

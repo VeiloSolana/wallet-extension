@@ -9,6 +9,7 @@ interface PricesData {
   sol: TokenPriceData;
   usdc: TokenPriceData;
   usdt: TokenPriceData;
+  usd1: TokenPriceData;
   veilo: TokenPriceData;
   lastUpdated: number;
 }
@@ -73,6 +74,10 @@ const fetchPrices = async (): Promise<PricesData> => {
         price: 1,
         priceChange24h: 0,
       },
+      usd1: {
+        price: 1,
+        priceChange24h: 0,
+      },
       // VEILO fixed price
       veilo: {
         price: 0.003,
@@ -94,6 +99,7 @@ const fetchPrices = async (): Promise<PricesData> => {
       sol: defaultPriceData,
       usdc: { price: 1, priceChange24h: 0 },
       usdt: { price: 1, priceChange24h: 0 },
+      usd1: { price: 1, priceChange24h: 0 },
       veilo: { price: 0.003, priceChange24h: 0 },
       lastUpdated: now,
     };
@@ -218,6 +224,7 @@ export const useCryptoPrices = (refreshInterval = 60000) => {
     sol: defaultPriceData,
     usdc: { price: 1, priceChange24h: 0 },
     usdt: { price: 1, priceChange24h: 0 },
+    usd1: { price: 1, priceChange24h: 0 },
     veilo: { price: 0.003, priceChange24h: 0 },
     lastUpdated: 0,
   });
@@ -250,6 +257,7 @@ export const useCryptoPrices = (refreshInterval = 60000) => {
     sol: pricesData.sol,
     usdc: pricesData.usdc,
     usdt: pricesData.usdt,
+    usd1: pricesData.usd1,
     veilo: pricesData.veilo,
     lastUpdated: pricesData.lastUpdated,
     isLoading,
