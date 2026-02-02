@@ -136,8 +136,10 @@ export function useNotes({
       }
 
       // Build NoteDetail for each note
-      const noteDetails: (NoteDetail & { onchainId?: string; spent: boolean })[] = notes.map((n) => {
+      const noteDetails: (NoteDetail & { groupKey?: string; spent: boolean })[] = notes.map((n) => {
         const tokenInfo = getTokenInfo(n.mintAddress || SOL_MINT.toString());
+        // Use onchainId if available, fall back to txSignature for grouping
+        const groupKey = n.onchainId || n.txSignature;
         return {
           id: n.id || n.commitment.slice(0, 8),
           amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
@@ -148,17 +150,17 @@ export function useNotes({
           txSignature: n.txSignature,
           mintAddress: n.mintAddress || SOL_MINT.toString(),
           token: tokenInfo.symbol,
-          onchainId: n.onchainId,
+          groupKey,
         };
       });
 
-      // Partition: notes with onchainId (grouped) vs without (legacy/ungrouped)
+      // Partition: notes with a grouping key vs without (ungrouped)
       const grouped = new Map<string, typeof noteDetails>();
       const ungrouped: typeof noteDetails = [];
 
       for (const nd of noteDetails) {
-        if (nd.onchainId) {
-          const key = `${nd.onchainId}_${nd.mintAddress}`;
+        if (nd.groupKey) {
+          const key = `${nd.groupKey}_${nd.mintAddress}`;
           const arr = grouped.get(key);
           if (arr) {
             arr.push(nd);
@@ -183,8 +185,8 @@ export function useNotes({
         const first = group[0];
 
         noteTxs.push({
-          id: first.onchainId!,
-          txSignature: latest.txSignature,
+          id: first.groupKey!,
+          txSignature: first.groupKey,
           type: type as "send" | "receive",
           amount,
           timestamp: latest.timestamp,
@@ -193,7 +195,7 @@ export function useNotes({
           token: first.token,
           mintAddress: first.mintAddress,
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          notes: group.map(({ onchainId: _onchainId, ...rest }) => rest),
+          notes: group.map(({ groupKey: _gk, ...rest }) => rest),
           noteCount: group.length,
         });
       }
@@ -201,7 +203,7 @@ export function useNotes({
       // Process ungrouped notes: each becomes its own transaction
       for (const nd of ungrouped) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { onchainId: _onchainId, ...detail } = nd;
+        const { groupKey: _gk, ...detail } = nd;
         noteTxs.push({
           id: nd.id,
           txSignature: nd.txSignature,
