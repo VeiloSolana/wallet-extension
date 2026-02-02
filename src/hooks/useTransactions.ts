@@ -123,6 +123,13 @@ export function useTransactions({
 
       console.log("✅ Withdrawal complete:", result);
 
+      // Mark spent notes locally before sync so the sync skips them
+      if (result.txSignature) {
+        for (const id of result.spentNoteIds) {
+          await noteManager.markAsSpent(id, result.txSignature);
+        }
+      }
+
       // Sync notes from relayer to get the change note and updated spent status
       console.log("Syncing notes from relayer after withdrawal...");
       if (storedWallet) {
@@ -260,6 +267,12 @@ export function useTransactions({
       console.log("✅ Private transfer complete:", result);
             setTransactionPhase("success");
 
+      // Mark spent notes locally before sync so the sync skips them
+      if (result.txSignature) {
+        for (const id of result.spentNoteIds) {
+          await noteManager.markAsSpent(id, result.txSignature);
+        }
+      }
 
       // Sync notes from relayer to get the change note and updated spent status
       console.log("Syncing notes from relayer after transfer...");

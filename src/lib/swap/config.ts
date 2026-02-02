@@ -45,7 +45,9 @@ export function getSwapConfig(): SwapConfig {
 
     // RPC endpoints - network-aware
     rpcEndpoint: getRpcEndpoint(),
-    relayerEndpoint: import.meta.env.VITE_RELAYER_ENDPOINT || "http://localhost:8080",
+    relayerEndpoint:
+      import.meta.env.VITE_RELAYER_ENDPOINT ||
+      "https://relayer-server.onrender.com",
 
     // Provider configurations
     providers: {

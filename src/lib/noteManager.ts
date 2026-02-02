@@ -12,6 +12,7 @@ export interface StoredNote {
   spent: boolean;
   spentAt?: number;
   txSignature?: string;
+  spentTxSignature?: string;
   mintAddress: string; // SPL token mint address (PublicKey.default for SOL)
   treeId: number; // Merkle tree identifier
   onchainId?: string; // Groups notes belonging to the same on-chain transaction
@@ -222,7 +223,7 @@ export class NoteManager {
 
     note.spent = true;
     note.spentAt = Date.now();
-    note.txSignature = txSignature;
+    note.spentTxSignature = txSignature;
 
     await this.saveNotesToStorage(notes);
     console.log(`✅ Note marked as spent: ${id}`);

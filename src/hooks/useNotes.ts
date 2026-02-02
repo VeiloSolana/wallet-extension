@@ -142,7 +142,9 @@ export function useNotes({
       const noteDetails: (NoteDetail & { groupKey?: string; spent: boolean })[] = notes.map((n) => {
         const tokenInfo = getTokenInfo(n.mintAddress || SOL_MINT.toString());
         // Use onchainId if available, fall back to txSignature for grouping
-        const groupKey = n.onchainId || n.txSignature;
+        const groupKey = (n.spent && n.spentTxSignature)
+          ? n.spentTxSignature
+          : (n.txSignature || n.onchainId);
         return {
           id: n.id || n.commitment.slice(0, 8),
           amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
