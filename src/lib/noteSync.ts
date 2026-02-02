@@ -136,6 +136,7 @@ export async function syncNotesFromRelayer(
               spent: encryptedNote.spent ?? false,
               mintAddress: decrypted.mintAddress || "",
               treeId: decrypted.treeId,
+              onchainId: encryptedNote.onchainId,
             });
           } catch (error) {
             // Decryption failed = not our note. Ignore silently.

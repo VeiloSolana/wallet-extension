@@ -64,18 +64,7 @@ import { syncNotesFromRelayer } from "./lib/noteSync";
 // Note: Transaction handlers and helpers moved to hooks
 
 import { getRpcEndpoint } from "./lib/network";
-
-interface Transaction {
-  id: string;
-  type: "send" | "receive";
-  amount: number;
-  timestamp: number;
-  status: "confirmed" | "pending";
-  address: string;
-  txSignature?: string; // Optional blockchain transaction signature
-  token: string; // Token symbol (SOL, USDC, USDT)
-  mintAddress: string; // Token mint address
-}
+import type { Transaction } from "./types/transaction";
 
 // Simple interface for a stored note
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
