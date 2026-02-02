@@ -9,7 +9,7 @@ import usdtLogo from "/images/usdt-logo.svg";
 
 interface WithdrawPageProps {
   onBack: () => void;
-  onSend: (address: string, amount: number, token: string) => void;
+  onSend: (address: string, amount: number, token: string, setTransactionPhase:(value: React.SetStateAction<TransactionPhase>) => void) => void;
   tokenBalances?: {
     sol: number;
     usdc: number;
@@ -93,9 +93,8 @@ export const WithdrawPage = ({
       setStatus("");
       setTransactionPhase("processing");
 
-      await onSend(recipient, parseFloat(amount), selectedToken);
+      await onSend(recipient, parseFloat(amount), selectedToken, setTransactionPhase);
 
-      setTransactionPhase("success");
       setStatus("Transaction completed successfully!");
 
       // Go back after showing success animation

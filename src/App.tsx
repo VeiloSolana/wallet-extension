@@ -702,9 +702,13 @@ function App() {
           <DAppPage
             availableBalance={balance}
             password={password}
-            onWithdrawToWallet={async (toAddress: string, amount: number) => {
+            onWithdrawToWallet={async (
+              toAddress: string,
+              amount: number,
+              setTransactionPhase: any,
+            ) => {
               // Withdraw from privacy pool to dapp wallet via relayer
-              await handleSend(toAddress, amount, "SOL");
+              await handleSend(toAddress, amount, "SOL", setTransactionPhase);
             }}
           />
         )}

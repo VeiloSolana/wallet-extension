@@ -33,7 +33,7 @@ export const TransactionList = ({
   isLoadingNotes = false,
 }: TransactionListProps) => {
 
-  console.log({ transactions });
+  // console.log({ transactions });
   const [activeTab, setActiveTab] = useState<TabType>("history");
   const {
     sol,
@@ -320,12 +320,60 @@ export const TransactionList = ({
                 </p>
               </div>
             </div>
+          </div>
+          <div className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group">
+            {/* Corner Brackets */}
+            <svg
+              className="absolute top-0 left-0 w-2.5 h-2.5 text-neon-green/40"
+              viewBox="0 0 10 10"
+            >
+              <path
+                d="M0,3 L0,0 L3,0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+              />
+            </svg>
+            <svg
+              className="absolute top-0 right-0 w-2.5 h-2.5 text-neon-green/40"
+              viewBox="0 0 10 10"
+            >
+              <path
+                d="M7,0 L10,0 L10,3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+              />
+            </svg>
+            <svg
+              className="absolute bottom-0 left-0 w-2.5 h-2.5 text-neon-green/40"
+              viewBox="0 0 10 10"
+            >
+              <path
+                d="M0,7 L0,10 L3,10"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+              />
+            </svg>
+            <svg
+              className="absolute bottom-0 right-0 w-2.5 h-2.5 text-neon-green/40"
+              viewBox="0 0 10 10"
+            >
+              <path
+                d="M10,7 L10,10 L7,10"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+              />
+            </svg>
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <img src={usd1Logo} alt="USD1" className="w-8 h-8" />
+                <img src={usd1Logo} alt="USDT" className="w-8 h-8" />
                 <div>
                   <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-medium mb-0.5">
-                    USD One
+                    USD ONE
                   </p>
                   <p className="text-xs text-white font-medium">USD1</p>
                 </div>
@@ -344,6 +392,7 @@ export const TransactionList = ({
               </div>
             </div>
           </div>
+           
 
           {/* VEILO Balance */}
           <div className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group">

@@ -9,6 +9,7 @@ import { TOKEN_MINTS, SOL_MINT } from "../lib/transactions/shared";
 import { loadWallet } from "../utils/storage";
 import { decrypt } from "../utils/encryption";
 import { Wallet } from "../utils/wallet";
+import type { TransactionPhase } from "../components/pages/wallet/TransferPage";
 
 // ============================================================================
 // Types
@@ -22,8 +23,8 @@ interface UseTransactionsParams {
 }
 
 interface UseTransactionsReturn {
-  handleSend: (recipient: string, amount: number, token: string) => Promise<void>;
-  handleTransfer: (username: string, amount: number, token: string) => Promise<any>;
+  handleSend: (recipient: string, amount: number, token: string, setTransactionPhase:(value: React.SetStateAction<TransactionPhase>) => void) => Promise<void>;
+  handleTransfer: (username: string, amount: number, token: string,setTransactionPhase:(value: React.SetStateAction<TransactionPhase>) => void) => Promise<any>;
 }
 
 // ============================================================================
@@ -159,7 +160,8 @@ export function useTransactions({
   const handleSend = useCallback(async (
     recipient: string,
     amount: number,
-    token: string
+    token: string,
+          setTransactionPhase:(value: React.SetStateAction<TransactionPhase>) => void
   ) => {
     try {
       console.log(
@@ -167,6 +169,8 @@ export function useTransactions({
       );
 
       await withdraw(recipient, amount, token);
+            setTransactionPhase("success");
+
 
       console.log(`✅ Successfully sent ${amount} ${token} to ${recipient}`);
     } catch (error) {
@@ -181,7 +185,8 @@ export function useTransactions({
   const handleTransfer = useCallback(async (
     username: string,
     amount: number,
-    token: string
+    token: string,
+    setTransactionPhase:(value: React.SetStateAction<TransactionPhase>) => void
   ) => {
     if (!noteManager || !wallet) {
       throw new Error("NoteManager or wallet not initialized");
@@ -253,6 +258,8 @@ export function useTransactions({
       );
 
       console.log("✅ Private transfer complete:", result);
+            setTransactionPhase("success");
+
 
       // Sync notes from relayer to get the change note and updated spent status
       console.log("Syncing notes from relayer after transfer...");

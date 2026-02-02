@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Connection,
   PublicKey,
@@ -39,10 +39,16 @@ import {
   getExplorerUrl,
 } from "../../../lib/network";
 
+type TransactionPhase = "idle" | "processing" | "success";
+
 interface DAppPageProps {
   availableBalance?: number;
   password?: string;
-  onWithdrawToWallet?: (toAddress: string, amount: number) => Promise<void>;
+  onWithdrawToWallet?: (
+    toAddress: string,
+    amount: number,
+    setTransactionPhase: (value: React.SetStateAction<TransactionPhase>) => void
+  ) => Promise<void>;
 }
 
 export const DAppPage = ({
@@ -62,6 +68,9 @@ export const DAppPage = ({
   const [isFundModalOpen, setIsFundModalOpen] = useState(false);
   const [deletingWalletId, setDeletingWalletId] = useState<string | null>(null);
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [transactionPhase, setTransactionPhase] =
+    useState<TransactionPhase>("idle");
+  const [displayAmount, setDisplayAmount] = useState<number>(0);
 
   // Custom modal state
   const [customModal, setCustomModal] = useState<{
@@ -284,7 +293,19 @@ export const DAppPage = ({
       if (shouldDeposit && publicKey) {
         // Just perform the deposit
         if (fundAmount && parseFloat(fundAmount) > 0 && onWithdrawToWallet) {
-          await onWithdrawToWallet(publicKey, parseFloat(fundAmount));
+          const amount = parseFloat(fundAmount);
+          setTransactionPhase("processing");
+          setDisplayAmount(amount);
+          try {
+            await onWithdrawToWallet(
+              publicKey,
+              amount,
+              setTransactionPhase,
+            );
+          } catch (e) {
+            setTransactionPhase("idle");
+            throw e;
+          }
         }
         await loadWallets();
         return { privateKey: "", publicKey }; // privateKey not needed for deposit phase
@@ -638,8 +659,14 @@ export const DAppPage = ({
     if (!selectedWallet || !onWithdrawToWallet) return;
 
     try {
+      setTransactionPhase("processing");
+      setDisplayAmount(amount);
       // Withdraw from Veilo privacy pool to dapp wallet
-      await onWithdrawToWallet(selectedWallet.publicKey, amount);
+      await onWithdrawToWallet(
+        selectedWallet.publicKey,
+        amount,
+        setTransactionPhase,
+      );
 
       // Refresh balances
       fetchWalletBalances(selectedWallet.publicKey);
@@ -648,6 +675,7 @@ export const DAppPage = ({
       }
     } catch (error: any) {
       console.error("Fund failed:", error);
+      setTransactionPhase("idle");
       throw error;
     }
   };
@@ -1495,6 +1523,237 @@ export const DAppPage = ({
         type={customModal.type}
         variant={customModal.variant}
       />
+
+      {/* Processing Overlay */}
+      <AnimatePresence>
+        {transactionPhase === "processing" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center"
+          >
+            {/* Animated rings */}
+            <div className="relative w-24 h-24">
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-neon-green/30"
+                animate={{
+                  scale: [1, 1.3, 1],
+                  opacity: [0.5, 0, 0.5],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+              <motion.div
+                className="absolute inset-2 rounded-full border-2 border-transparent border-t-neon-green border-r-neon-green/50"
+                animate={{ rotate: 360 }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+              />
+              <motion.div
+                className="absolute inset-4 rounded-full border-2 border-transparent border-b-neon-green/70 border-l-neon-green/30"
+                animate={{ rotate: -360 }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <svg
+                    className="w-8 h-8 text-neon-green"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    />
+                  </svg>
+                </motion.div>
+              </div>
+            </div>
+
+            <motion.div
+              className="mt-6 text-center"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <p className="text-sm font-mono text-neon-green tracking-widest">
+                PROCESSING
+              </p>
+              <motion.div
+                className="flex justify-center gap-1 mt-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                {[0, 1, 2].map((i) => (
+                  <motion.span
+                    key={i}
+                    className="w-1.5 h-1.5 rounded-full bg-neon-green"
+                    animate={{
+                      opacity: [0.3, 1, 0.3],
+                      scale: [0.8, 1.2, 0.8],
+                    }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      delay: i * 0.2,
+                    }}
+                  />
+                ))}
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-neon-green/50 to-transparent"
+              animate={{
+                top: ["0%", "100%", "0%"],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            />
+
+            <p className="mt-4 text-xs text-zinc-400 font-mono">
+              Sending {displayAmount} SOL
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Success Overlay */}
+      <AnimatePresence>
+        {transactionPhase === "success" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center"
+          >
+            <div className="relative w-28 h-28">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="absolute inset-0 rounded-full border border-neon-green/30"
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{
+                    scale: [0.8 + i * 0.2, 1.4 + i * 0.2],
+                    opacity: [0.6, 0],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    delay: i * 0.3,
+                    ease: "easeOut",
+                  }}
+                />
+              ))}
+
+              <motion.div
+                className="absolute inset-2 rounded-full bg-neon-green/10 border-2 border-neon-green flex items-center justify-center"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 15,
+                  delay: 0.1,
+                }}
+              >
+                <motion.svg
+                  className="w-12 h-12 text-neon-green"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <motion.path
+                    d="M5 13l4 4L19 7"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{
+                      duration: 0.5,
+                      delay: 0.3,
+                      ease: "easeOut",
+                    }}
+                  />
+                </motion.svg>
+              </motion.div>
+            </div>
+
+            <motion.div
+              className="mt-6 text-center"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <motion.p
+                className="text-lg font-bold text-neon-green tracking-wider"
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.6, type: "spring" }}
+              >
+                SENT!
+              </motion.p>
+              <motion.p
+                className="mt-2 text-xs text-zinc-400 font-mono"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+              >
+                {displayAmount} SOL transferred successfully
+              </motion.p>
+            </motion.div>
+
+            {[...Array(8)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1 h-1 rounded-full bg-neon-green"
+                style={{
+                  left: "50%",
+                  top: "40%",
+                }}
+                initial={{ scale: 0, x: 0, y: 0 }}
+                animate={{
+                  scale: [0, 1, 0],
+                  x: [0, Math.cos((i * Math.PI) / 4) * 60],
+                  y: [0, Math.sin((i * Math.PI) / 4) * 60],
+                  opacity: [0, 1, 0],
+                }}
+                transition={{
+                  duration: 1,
+                  delay: 0.4 + i * 0.05,
+                  ease: "easeOut",
+                }}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
