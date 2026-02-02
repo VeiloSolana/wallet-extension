@@ -139,24 +139,30 @@ export function useNotes({
       }
 
       // Build NoteDetail for each note
-      const noteDetails: (NoteDetail & { groupKey?: string; spent: boolean })[] = notes.map((n) => {
+      const noteDetails: (NoteDetail & { groupKey?: string; spent: boolean })[] = notes.flatMap((n) => {
         const tokenInfo = getTokenInfo(n.mintAddress || SOL_MINT.toString());
-        // Use onchainId if available, fall back to txSignature for grouping
-        const groupKey = (n.spent && n.spentTxSignature)
-          ? n.spentTxSignature
-          : (n.txSignature || n.onchainId);
-        return {
+        const base = {
           id: n.id || n.commitment.slice(0, 8),
           amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
           rawAmount: n.amount,
           commitment: n.commitment,
-          spent: n.spent,
           timestamp: n.timestamp,
           txSignature: n.txSignature,
           mintAddress: n.mintAddress || SOL_MINT.toString(),
           token: tokenInfo.symbol,
-          groupKey,
         };
+
+        if (n.spent && n.spentTxSignature) {
+          // Emit TWO entries:
+          return [
+            { ...base, spent: false, groupKey: n.txSignature || n.onchainId },   // original receive
+            { ...base, spent: true,  groupKey: n.spentTxSignature },              // spend side
+          ];
+        }
+
+        // Default: single entry
+        const groupKey = n.txSignature || n.onchainId;
+        return [{ ...base, spent: n.spent, groupKey }];
       });
 
       // Partition: notes with a grouping key vs without (ungrouped)
