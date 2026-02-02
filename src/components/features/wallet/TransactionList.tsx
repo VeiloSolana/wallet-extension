@@ -1,24 +1,13 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useCryptoPrices } from "../../../hooks/useSolPrice";
+import type { Transaction } from "../../../types/transaction";
 import solLogo from "/images/sol-logo.svg";
   // usd1: require("../../assets/images/coins/usdt1-logo.png"),
 
 import usdcLogo from "/images/usdc-logo.svg";
 import usd1Logo from "/images/usd1-logo.png";
 import usdtLogo from "/images/usdt-logo.svg";
-
-interface Transaction {
-  id: string;
-  type: "send" | "receive";
-  amount: number;
-  timestamp: number;
-  status: "confirmed" | "pending";
-  address: string;
-  txSignature?: string;
-  token: string;
-  mintAddress: string;
-}
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -557,6 +546,11 @@ export const TransactionList = ({
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-white">
                         {tx.type === "send" ? "Spent" : "Received"}
+                        {(tx.noteCount ?? 0) > 1 && (
+                          <span className="ml-1 text-[10px] text-zinc-400 font-mono">
+                            ({tx.noteCount} notes)
+                          </span>
+                        )}
                       </span>
                       <span
                         className={`text-xs font-mono ${tx.type === "send"

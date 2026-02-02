@@ -14,6 +14,7 @@ export interface StoredNote {
   txSignature?: string;
   mintAddress: string; // SPL token mint address (PublicKey.default for SOL)
   treeId: number; // Merkle tree identifier
+  onchainId?: string; // Groups notes belonging to the same on-chain transaction
   merklePath?: {
     pathElements: bigint[];
     pathIndices: number[];
