@@ -3,7 +3,10 @@ import { useState } from "react";
 import { useCryptoPrices } from "../../../hooks/useSolPrice";
 import type { Transaction } from "../../../types/transaction";
 import solLogo from "/images/sol-logo.svg";
+  // usd1: require("../../assets/images/coins/usdt1-logo.png"),
+
 import usdcLogo from "/images/usdc-logo.svg";
+import usd1Logo from "/images/usd1-logo.png";
 import usdtLogo from "/images/usdt-logo.svg";
 
 interface TransactionListProps {
@@ -14,6 +17,7 @@ interface TransactionListProps {
     sol: number;
     usdc: number;
     usdt: number;
+    usd1: number;
     veilo: number;
   };
   isLoadingNotes?: boolean;
@@ -25,14 +29,17 @@ export const TransactionList = ({
   transactions,
   onViewAll,
   onSelectTransaction,
-  tokenBalances = { sol: 0, usdc: 0, usdt: 0, veilo: 0 },
+  tokenBalances = { sol: 0, usdc: 0, usdt: 0, usd1: 0, veilo: 0 },
   isLoadingNotes = false,
 }: TransactionListProps) => {
+
+  console.log({ transactions });
   const [activeTab, setActiveTab] = useState<TabType>("history");
   const {
     sol,
     usdc,
     usdt,
+    usd1,
     veilo,
     isLoading: isPriceLoading,
   } = useCryptoPrices();
@@ -60,11 +67,10 @@ export const TransactionList = ({
       <div className="flex border-b border-white/10 bg-black/40 backdrop-blur-md shrink-0 px-4">
         <button
           onClick={() => setActiveTab("balances")}
-          className={`flex-1 py-3 text-xs font-medium tracking-widest uppercase transition-all relative ${
-            activeTab === "balances"
+          className={`flex-1 py-3 text-xs font-medium tracking-widest uppercase transition-all relative ${activeTab === "balances"
               ? "text-white"
               : "text-zinc-400 hover:text-white"
-          }`}
+            }`}
         >
           BALANCES
           {activeTab === "balances" && (
@@ -77,11 +83,10 @@ export const TransactionList = ({
         </button>
         <button
           onClick={() => setActiveTab("history")}
-          className={`flex-1 py-3 text-xs font-medium tracking-widest uppercase transition-all relative ${
-            activeTab === "history"
+          className={`flex-1 py-3 text-xs font-medium tracking-widest uppercase transition-all relative ${activeTab === "history"
               ? "text-white"
               : "text-zinc-400 hover:text-white"
-          }`}
+            }`}
         >
           HISTORY
           {activeTab === "history" && (
@@ -237,8 +242,8 @@ export const TransactionList = ({
                   {isPriceLoading
                     ? "--"
                     : `≈ $${(tokenBalances.usdc * (usdc?.price || 0)).toFixed(
-                        2,
-                      )}`}
+                      2,
+                    )}`}
                 </p>
               </div>
             </div>
@@ -310,8 +315,31 @@ export const TransactionList = ({
                   {isPriceLoading
                     ? "--"
                     : `≈ $${(tokenBalances.usdt * (usdt?.price || 0)).toFixed(
-                        2,
-                      )}`}
+                      2,
+                    )}`}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <img src={usd1Logo} alt="USD1" className="w-8 h-8" />
+                <div>
+                  <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-medium mb-0.5">
+                    USD One
+                  </p>
+                  <p className="text-xs text-white font-medium">USD1</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-mono font-light text-white">
+                  {tokenBalances.usd1.toFixed(2)}
+                </p>
+                <p className="text-[10px] text-zinc-400 font-mono">
+                  {isPriceLoading
+                    ? "--"
+                    : `≈ $${(tokenBalances.usd1 * (usd1?.price || 0)).toFixed(
+                      2,
+                    )}`}
                 </p>
               </div>
             </div>
@@ -385,8 +413,8 @@ export const TransactionList = ({
                   {isPriceLoading
                     ? "--"
                     : `≈ $${(tokenBalances.veilo * (veilo?.price || 0)).toFixed(
-                        2,
-                      )}`}
+                      2,
+                    )}`}
                 </p>
               </div>
             </div>
@@ -477,11 +505,10 @@ export const TransactionList = ({
                   <div
                     className={`
                     w-6 h-6 rounded-full flex items-center justify-center
-                    ${
-                      tx.type === "send"
+                    ${tx.type === "send"
                         ? "bg-red-500/10 border border-red-500/30"
                         : "bg-neon-green/10 border border-neon-green/30"
-                    }
+                      }
                   `}
                   >
                     {tx.type === "send" ? (
@@ -526,11 +553,10 @@ export const TransactionList = ({
                         )}
                       </span>
                       <span
-                        className={`text-xs font-mono ${
-                          tx.type === "send"
+                        className={`text-xs font-mono ${tx.type === "send"
                             ? "text-red-500"
                             : "text-neon-green"
-                        }`}
+                          }`}
                       >
                         {tx.type === "send" ? "-" : "+"}
                         {tx.amount} {tx.token || "SOL"}

@@ -18,6 +18,7 @@ export interface TokenBalances {
   sol: number;
   usdc: number;
   usdt: number;
+  usd1: number;
   veilo: number;
 }
 
@@ -80,6 +81,7 @@ export function useNotes({
     sol: 0,
     usdc: 0,
     usdt: 0,
+    usd1: 0,
     veilo: 0,
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -108,6 +110,7 @@ export function useNotes({
         sol: 0,
         usdc: 0,
         usdt: 0,
+        usd1: 0,
         veilo: 0,
       };
 

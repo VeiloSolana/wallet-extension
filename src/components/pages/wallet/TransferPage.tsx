@@ -4,6 +4,7 @@ import { CyberButton } from "../../common/ui/CyberButton";
 import { getVeiloPublicKey } from "../../../lib/api/relayerApi";
 import solLogo from "/images/sol-logo.svg";
 import usdcLogo from "/images/usdc-logo.svg";
+import usd1Logo from "/images/usd1-logo.png";
 import usdtLogo from "/images/usdt-logo.svg";
 
 interface TransferPageProps {
@@ -13,6 +14,7 @@ interface TransferPageProps {
     sol: number;
     usdc: number;
     usdt: number;
+    usd1: number;
     veilo: number;
   };
 }
@@ -444,7 +446,9 @@ export const TransferPage = ({
                   ? tokenBalances?.usdc || 0
                   : selectedToken === "USDT"
                     ? tokenBalances?.usdt || 0
-                    : tokenBalances?.veilo || 0
+                    : selectedToken === "USD1"
+                      ? tokenBalances?.usd1 || 0
+                      : tokenBalances?.veilo || 0
               ).toFixed(4)}{" "}
               {selectedToken}
             </p>
@@ -465,6 +469,7 @@ export const TransferPage = ({
                 <option value="SOL">SOL - Solana</option>
                 <option value="USDC">USDC - USD Coin</option>
                 <option value="USDT">USDT - Tether</option>
+                <option value="USD1">USD1 - USD One</option>
                 <option value="VEILO">VEILO - Veilo Token</option>
               </select>
               <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -476,6 +481,9 @@ export const TransferPage = ({
                 )}
                 {selectedToken === "USDT" && (
                   <img src={usdtLogo} alt="USDT" className="w-4 h-4" />
+                )}
+                {selectedToken === "USD1" && (
+                  <img src={usd1Logo} alt="USD1" className="w-4 h-4" />
                 )}
                 {selectedToken === "VEILO" && (
                   <div className="w-4 h-4 rounded-full bg-neon-green/10 border border-neon-green/30 flex items-center justify-center">
