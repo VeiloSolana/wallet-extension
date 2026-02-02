@@ -76,10 +76,7 @@ export async function syncNotesFromRelayer(
               // Update spent status if it differs
               const relayerSpent = encryptedNote.spent ?? false;
               if (relayerSpent && !existing.spent) {
-                await noteManager.markAsSpent(
-                  existing.id,
-                  encryptedNote.txSignature || "unknown",
-                );
+                await noteManager.markAsSpent(existing.id, "");
               }
               return;
             }

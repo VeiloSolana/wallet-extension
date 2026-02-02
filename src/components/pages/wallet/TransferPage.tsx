@@ -9,7 +9,7 @@ import usdtLogo from "/images/usdt-logo.svg";
 
 interface TransferPageProps {
   onBack: () => void;
-  onTransfer: (username: string, amount: number, token: string) => Promise<any>;
+  onTransfer: (username: string, amount: number, token: string,setTransactionPhase:(value: React.SetStateAction<TransactionPhase>) => void) => Promise<any>;
   tokenBalances?: {
     sol: number;
     usdc: number;
@@ -19,7 +19,7 @@ interface TransferPageProps {
   };
 }
 
-type TransactionPhase = "idle" | "processing" | "success";
+export type TransactionPhase = "idle" | "processing" | "success";
 
 export const TransferPage = ({
   onBack,
@@ -88,9 +88,9 @@ export const TransferPage = ({
       setStatus("");
       setTransactionPhase("processing");
 
-      await onTransfer(username, parseFloat(amount), selectedToken);
+      await onTransfer(username, parseFloat(amount), selectedToken, setTransactionPhase);
 
-      setTransactionPhase("success");
+      // setTransactionPhase("success");
       setStatus("Transfer completed successfully!");
 
       // Go back after showing success animation

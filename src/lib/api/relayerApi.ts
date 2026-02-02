@@ -33,7 +33,8 @@ api.interceptors.response.use(
   },
 );
 
-const RELAYER_API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const RELAYER_API_URL =
+  import.meta.env.VITE_API_URL || "https://relayer-server.onrender.com";
 // const RELAYER_API_URL = "http://localhost:8080"; // TODO: Load from config/storage
 const RELAYER_PUBLIC_KEY = "utVxnA7zax09qJCZ7UJsa8PAOoWLRcCwOkdxg/ZGmD4=";
 
