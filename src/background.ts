@@ -107,14 +107,14 @@ async function handleWalletRequest(
       case "signTransaction":
       case "signMessage":
       case "signAndSendTransaction":
-      case "sendShieldedTransaction": {
+      case "sendPrivateTransaction": {
         // All signing operations require user approval
         await requestUserApproval(id, method, params, origin, sendResponse);
         break;
       }
 
-      case "getShieldedBalance": {
-        // Get shielded balance for a specific token
+      case "getPrivateBalance": {
+        // Get private balance for a specific token
         try {
           const result = await chrome.storage.local.get(["tokenBalances"]);
           const balances = (result.tokenBalances as
@@ -163,8 +163,8 @@ async function handleWalletRequest(
         break;
       }
 
-      case "getAllShieldedBalances": {
-        // Get all shielded token balances
+      case "getAllPrivateBalances": {
+        // Get all private token balances
         try {
           const result = await chrome.storage.local.get(["tokenBalances"]);
           const balances = (result.tokenBalances as

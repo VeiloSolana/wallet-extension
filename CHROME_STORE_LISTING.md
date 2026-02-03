@@ -2,49 +2,54 @@
 
 ## Extension Name
 
-Veilo - Privacy Wallet for Solana
+Veilo Wallet
 
 ## Tagline (Short Description)
 
-Non-custodial privacy wallet for Solana. Send shielded transactions using zero-knowledge proofs.
+The privacy-focused Solana wallet. Manage your crypto privately.
 
 ## Detailed Description
 
-**Veilo is a privacy-focused browser extension wallet for the Solana blockchain.**
+**The first privacy-by-default Solana wallet extension. Now in beta.**
 
-### 🛡️ What is Veilo?
+We've designed Veilo to be private by default, and completely behind the scenes. Our core features include:
 
-Veilo enables you to hold and transfer cryptocurrency privately on Solana using zero-knowledge (ZK) proof technology. Your balance and transaction history remain confidential while maintaining blockchain security.
+### ✨ Core Features
 
-### ✨ Key Features
+- **🔮 Smart Wallet Management:** We create and manage wallets behind the scenes for enhanced privacy
 
-- **🔐 Non-Custodial:** You control your private keys and seed phrase. We cannot access your funds.
-- **🛡️ Shielded Balance:** Hold assets privately. Your balance is not visible on the public ledger.
-- **⚡ Private Transfers:** Send crypto to other users by username (e.g., @alice) with zero-knowledge proofs.
-- **🌐 dApp Connectivity:** Connect to Solana decentralized applications (dApps) with standard wallet integration.
-- **🪙 Multi-Token Support:** Support for SOL and SPL tokens (USDC, USDT, etc.).
-- **🔑 Username System:** No more complex wallet addresses - send money to easy usernames.
+- **🔒 Private dApp Connections:** Create fresh wallets specifically for connecting to dApps to prevent wallet-IP connections
 
-### 🔒 Privacy & Security
+- **🛡️ Veilo Balance:** All crypto that flows through Veilo is pooled with other users' funds to enhance privacy
 
-- **Zero-Knowledge Proofs:** Transactions are cryptographically private - no one can see sender, recipient, or amounts.
-- **Local Encryption:** All keys are encrypted with your password and stored only on your device.
-- **No Data Collection:** We do not track your browsing, transactions, or personal information.
-- **Open Source:** Our code is publicly auditable on GitHub.
+- **⚡ Private Transfers:** Send crypto to other Veilo users by username - fast and private
+
+- **🪙 Multi-Token Support:** Support for SOL and SPL tokens (USDC, USDT, etc.)
+
+- **🔑 Username System:** No more complex wallet addresses - send money to easy usernames like @alice
+
+### 🔐 Security & Privacy
+
+- **AES-256 Encryption:** Your private keys and seed phrase are encrypted with your password
+- **Local-Only Storage:** Sensitive data never leaves your device
+- **Non-Custodial:** You control your keys. We cannot access your funds.
+- **Open Source:** Our code is publicly auditable on GitHub
 
 ### 📱 How It Works
 
 1. Create a wallet with a unique username
-2. Deposit crypto into your shielded balance
-3. Send private transfers to other Veilo users by username
-4. Withdraw to public addresses when needed
-5. Connect to dApps for private blockchain interactions
+2. Deposit crypto into your Veilo balance
+3. Send private transfers to other users by username
+4. Connect to dApps with fresh wallets for enhanced privacy
+5. All wallet management happens behind the scenes
+
+Welcome to magical privacy.
 
 ### 🌐 Permissions Explanation
 
 **Why does Veilo need "access to all websites"?**
 
-Like ALL Web3 wallets (MetaMask, Phantom, etc.), Veilo requires `<all_urls>` permission to:
+Like ALL Web3 wallets (MetaMask, Phantom, Hush, etc.), Veilo requires `<all_urls>` permission to:
 
 - Inject a wallet provider into websites (Wallet Standard API)
 - Allow dApps to detect and request connection to your wallet
@@ -60,28 +65,23 @@ Like ALL Web3 wallets (MetaMask, Phantom, etc.), Veilo requires `<all_urls>` per
 ❌ Does NOT track your browsing history
 ❌ Does NOT collect personal data from websites
 ❌ Does NOT inject ads or tracking scripts
-❌ Does NOT access data beyond wallet connection requests
 
 **Storage Permission:**
-Used to securely store your encrypted wallet data locally on your device. Data is encrypted with your password and never transmitted to our servers.
-
-### 📋 For Developers
-
-Veilo implements the Solana Wallet Standard, making it compatible with any dApp that supports standard Solana wallets. Developers can integrate Veilo just like any other wallet - no special code required.
+Used to securely store your encrypted wallet data locally on your device.
 
 ### 🔗 Links
 
 - Privacy Policy: [Full privacy policy included in extension]
 - Website: https://veilo.network
+- Docs: https://veilo.network/docs
 - GitHub: https://github.com/VeiloSolana/wallet-extension
-- Documentation: https://docs.veilo.network
 - Support: support@veilo.network
 
 ### ⚠️ Important Disclaimers
 
+- **Beta Software:** Veilo is currently in beta. Use at your own risk and start with small amounts.
 - **Cryptocurrency Risk:** Trading and holding cryptocurrency involves risk. Only invest what you can afford to lose.
 - **User Responsibility:** You are responsible for securing your seed phrase and password. We cannot recover lost credentials.
-- **Beta Software:** Veilo is new software. Use at your own risk and start with small amounts.
 - **Not Financial Advice:** Veilo is a tool, not financial advice. Do your own research.
 
 ### 🆘 Support
@@ -90,15 +90,15 @@ For help, bug reports, or feature requests:
 
 - Email: support@veilo.network
 - GitHub Issues: https://github.com/VeiloSolana/wallet-extension/issues
-- Discord: [Your Discord link]
+- Response Time: We respond to all inquiries within 3 business days (24 hours for urgent issues)
 
 ---
 
-**Privacy-first. User-controlled. Open source.**
+**Welcome to magical privacy.**
 
 ## Category
 
-Productivity / Developer Tools
+Tools
 
 ## Language
 
@@ -106,17 +106,16 @@ English
 
 ## Privacy Policy URL
 
-https://raw.githubusercontent.com/VeiloSolana/wallet-extension/master/PRIVACY_POLICY.md
-(Or host it on your website)
+https://veilo.network/privacy-policy
 
 ## Single Purpose Description
 
-Veilo is a privacy-focused cryptocurrency wallet for the Solana blockchain. Its single purpose is to enable users to securely manage their digital assets and interact with decentralized applications (dApps) using privacy-preserving zero-knowledge proof technology.
+Veilo is a privacy-focused cryptocurrency wallet for the Solana blockchain. Its single purpose is to enable users to privately manage their digital assets and interact with decentralized applications (dApps).
 
 Users need this extension to:
 
-1. Create and manage a non-custodial Solana wallet.
-2. Hold and transfer assets privately using shielded transactions.
+1. Create and manage a non-custodial Solana wallet with smart wallet management for privacy.
+2. Send and receive SOL and SPL tokens privately using your Veilo balance.
 3. Inject a wallet provider into websites to connect with Web3 dApps (requires access to all sites to detect and facilitate these connections).
 
 ## Justification for Permissions (For Reviewer Notes)
@@ -126,6 +125,8 @@ Users need this extension to:
 The extension requires access to all URLs (<all_urls>) to inject the bundled wallet provider (content.js and injected.js) into the DOM at 'document_start'.
 
 This is a functional requirement for the Solana Wallet Standard. Decentralized applications (dApps) running on arbitrary web domains need to detect 'window.solana' immediately upon page load to initialize.
+
+This is identical to how Hush Wallet, Phantom, MetaMask, and all other Web3 wallets operate.
 
 Security limitations:
 
@@ -138,7 +139,7 @@ Security limitations:
 
 **Required for:** Storing encrypted wallet data locally
 
-- All data encrypted with user's password
+- All data encrypted with user's password using AES-256
 - Never synced to cloud or transmitted to servers
 - Non-custodial design - we cannot access user data
 
@@ -153,16 +154,16 @@ Security limitations:
 
 ## Screenshots to Include
 
-1. Main wallet interface showing shielded balance
+1. Main wallet interface showing Veilo balance
 2. Send transaction screen with username input
 3. dApp connection approval dialog
 4. Security/seed phrase backup screen
-5. Settings showing privacy features
+5. Private transfer confirmation
 
 ## Target Audience
 
-- Cryptocurrency users seeking privacy
+- Privacy-conscious cryptocurrency users
 - Solana blockchain users
-- Privacy-conscious individuals
 - DeFi participants
-- Web3 developers testing privacy features
+- Web3 developers
+- Users seeking enhanced financial privacy

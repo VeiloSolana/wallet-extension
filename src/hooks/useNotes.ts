@@ -3,7 +3,6 @@ import { Keypair } from "@solana/web3.js";
 import { Wallet } from "../utils/wallet";
 import { Buffer } from "buffer";
 
-
 import { NoteManager } from "../lib/noteManager";
 import { syncNotesFromRelayer } from "../lib/noteSync";
 import { loadWallet } from "../utils/storage";
@@ -45,7 +44,7 @@ interface UseNotesReturn {
 // ============================================================================
 
 const getTokenInfo = (
-  mintAddress: string
+  mintAddress: string,
 ): { symbol: string; decimals: number } => {
   const mint = mintAddress.toLowerCase();
 
@@ -139,12 +138,16 @@ export function useNotes({
       }
 
       // Build NoteDetail for each note
-      const noteDetails: (NoteDetail & { groupKey?: string; spent: boolean })[] = notes.map((n) => {
+      const noteDetails: (NoteDetail & {
+        groupKey?: string;
+        spent: boolean;
+      })[] = notes.map((n) => {
         const tokenInfo = getTokenInfo(n.mintAddress || SOL_MINT.toString());
         // Use onchainId if available, fall back to txSignature for grouping
-        const groupKey = (n.spent && n.spentTxSignature)
-          ? n.spentTxSignature
-          : (n.txSignature || n.onchainId);
+        const groupKey =
+          n.spent && n.spentTxSignature
+            ? n.spentTxSignature
+            : n.txSignature || n.onchainId;
         return {
           id: n.id || n.commitment.slice(0, 8),
           amount: Number(n.amount) / Math.pow(10, tokenInfo.decimals),
@@ -181,12 +184,18 @@ export function useNotes({
 
       // Process grouped notes: compute net change
       for (const [, group] of grouped) {
-        const received = group.filter((n) => !n.spent).reduce((sum, n) => sum + n.amount, 0);
-        const spent = group.filter((n) => n.spent).reduce((sum, n) => sum + n.amount, 0);
+        const received = group
+          .filter((n) => !n.spent)
+          .reduce((sum, n) => sum + n.amount, 0);
+        const spent = group
+          .filter((n) => n.spent)
+          .reduce((sum, n) => sum + n.amount, 0);
         const netChange = received - spent;
         const type = netChange < 0 ? "send" : "receive";
         const amount = Math.abs(netChange);
-        const latest = group.reduce((a, b) => (b.timestamp > a.timestamp ? b : a));
+        const latest = group.reduce((a, b) =>
+          b.timestamp > a.timestamp ? b : a,
+        );
         const first = group[0];
 
         noteTxs.push({
@@ -196,7 +205,7 @@ export function useNotes({
           amount,
           timestamp: latest.timestamp,
           status: "confirmed",
-          address: "Shielded Pool",
+          address: "Veilo Pool",
           token: first.token,
           mintAddress: first.mintAddress,
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -216,7 +225,7 @@ export function useNotes({
           amount: nd.amount,
           timestamp: nd.timestamp,
           status: "confirmed",
-          address: "Shielded Pool",
+          address: "Veilo Pool",
           token: nd.token,
           mintAddress: nd.mintAddress,
           notes: [detail],
@@ -226,9 +235,9 @@ export function useNotes({
 
       // Sort by timestamp descending (newest first)
       setTransactions((prev) =>
-        [...prev.filter((t) => t.address !== "Shielded Pool"), ...noteTxs].sort(
-          (a, b) => b.timestamp - a.timestamp
-        )
+        [...prev.filter((t) => t.address !== "Veilo Pool"), ...noteTxs].sort(
+          (a, b) => b.timestamp - a.timestamp,
+        ),
       );
     } catch (e) {
       console.error("Failed to load notes", e);
@@ -263,23 +272,23 @@ export function useNotes({
         // Decrypt the wallet private key
         const secretKeyStr = await decrypt(
           storedWallet.encryptedSecretKey,
-          password
+          password,
         );
         const secretKey = new Uint8Array(JSON.parse(secretKeyStr));
         const keypair = Keypair.fromSecretKey(secretKey);
         const walletInstance = new Wallet(keypair);
 
         const privKeyHex = Buffer.from(walletInstance.payer.secretKey).toString(
-          "hex"
+          "hex",
         );
 
         const veiloPrivateKeyStr = await decrypt(
           storedWallet.encryptedVeiloPrivateKey,
-          password
+          password,
         );
         const veiloPublicKeyStr = await decrypt(
           storedWallet.encryptedVeiloPublicKey,
-          password
+          password,
         );
 
         const count = await syncNotesFromRelayer(
@@ -287,7 +296,7 @@ export function useNotes({
           walletInstance.payer.publicKey.toString(),
           privKeyHex,
           veiloPrivateKeyStr,
-          veiloPublicKeyStr
+          veiloPublicKeyStr,
         );
         console.log(`Synced ${count} new notes`);
         await loadNotes();

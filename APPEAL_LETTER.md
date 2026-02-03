@@ -2,175 +2,110 @@
 
 **To:** Chrome Web Store Developer Support  
 **From:** [Your Name/Company]  
-**Extension:** Veilo - Privacy Wallet for Solana  
-**Publisher Account:** ezetdaniel@gmail.com  
-**Date:** January 22, 2026  
-**Routing ID:** FZSL
+**Extension:** Veilo Wallet  
+**Publisher Account:** frennadev@gmail.com  
+**Date:** February 3, 2026
 
 ---
 
-## Subject: Appeal for Account Suspension - Veilo Wallet Extension
+## Subject: Appeal for Account Reinstatement - Veilo Wallet
 
 Dear Chrome Web Store Review Team,
 
-I am writing to appeal the suspension of my publisher account and the removal of my extension, "Veilo - Privacy Wallet for Solana." I believe this decision was made in error, and I would like to provide additional context and documentation to demonstrate compliance with Chrome Web Store policies.
+I am writing to appeal the suspension of my publisher account and request the opportunity to resubmit my extension, "Veilo Wallet."
 
-## Extension Purpose
+I have carefully reviewed the Chrome Web Store policies and made significant changes to ensure full compliance. I would also like to bring to your attention that a **directly comparable extension has been approved** on the Chrome Web Store, which I believe demonstrates that my extension's functionality is policy-compliant.
 
-Veilo is a **non-custodial cryptocurrency wallet** for the Solana blockchain that enables users to:
+## Approved Comparable Extension: Hush Wallet
 
-- Store and manage Solana-based cryptocurrencies (SOL, USDC, etc.)
-- Make private transactions using zero-knowledge cryptography
-- Connect to decentralized applications (dApps) on the Solana network
+**Hush Wallet** (published by hush.so) is currently live on the Chrome Web Store with the following features:
 
-This extension serves the same purpose as other established Web3 wallets in the Chrome Web Store (MetaMask, Phantom, Coinbase Wallet, etc.) and follows industry-standard practices for blockchain wallet extensions.
+- "Auto-shielding SOL: All SOL that flows through Hush is put in a private pool with other users funds"
+- "Private dApp connections"
+- "Private Swapping: Swap exclusively using shielded funds"
+- "Break onchain links"
+- "Proxy routing to prevent IP leakage"
 
-## Addressing Potential Policy Concerns
+**Veilo Wallet provides equivalent functionality** using the same technical approach (privacy pools and wallet management). If Hush Wallet meets Chrome Web Store policies, Veilo Wallet should as well.
 
-I understand that Chrome Web Store has strict policies, and I want to address any potential concerns:
+## What Veilo Wallet Does
 
-### 1. Permissions Justification (`<all_urls>`)
+Veilo is a **privacy-focused Solana wallet** that helps users manage their crypto securely:
 
-**Why This Permission is Required:**
+- **Smart Wallet Management:** Automatically manages wallets behind the scenes to enhance privacy
+- **Private dApp Connections:** Create fresh wallets for connecting to dApps
+- **Veilo Balance:** Pool funds with other users for enhanced privacy
+- **Private Transfers:** Send crypto to other users privately using usernames
+- **Local Encryption:** All keys encrypted with AES-256 on your device
 
-- **Industry Standard:** ALL Web3 wallets (MetaMask, Phantom, Coinbase Wallet) require this same permission
-- **Technical Necessity:** To inject a wallet provider (Wallet Standard API) into websites so decentralized applications can detect and connect to the wallet
-- **User Control:** The extension ONLY responds when users explicitly approve a connection to a dApp
-- **No Data Collection:** We do NOT access website content, read forms, track browsing history, or collect user data from websites
+This is **functionally identical** to Hush Wallet, which is currently approved.
 
-**What We Actually Do:**
+## Changes Made
 
-- Inject a small JavaScript object that implements the Solana Wallet Standard
-- Respond ONLY to wallet connection requests initiated by the user
-- Sign transactions ONLY with explicit user approval via popup
+I have made the following improvements to ensure compliance:
 
-**What We Do NOT Do:**
+### 1. Clear "Beta" Designation
 
-- ❌ Read website content or DOM elements
-- ❌ Track browsing history
-- ❌ Collect personal data from websites
-- ❌ Inject ads or tracking scripts
-- ❌ Modify website behavior without permission
+- Added beta disclaimer to indicate the software is in development
+- Clear warnings about cryptocurrency risks
 
-### 2. Privacy Policy
+### 2. Enhanced Privacy Policy
 
-I have now created a comprehensive Privacy Policy that explains:
+- Detailed explanation of what data is collected (minimal)
+- Clear explanation of what data is NOT collected
+- Full justification for all requested permissions
 
-- What data we collect (only encrypted wallet data stored locally)
-- Why we need each permission
-- What data we do NOT collect (browsing history, personal info, etc.)
-- User rights and data security measures
-- Our non-custodial architecture (we cannot access user funds)
+### 3. Improved Documentation
 
-**Privacy Policy Location:** Included in the extension package at `PRIVACY_POLICY.md` and will be hosted at [your website URL]
+- Clear description of all features
+- Transparent explanation of how privacy features work
+- Open source code available for review
 
-### 3. User Transparency
+## Compliance with Chrome Web Store Policies
 
-I have improved the extension's user-facing documentation to clearly explain:
+### Single Purpose
 
-- **In the Chrome Store listing:** Detailed explanation of why permissions are needed
-- **In the extension itself:** Clear warnings about seed phrase security and cryptocurrency risks
-- **In the Privacy Policy:** Comprehensive disclosure of all data handling practices
-- **In consent flows:** Users must explicitly approve each dApp connection
+Veilo has ONE clear purpose: Enable users to securely and privately manage Solana cryptocurrency and interact with dApps.
 
-### 4. Security & Best Practices
+### No Deceptive Behavior
 
-Veilo follows security best practices:
+- No misleading claims about functionality
+- Clear documentation of all features
+- Open source code available for review
 
-- ✅ All private keys encrypted with user's password
-- ✅ Non-custodial (we cannot access user funds or data)
-- ✅ No obfuscated or minified code submitted (readable source code)
-- ✅ Open source on GitHub for public audit
-- ✅ Uses standard cryptographic libraries (not custom implementations)
-- ✅ Clear warnings about cryptocurrency risks
-- ✅ Implements Content Security Policy in manifest
+### User Data Protection
 
-### 5. No Malicious Behavior
+- All sensitive data encrypted locally
+- No browsing data collected
+- Privacy by design
 
-Veilo does NOT engage in any prohibited activities:
+### Precedent
 
-- ❌ No cryptocurrency mining
-- ❌ No ads or affiliate tracking
-- ❌ No data harvesting or selling
-- ❌ No clickbait or misleading functionality
-- ❌ No unauthorized data collection
-- ❌ No circumvention of user consent
+- **Hush Wallet is approved** with identical privacy pool functionality
+- Our extension follows the same technical and policy approach
 
-### 6. Compliance with Code Readability Requirements
+## Request
 
-- All source code is readable and unobfuscated
-- Dependencies are standard, widely-used libraries (React, Solana Web3.js, etc.)
-- Code is available on GitHub for review: https://github.com/VeiloSolana/wallet-extension
-- Build process is transparent (Vite bundler with standard configuration)
+I respectfully request:
 
-## Changes Made for Resubmission
+1. Reinstatement of my developer account
+2. The opportunity to submit the updated, compliant version of Veilo
+3. Review in light of the approved precedent (Hush Wallet)
 
-I have made the following improvements:
+I am committed to full compliance with Chrome Web Store policies. The approval of Hush Wallet demonstrates that privacy-focused Solana wallets with pooling features are acceptable on the Chrome Web Store.
 
-1. **✅ Created comprehensive Privacy Policy** (PRIVACY_POLICY.md)
-2. **✅ Updated manifest description** to be clearer about wallet functionality
-3. **✅ Improved Chrome Store listing** with detailed permission justifications
-4. **✅ Added security disclaimers** about cryptocurrency risks
-5. **✅ Enhanced documentation** explaining non-custodial architecture
-6. **✅ Clarified that we do NOT collect browsing data** or track users
+## Contact Information
 
-## Comparison to Approved Extensions
-
-Veilo uses the **exact same permission model** as these approved Chrome Web Store extensions:
-
-- **MetaMask** - Uses `<all_urls>` for Ethereum wallet provider
-- **Phantom** - Uses `<all_urls>` for Solana wallet provider
-- **Coinbase Wallet** - Uses `<all_urls>` for multi-chain wallet provider
-- **Backpack** - Uses `<all_urls>` for Solana wallet provider
-
-These permissions are **required** for Web3 wallet functionality and are an **industry standard** for blockchain applications.
-
-## Request for Reinstatement
-
-I respectfully request that you:
-
-1. Review the updated Privacy Policy and documentation
-2. Reinstate my publisher account
-3. Allow me to resubmit the extension with the improved documentation
-
-I am committed to full compliance with Chrome Web Store policies and have taken immediate steps to address any concerns. I believe the suspension was based on a misunderstanding of the technical requirements for Web3 wallet extensions.
-
-## Additional Information
-
-**Extension Details:**
-
-- **Name:** Veilo - Privacy Wallet for Solana
-- **Version:** 1.0.1
-- **Category:** Productivity / Developer Tools
-- **Type:** Non-custodial cryptocurrency wallet
-- **Open Source:** https://github.com/VeiloSolana/wallet-extension
-
-**Contact Information:**
-
-- **Email:** ezetdaniel@gmail.com
-- **Alternative Email:** [Add backup email]
-- **Phone:** [Optional - your phone number]
+- **Email:** frennadev@gmail.com
+- **GitHub:** https://github.com/VeiloSolana/wallet-extension
 - **Website:** https://veilo.network
 
-**Supporting Documentation:**
+Thank you for your time and consideration. I am happy to provide any additional information or make further changes as needed.
 
-- Privacy Policy: Attached/Included in extension
-- Source Code: https://github.com/VeiloSolana/wallet-extension
-- Technical Documentation: [Your docs URL]
-
-## Conclusion
-
-Veilo is a legitimate cryptocurrency wallet extension that serves a real need for privacy-conscious Solana users. The permissions requested are standard for this category of software and identical to those used by major, approved wallet extensions.
-
-I have addressed all potential policy concerns with comprehensive documentation and transparency. I am happy to provide any additional information or make further changes as needed.
-
-Thank you for your time and consideration. I look forward to your response.
-
-Respectfully,
+Sincerely,
 
 [Your Name]
-[Your Company Name]
-ezetdaniel@gmail.com
+Developer, Veilo Wallet
 
 ---
 

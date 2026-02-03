@@ -324,18 +324,18 @@ class VeiloWallet implements Wallet {
   }
 
   /**
-   * Get the shielded balance from the Veilo wallet.
+   * Get the private balance from the Veilo wallet.
    * @param mintAddress - Optional mint address for SPL tokens. Omit for SOL.
    * @returns Promise with balance info { balance: string, decimals: number, symbol: string }
    */
-  async getShieldedBalance(mintAddress?: string): Promise<{
+  async getPrivateBalance(mintAddress?: string): Promise<{
     balance: string;
     balanceFormatted: number;
     decimals: number;
     symbol: string;
   }> {
     try {
-      const response = (await this._request("getShieldedBalance", {
+      const response = (await this._request("getPrivateBalance", {
         mintAddress,
       })) as {
         balance: string;
@@ -356,17 +356,17 @@ class VeiloWallet implements Wallet {
   }
 
   /**
-   * Get all shielded token balances from the Veilo wallet.
+   * Get all private token balances from the Veilo wallet.
    * @returns Promise with all token balances
    */
-  async getAllShieldedBalances(): Promise<{
+  async getAllPrivateBalances(): Promise<{
     sol: { balance: string; balanceFormatted: number };
     usdc: { balance: string; balanceFormatted: number };
     usdt: { balance: string; balanceFormatted: number };
     veilo: { balance: string; balanceFormatted: number };
   }> {
     try {
-      const response = (await this._request("getAllShieldedBalances", {})) as {
+      const response = (await this._request("getAllPrivateBalances", {})) as {
         sol: number;
         usdc: number;
         usdt: number;
@@ -397,17 +397,17 @@ class VeiloWallet implements Wallet {
   }
 
   /**
-   * Send shielded funds to another Veilo user.
+   * Send private funds to another Veilo user.
    * @param params - { username: string, amount: string, mintAddress?: string }
    * @returns Promise with transaction signature
    */
-  async sendShieldedTransaction(params: {
+  async sendPrivateTransaction(params: {
     username: string;
     amount: string;
     mintAddress?: string;
   }): Promise<{ signature: string }> {
     try {
-      return (await this._request("sendShieldedTransaction", params)) as {
+      return (await this._request("sendPrivateTransaction", params)) as {
         signature: string;
       };
     } catch (error) {

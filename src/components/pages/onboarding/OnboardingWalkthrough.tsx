@@ -10,7 +10,7 @@ const slides = [
   {
     title: "magical privacy.",
     description:
-      "The first wallet that makes privacy on Solana simple, powerful, and automatic.",
+      "The first wallet that makes privacy on Solana simple, powerful, and behind the scenes.",
     icon: (
       <svg
         className="w-16 h-16 text-white"
@@ -30,7 +30,7 @@ const slides = [
   {
     title: "One Balance, Many Vaults",
     description:
-      "We split your funds across multiple hidden wallets. You see one balance; the blockchain sees unconnected noise.",
+      "We manage your funds across multiple wallets behind the scenes. You see one balance; we handle the complexity.",
     icon: (
       <svg
         className="w-16 h-16 text-white"
@@ -48,9 +48,9 @@ const slides = [
     ),
   },
   {
-    title: "Invisible Transactions",
+    title: "Enhanced Privacy",
     description:
-      "Your SOL enters a private pool. Once inside, your financial history becomes impossible to trace.",
+      "Your SOL is pooled with other users' funds to enhance your financial privacy.",
     icon: (
       <svg
         className="w-16 h-16 text-white"
@@ -68,9 +68,9 @@ const slides = [
     ),
   },
   {
-    title: "Always a Fresh Identity",
+    title: "Fresh Addresses",
     description:
-      "Every time you receive funds, we generate a brand new address. Your digital footprint remains fragmented.",
+      "Every time you receive funds, we generate a brand new address for enhanced privacy.",
     icon: (
       <svg
         className="w-16 h-16 text-white"
@@ -93,9 +93,9 @@ const slides = [
     ),
   },
   {
-    title: "Smart dApp Protection",
+    title: "Private dApp Connections",
     description:
-      "Connect to apps using isolated wallets. Keep your main savings completely invisible to the sites you visit.",
+      "Connect to apps using fresh wallets. Keep your main balance separate from the sites you visit.",
     icon: (
       <svg
         className="w-16 h-16 text-white"

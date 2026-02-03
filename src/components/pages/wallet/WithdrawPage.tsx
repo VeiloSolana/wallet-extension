@@ -9,7 +9,14 @@ import usdtLogo from "/images/usdt-logo.svg";
 
 interface WithdrawPageProps {
   onBack: () => void;
-  onSend: (address: string, amount: number, token: string, setTransactionPhase:(value: React.SetStateAction<TransactionPhase>) => void) => void;
+  onSend: (
+    address: string,
+    amount: number,
+    token: string,
+    setTransactionPhase: (
+      value: React.SetStateAction<TransactionPhase>,
+    ) => void,
+  ) => void;
   tokenBalances?: {
     sol: number;
     usdc: number;
@@ -93,7 +100,12 @@ export const WithdrawPage = ({
       setStatus("");
       setTransactionPhase("processing");
 
-      await onSend(recipient, parseFloat(amount), selectedToken, setTransactionPhase);
+      await onSend(
+        recipient,
+        parseFloat(amount),
+        selectedToken,
+        setTransactionPhase,
+      );
 
       setStatus("Transaction completed successfully!");
 
@@ -441,7 +453,7 @@ export const WithdrawPage = ({
           {/* Available Balance Display */}
           <div className="p-2.5 bg-zinc-900/60 border border-white/10">
             <p className="text-[10px] text-zinc-400 font-mono tracking-widest mb-0.5">
-              AVAILABLE SHIELDED
+              AVAILABLE BALANCE
             </p>
             <p className="text-sm font-mono text-neon-green">
               {(selectedToken === "SOL"

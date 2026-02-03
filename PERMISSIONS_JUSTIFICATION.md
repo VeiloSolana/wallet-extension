@@ -2,7 +2,7 @@
 
 ## Single-Purpose Extension Statement
 
-**Veilo has ONE clear purpose:** To provide a non-custodial cryptocurrency wallet for the Solana blockchain with privacy features.
+**Veilo has ONE clear purpose:** To provide a non-custodial, secure cryptocurrency wallet for the Solana blockchain.
 
 All requested permissions directly support this core functionality.
 
@@ -16,13 +16,13 @@ All requested permissions directly support this core functionality.
 
 **What We Store:**
 
-- User's encrypted private keys (encrypted with user's password)
-- User's encrypted seed phrase (encrypted with user's password)
+- User's encrypted private keys (encrypted with user's password using AES-256)
+- User's encrypted seed phrase (encrypted with user's password using AES-256)
 - Local transaction history
 - User preferences (currency display, network selection)
-- Username and public keys (for easy transfers)
+- Username and public address (for easy transfers)
 
-**Privacy & Security:**
+**Security:**
 
 - ALL sensitive data is encrypted using AES-256 before storage
 - Encryption key derived from user's password (never stored)

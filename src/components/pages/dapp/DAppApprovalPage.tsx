@@ -67,8 +67,8 @@ export const DAppApprovalPage = ({
         return "Sign Message";
       case "signAndSendTransaction":
         return "Sign & Send";
-      case "sendShieldedTransaction":
-        return "Shielded Transfer";
+      case "sendPrivateTransaction":
+        return "Private Transfer";
       default:
         return "Access Request";
     }
@@ -89,8 +89,8 @@ export const DAppApprovalPage = ({
         ];
       case "signMessage":
         return ["Verify your identity by signing a message"];
-      case "sendShieldedTransaction":
-        return ["Initiate a private shielded transfer"];
+      case "sendPrivateTransaction":
+        return ["Initiate a private transfer"];
       default:
         return [];
     }

@@ -129,8 +129,8 @@ export const DappFundModal = ({
 
                   <div className="p-3 bg-neon-green/5 border border-neon-green/20">
                     <p className="text-xs font-mono text-zinc-300 leading-relaxed">
-                      This will withdraw SOL from your shielded Veilo balance to
-                      fund this dApp wallet.
+                      This will withdraw SOL from your Veilo balance to fund
+                      this dApp wallet.
                     </p>
                   </div>
 

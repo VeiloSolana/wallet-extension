@@ -1,66 +1,58 @@
 # Veilo Wallet Extension
 
-Veilo is a privacy-focused browser extension wallet for the Solana blockchain. It enables shielded transactions using Zero-Knowledge (ZK) proofs, allowing users to deposit, transfer, and withdraw assets privately while maintaining a user-friendly experience through usernames and abstraction of complex cryptographic operations.
+The first privacy-focused Solana wallet extension. Now in beta.
+
+We've designed Veilo to be private by default, and completely behind the scenes.
 
 ## Features
 
-- **🛡️ Shielded Balance:** Hold assets privately. Your balance and transaction history are not visible on the public ledger.
-- **⚡ Private Transfers:** Send assets to other Veilo users instantaneously and privately using usernames (e.g., `@alice`).
-- **🌉 Relayer Integration:** Transactions are submitted via a relayer to preserve privacy by dissociating the gas payer from the transaction origin.
-- **🔑 Non-Custodial:** Your private keys and seed phrase are encrypted and stored locally. You have full control.
-- **🪙 Multi-Token Support:** Support for SOL and SPL tokens (USDC, USDT, etc.) within the privacy pool.
+- **🔮 Smart Wallet Management:** We create and manage wallets behind the scenes for enhanced privacy
+- **🔒 Private dApp Connections:** Create fresh wallets specifically for connecting to dApps
+- **🛡️ Veilo Balance:** All crypto that flows through Veilo is pooled with other users' funds to enhance privacy
+- **⚡ Private Transfers:** Send crypto to other Veilo users by username - fast and private
+- **🪙 Multi-Token Support:** Support for SOL and SPL tokens (USDC, USDT, etc.)
+- **🔑 Username System:** No more complex wallet addresses - send money to easy usernames like @alice
 
 ## User Flows
 
 ### 1. Onboarding & Account Creation
 
 - **New User:** The user chooses a unique username (e.g., `@satoshi`).
-- **Key Generation:** The wallet generates a Solana Keypair (Public/Private keys) and a specific Privacy Keypair.
-- **Security:** A mnemonic seed phrase is generated. The user sets a password which encrypts these keys in local storage.
-- **Registration:** The username is registered with the backend service to map it to the user's public identity keys for discovery (while preserving transactional privacy).
+- **Key Generation:** The wallet generates a Solana Keypair (Public/Private keys).
+- **Security:** A mnemonic seed phrase is generated. The user sets a password which encrypts these keys in local storage using AES-256.
+- **Registration:** The username is registered with our backend service to map it to the user's public address for easy transfers.
 
-### 2. Deposit (Shielding)
+### 2. Send Tokens
 
-_Flow: Public Address → Shielded Pool_
+1. User enters recipient's username or public address and amount.
+2. The wallet creates a standard Solana transaction.
+3. User approves the transaction.
+4. Transaction is submitted to the Solana network.
 
-1. User selects an amount to deposit from their public Solana balance.
-2. The wallet creates a transaction calling the **Privacy Pool Program**.
-3. Funds are transferred to the program's vault.
-4. A "Note" (UTXO) representing the deposited value is created and added to the on-chain Merkle Tree.
-5. The user's encrypted local state is updated to include this new Note.
+### 3. Receive Tokens
 
-### 3. Private Transfer
+1. User shares their username or public address.
+2. Sender sends tokens to the user's address.
+3. Tokens appear in the user's balance.
 
-_Flow: User A (Shielded) → User B (Shielded)_
+### 4. Connect to dApps
 
-1. User A enters User B's username and amount.
-2. **Note Selection:** The wallet selects "Notes" from User A's local storage that sum up to the required amount.
-3. **ZK Proof Generation:** The wallet generates a Zero-Knowledge proof locally. This proof asserts:
-   - User A owns the notes.
-   - The notes exist in the Merkle Tree.
-   - The notes have not been spent (nullifier check).
-4. **Relayer Submission:** The proof and encrypted output notes (for User B) are sent to the Relayer.
-5. **On-Chain Settlement:** The Relayer submits the transaction. The Program verifies the proof and updates the Merkle Tree with new notes for User B. User A's spent notes are nullified.
-
-### 4. Withdraw (Unshielding)
-
-_Flow: Shielded Pool → Public Address_
-
-1. User selects an amount to withdraw to a public Solana address (their own or external).
-2. Similar to a transfer, the wallet generates a ZK proof proving ownership of funds.
-3. The transaction instructs the Privacy Pool Program to release funds from the vault to the target public address.
-4. This action breaks the link between the deposit history and the withdrawal event.
+1. User visits a Solana dApp.
+2. dApp detects Veilo via the Wallet Standard API.
+3. User clicks "Connect" and approves in the extension popup.
+4. dApp can now request transaction signatures (with user approval).
 
 ## Use Cases
 
-- **Private Payments:** Send money to friends or vendors without revealing your net worth or history.
-- **Payroll:** Pay employees without exposing the company's full treasury or salary details publicly.
-- **Trading:** Move funds to an exchange (via Withdraw) strategies without linking back to a main identifyable wallet.
+- **Everyday Payments:** Send money to friends or pay for goods and services.
+- **DeFi Participation:** Connect to DEXs, lending protocols, and other DeFi apps.
+- **NFT Transactions:** Buy, sell, and transfer NFTs on Solana marketplaces.
+- **Gaming:** Use with Solana-based games and gaming platforms.
 
 ## Technologies
 
 - **Frontend:** React, TypeScript, Vite, Tailwind CSS
-- **Cryptographic:** `circomlibjs` (for ZK integration), `@solana/web3.js`
+- **Cryptographic:** `@solana/web3.js`
 - **State Management:** Zustand
 - **Animation:** Framer Motion
 
@@ -70,7 +62,7 @@ MIT
 
 ## Privacy Policy
 
-Please see [PRIVACY_POLICY.md](./PRIVACY_POLICY.md) for details on how Veilo handles your data and protects your privacy.
+Please see [PRIVACY_POLICY.md](./PRIVACY_POLICY.md) for details on how Veilo handles your data and protects your security.
 
 ## Permissions
 

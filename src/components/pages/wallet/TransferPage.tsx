@@ -9,7 +9,14 @@ import usdtLogo from "/images/usdt-logo.svg";
 
 interface TransferPageProps {
   onBack: () => void;
-  onTransfer: (username: string, amount: number, token: string,setTransactionPhase:(value: React.SetStateAction<TransactionPhase>) => void) => Promise<any>;
+  onTransfer: (
+    username: string,
+    amount: number,
+    token: string,
+    setTransactionPhase: (
+      value: React.SetStateAction<TransactionPhase>,
+    ) => void,
+  ) => Promise<any>;
   tokenBalances?: {
     sol: number;
     usdc: number;
@@ -88,7 +95,12 @@ export const TransferPage = ({
       setStatus("");
       setTransactionPhase("processing");
 
-      await onTransfer(username, parseFloat(amount), selectedToken, setTransactionPhase);
+      await onTransfer(
+        username,
+        parseFloat(amount),
+        selectedToken,
+        setTransactionPhase,
+      );
 
       // setTransactionPhase("success");
       setStatus("Transfer completed successfully!");
@@ -437,7 +449,7 @@ export const TransferPage = ({
           {/* Available Balance Display */}
           <div className="p-2.5 bg-zinc-900/60 border border-white/10">
             <p className="text-[10px] text-zinc-400 font-mono tracking-widest mb-0.5">
-              AVAILABLE SHIELDED
+              AVAILABLE BALANCE
             </p>
             <p className="text-sm font-mono text-neon-green">
               {(selectedToken === "SOL"

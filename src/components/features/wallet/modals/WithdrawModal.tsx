@@ -157,7 +157,7 @@ export const WithdrawModal = ({
             <div className="p-4">
               <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
                 <h2 className="text-[10px] font-mono font-bold uppercase tracking-widest text-neon-green">
-                  UNSHIELD FUNDS
+                  WITHDRAW FUNDS
                 </h2>
                 <button
                   onClick={onClose}
@@ -204,7 +204,7 @@ export const WithdrawModal = ({
 
                 <div className="p-2.5 bg-zinc-900/60 border border-white/10">
                   <p className="text-[10px] text-zinc-400 font-mono tracking-widest mb-0.5">
-                    AVAILABLE SHIELDED
+                    AVAILABLE BALANCE
                   </p>
                   <p className="text-sm font-mono text-neon-green">
                     {(selectedToken === "SOL"
@@ -308,7 +308,7 @@ export const WithdrawModal = ({
                     fullWidth
                     disabled={!recipient || !amount || isProcessing}
                   >
-                    {isProcessing ? "PROCESSING..." : "UNSHIELD"}
+                    {isProcessing ? "PROCESSING..." : "WITHDRAW"}
                   </CyberButton>
                 </div>
               </div>

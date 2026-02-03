@@ -114,7 +114,7 @@ export const DepositModal = ({
                 {/* Info Box */}
                 <div className="p-2.5 bg-zinc-900/60 border border-neon-green/20">
                   <p className="text-xs font-mono text-zinc-300 leading-relaxed">
-                    Use our deposit dapp to add SOL privately to your shielded
+                    Use our deposit dapp to add SOL privately to your Veilo
                     balance.
                   </p>
                 </div>
@@ -147,7 +147,7 @@ export const DepositModal = ({
                     </div>
                     <div className="flex gap-1.5">
                       <span className="text-neon-green">3.</span>
-                      <span>Funds appear as private notes</span>
+                      <span>Funds appear in your balance</span>
                     </div>
                   </div>
                 </div>

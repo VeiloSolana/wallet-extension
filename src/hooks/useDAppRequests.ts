@@ -233,7 +233,7 @@ export function useDAppRequests({
           approved: true,
           response: { signedTransaction: signedTxBytes },
         });
-      } else if (pendingDAppRequest.method === "sendShieldedTransaction") {
+      } else if (pendingDAppRequest.method === "sendPrivateTransaction") {
         if (!noteManager || !wallet) {
           throw new Error("Wallet not unlocked");
         }
