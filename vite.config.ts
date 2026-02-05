@@ -23,7 +23,7 @@ export default defineConfig({
     alias: {
       "@zkprivacysol/sdk-core": path.resolve(
         __dirname,
-        "./node_modules/@zkprivacysol/sdk-core/dist/index.js"
+        "./node_modules/@zkprivacysol/sdk-core/dist/index.js",
       ),
     },
   },
@@ -53,6 +53,11 @@ export default defineConfig({
         },
         chunkFileNames: "assets/[name]-[hash].js",
         assetFileNames: "assets/[name]-[hash].[ext]",
+        manualChunks: {
+          vendor: ["react", "react-dom", "framer-motion"],
+          solana: ["@solana/web3.js", "@coral-xyz/anchor"],
+          zk: ["snarkjs", "circomlibjs", "@zkprivacysol/sdk-core"],
+        },
       },
     },
     // Don't minify for easier debugging during development
@@ -60,4 +65,3 @@ export default defineConfig({
   },
   publicDir: "public",
 });
-

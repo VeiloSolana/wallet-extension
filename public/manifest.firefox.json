@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "Veilo Wallet",
+  "version": "1.1.0",
+  "description": "The privacy-focused Solana wallet. Manage your crypto privately.",
+  "icons": {
+    "16": "images/logo-main.png",
+    "32": "images/logo-main.png",
+    "48": "images/logo-main.png",
+    "128": "images/logo-main.png"
+  },
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Veilo Wallet"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["injected.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "wallet@veilo.io",
+      "strict_min_version": "109.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  }
+}
