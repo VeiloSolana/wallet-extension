@@ -2,6 +2,8 @@
 
 Veilo is a browser-based crypto wallet designed to keep your on-chain Solana activity private. Your privacy and security are important to us, and this policy explains how Veilo handles data and interacts with third-party services.
 
+**Current Status:** Veilo supports standard wallet operations on Solana mainnet. Advanced privacy features are currently on Solana devnet (test network) using test tokens with no real monetary value. Mainnet support for privacy features coming soon.
+
 ## 1. Data Handling
 
 All core wallet functions, including key management and transaction signing, run locally in your browser. Veilo does not collect, store, or transmit any personal or wallet data to external servers.
@@ -29,7 +31,7 @@ For help or questions, reach out to us:
 
 - **Twitter:** @VeiloWallet
 - **Email:** support@veilo.network
-- **Website:** https://veilo.network
+- **Website:** https://wallet.veilo.network/
 
 ## 6. Chrome Web Store Compliance
 

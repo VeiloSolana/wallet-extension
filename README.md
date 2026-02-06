@@ -2,6 +2,8 @@
 
 The first privacy-focused Solana wallet extension. Now in beta.
 
+⚠️ **Privacy Features on Devnet:** Veilo supports standard wallet operations on Solana mainnet. However, advanced privacy features are currently on Solana devnet for testing, using test tokens with no real value. Mainnet support for privacy features coming soon.
+
 We've designed Veilo to be private by default, and completely behind the scenes.
 
 ## Features

@@ -6,7 +6,7 @@ interface DepositModalProps {
   username?: string;
 }
 
-const DEPOSIT_DAPP_URL = "https://veilo-dapp.vercel.app"; // TODO: Update with actual dapp URL
+const DEPOSIT_DAPP_URL = "https://fund.veilo.network/";
 
 export const DepositModal = ({
   isOpen,
