@@ -24,7 +24,7 @@ export const SecretPhrasePage = ({
       {/* Header */}
       <div className="p-4 border-b border-white/10 shrink-0">
         <h2 className="text-sm font-bold tracking-tight text-center">
-          Your Secret Phrase
+          Your Recovery Phrase
         </h2>
       </div>
 
@@ -273,7 +273,7 @@ export const SecretPhrasePage = ({
               )}
             </button>
             <p className="text-xs text-zinc-400 leading-relaxed select-none">
-              I have saved my secret phrase in a secure location. I understand
+              I have saved my recovery phrase in a secure location. I understand
               that if I lose it, my wallet cannot be recovered.
             </p>
           </div>

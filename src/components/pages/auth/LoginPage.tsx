@@ -225,7 +225,7 @@ export const LoginPage = ({ onLogin, error, setError }: LoginPageProps) => {
         >
           <p className="text-zinc-600 text-xs font-mono">Forgot password?</p>
           <p className="text-zinc-500 text-xs mt-1">
-            Sorry, there is no recovery option.
+            Reset your wallet and restore with your recovery phrase.
           </p>
 
           <button

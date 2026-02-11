@@ -8,9 +8,9 @@ interface OnboardingWalkthroughProps {
 
 const slides = [
   {
-    title: "magical privacy.",
+    title: "built-in privacy.",
     description:
-      "The first wallet that makes privacy on Solana simple, powerful, and behind the scenes.",
+      "The first wallet that makes privacy on Solana simple and powerful.",
     icon: (
       <svg
         className="w-16 h-16 text-white"
@@ -28,9 +28,9 @@ const slides = [
     ),
   },
   {
-    title: "One Balance, Many Vaults",
+    title: "Private by Default",
     description:
-      "We manage your funds across multiple wallets behind the scenes. You see one balance; we handle the complexity.",
+      "Your deposits are stored as encrypted notes on-chain. Only you can see your balance and spend your funds.",
     icon: (
       <svg
         className="w-16 h-16 text-white"
@@ -50,7 +50,7 @@ const slides = [
   {
     title: "Enhanced Privacy",
     description:
-      "Your SOL is pooled with other users' funds to enhance your financial privacy.",
+      "Zero-knowledge proofs keep your transactions private without revealing your balances or activity.",
     icon: (
       <svg
         className="w-16 h-16 text-white"
@@ -68,9 +68,9 @@ const slides = [
     ),
   },
   {
-    title: "Fresh Addresses",
+    title: "Send by Username",
     description:
-      "Every time you receive funds, we generate a brand new address for enhanced privacy.",
+      "Send crypto privately to anyone using just their Veilo username. No wallet addresses needed.",
     icon: (
       <svg
         className="w-16 h-16 text-white"

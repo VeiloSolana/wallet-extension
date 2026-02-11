@@ -1,22 +1,38 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { CyberButton } from "../../common/ui/CyberButton";
 import {
   type NetworkType,
   getSelectedNetwork,
   setSelectedNetwork,
 } from "../../../lib/network";
+import { loadWallet } from "../../../utils/storage";
+import { decrypt } from "../../../utils/encryption";
+import bs58 from "bs58";
+
+type RevealTarget = "phrase" | "privateKey" | null;
 
 interface PreferencesPageProps {
   address?: string;
   onLogout?: () => void;
+  password: string; // Required - used for decryption
 }
 
 export const PreferencesPage = ({
   address = "",
   onLogout,
+  password,
 }: PreferencesPageProps) => {
   const [copied, setCopied] = useState(false);
   const [network, setNetwork] = useState<NetworkType>(getSelectedNetwork());
+
+  // Reveal state
+  const [revealTarget, setRevealTarget] = useState<RevealTarget>(null);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [revealedData, setRevealedData] = useState<string | null>(null);
+  const [revealError, setRevealError] = useState("");
+  const [isRevealing, setIsRevealing] = useState(false);
+  const [copiedRevealed, setCopiedRevealed] = useState(false);
 
   useEffect(() => {
     const handleNetworkChange = (e: CustomEvent<NetworkType>) => {
@@ -46,12 +62,65 @@ export const PreferencesPage = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleExportPrivateKey = () => {
-    alert("Export functionality coming soon");
+  const handleRevealRequest = (target: RevealTarget) => {
+    setRevealTarget(target);
+    setConfirmPassword("");
+    setRevealedData(null);
+    setRevealError("");
   };
 
-  const handleViewSeedPhrase = () => {
-    alert("View seed phrase functionality coming soon");
+  const handleCloseReveal = () => {
+    setRevealTarget(null);
+    setConfirmPassword("");
+    setRevealedData(null);
+    setRevealError("");
+    setCopiedRevealed(false);
+  };
+
+  const handleConfirmReveal = async () => {
+    if (!confirmPassword) {
+      setRevealError("Please enter your password");
+      return;
+    }
+
+    setIsRevealing(true);
+    setRevealError("");
+
+    try {
+      const storedWallet = await loadWallet();
+      if (!storedWallet) {
+        setRevealError("Wallet data not found");
+        setIsRevealing(false);
+        return;
+      }
+
+      if (revealTarget === "phrase") {
+        const mnemonic = await decrypt(
+          storedWallet.encryptedMnemonic,
+          confirmPassword,
+        );
+        setRevealedData(mnemonic);
+      } else if (revealTarget === "privateKey") {
+        const secretKeyStr = await decrypt(
+          storedWallet.encryptedSecretKey,
+          confirmPassword,
+        );
+        const secretKey = new Uint8Array(JSON.parse(secretKeyStr));
+        setRevealedData(bs58.encode(secretKey));
+      }
+    } catch {
+      setRevealError("Incorrect password");
+    } finally {
+      setIsRevealing(false);
+    }
+  };
+
+  const handleCopyRevealed = () => {
+    if (revealedData) {
+      navigator.clipboard.writeText(revealedData);
+      setCopiedRevealed(true);
+      setTimeout(() => setCopiedRevealed(false), 2000);
+    }
   };
 
   return (
@@ -174,7 +243,7 @@ export const PreferencesPage = ({
           {/* Security Actions Grid */}
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={handleViewSeedPhrase}
+              onClick={() => handleRevealRequest("phrase")}
               className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/30 transition-all text-left group"
             >
               <div className="flex items-center justify-between mb-2">
@@ -200,13 +269,13 @@ export const PreferencesPage = ({
                 <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 group-hover:bg-neon-green transition-colors" />
               </div>
               <p className="text-[10px] font-mono text-zinc-300 uppercase tracking-wider mb-0.5">
-                Seed Phrase
+                Recovery Phrase
               </p>
               <p className="text-[9px] text-zinc-600">View recovery words</p>
             </button>
 
             <button
-              onClick={handleExportPrivateKey}
+              onClick={() => handleRevealRequest("privateKey")}
               className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/30 transition-all text-left group"
             >
               <div className="flex items-center justify-between mb-2">
@@ -262,6 +331,188 @@ export const PreferencesPage = ({
           )}
         </div>
       </div>
+
+      {/* Password Confirmation & Reveal Modal */}
+      <AnimatePresence>
+        {revealTarget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center"
+            onClick={handleCloseReveal}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative bg-black border border-white/10 shadow-lg max-w-md w-full mx-4"
+            >
+              {/* Corner brackets */}
+              <svg
+                className="absolute -top-px -left-px w-3 h-3 text-neon-green"
+                viewBox="0 0 12 12"
+              >
+                <path
+                  d="M0 0 L0 8 M0 0 L8 0"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  fill="none"
+                />
+              </svg>
+              <svg
+                className="absolute -top-px -right-px w-3 h-3 text-neon-green"
+                viewBox="0 0 12 12"
+              >
+                <path
+                  d="M12 0 L12 8 M12 0 L4 0"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  fill="none"
+                />
+              </svg>
+              <svg
+                className="absolute -bottom-px -left-px w-3 h-3 text-neon-green"
+                viewBox="0 0 12 12"
+              >
+                <path
+                  d="M0 12 L0 4 M0 12 L8 12"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  fill="none"
+                />
+              </svg>
+              <svg
+                className="absolute -bottom-px -right-px w-3 h-3 text-neon-green"
+                viewBox="0 0 12 12"
+              >
+                <path
+                  d="M12 12 L12 4 M12 12 L4 12"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  fill="none"
+                />
+              </svg>
+
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
+                  <h2 className="text-[10px] font-mono font-bold uppercase tracking-widest text-yellow-400">
+                    ⚠️ Security Warning
+                  </h2>
+                  <button
+                    onClick={handleCloseReveal}
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                {!revealedData ? (
+                  <>
+                    <div className="mb-4 p-2.5 bg-yellow-500/10 border border-yellow-500/30">
+                      <p className="text-xs font-mono text-yellow-300 leading-relaxed">
+                        {revealTarget === "phrase"
+                          ? "Never share your recovery phrase. Anyone with access can steal your funds."
+                          : "Never share your private key. Anyone with access can steal your funds."}
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-[10px] text-zinc-400 font-mono tracking-widest uppercase block mb-1.5">
+                          Enter Password to Reveal
+                        </label>
+                        <input
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleConfirmReveal()
+                          }
+                          placeholder="Enter your password"
+                          className="w-full px-3 py-2 bg-zinc-900/60 border border-white/10 text-white placeholder-zinc-600 focus:outline-none focus:border-neon-green/50 transition-colors font-mono text-sm"
+                          autoFocus
+                        />
+                      </div>
+
+                      {revealError && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-xs font-mono text-red-400"
+                        >
+                          {revealError}
+                        </motion.p>
+                      )}
+
+                      <button
+                        onClick={handleConfirmReveal}
+                        disabled={isRevealing || !confirmPassword}
+                        className="w-full px-3 py-2 text-[10px] font-mono font-bold text-black bg-white hover:bg-zinc-200 uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isRevealing ? "Verifying..." : "Reveal"}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="mb-4">
+                      <label className="text-[10px] text-zinc-400 font-mono tracking-widest uppercase block mb-2">
+                        {revealTarget === "phrase"
+                          ? "Your Recovery Phrase"
+                          : "Your Private Key (Base58)"}
+                      </label>
+                      {revealTarget === "phrase" ? (
+                        <div className="grid grid-cols-3 gap-2 p-3 bg-zinc-900/60 border border-white/10">
+                          {revealedData.split(" ").map((word, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-1.5 p-1.5 bg-black/40 border border-white/5"
+                            >
+                              <span className="text-[9px] text-zinc-500 font-mono">
+                                {i + 1}.
+                              </span>
+                              <span className="text-xs text-white font-mono">
+                                {word}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-zinc-900/60 border border-white/10">
+                          <p className="text-xs font-mono text-white break-all">
+                            {revealedData}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={handleCopyRevealed}
+                      className="w-full mt-3 px-3 py-2 text-[10px] font-mono font-bold text-black bg-white hover:bg-zinc-200 uppercase tracking-widest transition-all"
+                    >
+                      {copiedRevealed ? "✓ Copied" : "Copy to Clipboard"}
+                    </button>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -96,7 +96,7 @@ export const WelcomePage = ({ onGetStarted, onRestore }: WelcomePageProps) => {
           transition={{ delay: 0.4 }}
           className="text-zinc-400 text-center text-xs font-mono tracking-widest uppercase mb-6"
         >
-          Your Privacy-First Solana Wallet
+          A Secure Solana Wallet
         </motion.p>
 
         {/* Buttons */}
@@ -113,14 +113,14 @@ export const WelcomePage = ({ onGetStarted, onRestore }: WelcomePageProps) => {
             <div className="absolute inset-0 bg-neon-green/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
             <span className="relative z-10">CREATE ACCOUNT</span>
           </button>
-          
+
           <button
             onClick={onRestore}
             className="relative overflow-hidden group w-full py-3 bg-transparent border border-white/20 text-white font-bold text-sm tracking-wide rounded-lg transition-all hover:border-neon-green/50 hover:bg-white/5 active:scale-[0.98]"
           >
             <span className="relative z-10">RESTORE ACCOUNT</span>
           </button>
-          
+
           <p className="text-center text-zinc-600 text-[10px] mt-2 font-mono tracking-widest uppercase">
             Powered by Zero-Knowledge Technology
           </p>

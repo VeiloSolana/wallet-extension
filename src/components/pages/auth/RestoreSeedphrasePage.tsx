@@ -33,7 +33,9 @@ export const RestoreSeedphrasePage = ({
 
     // Validate BIP39 mnemonic
     if (!bip39.validateMnemonic(trimmedPhrase)) {
-      setError("Invalid seed phrase. Please check your words and try again.");
+      setError(
+        "Invalid recovery phrase. Please check your words and try again.",
+      );
       return;
     }
 
@@ -75,7 +77,7 @@ export const RestoreSeedphrasePage = ({
           className="mb-6"
         >
           <h3 className="text-xl font-bold text-white mb-1 tracking-tight">
-            Enter Your Seed Phrase
+            Enter Your Recovery Phrase
           </h3>
           <p className="text-zinc-400 text-xs leading-relaxed">
             Enter your 12-word recovery phrase to restore your wallet. Make sure
@@ -164,8 +166,8 @@ export const RestoreSeedphrasePage = ({
                 </span>
               </div>
               <p className="text-blue-200 text-xs leading-relaxed font-medium">
-                Never share your seed phrase with anyone. Veilo will never ask
-                for it outside of this restore process.
+                Never share your recovery phrase with anyone. Veilo will never
+                ask for it outside of this restore process.
               </p>
             </div>
           </div>
@@ -175,7 +177,7 @@ export const RestoreSeedphrasePage = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-[10px] text-zinc-400 font-mono mb-2 tracking-widest uppercase">
-              SEED PHRASE
+              RECOVERY PHRASE
             </label>
             <textarea
               value={seedphrase}
@@ -183,7 +185,7 @@ export const RestoreSeedphrasePage = ({
                 setSeedphrase(e.target.value);
                 if (error) setError("");
               }}
-              placeholder="Enter your 12-word seed phrase separated by spaces..."
+              placeholder="Enter your 12-word recovery phrase separated by spaces..."
               rows={4}
               className="w-full bg-zinc-900/60 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-neon-green/50 transition-colors resize-none font-mono"
               autoFocus

@@ -77,9 +77,7 @@ export const ReceiveModal = ({
 
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold tracking-tight">
-                  RECEIVE SOL
-                </h2>
+                <h2 className="text-base font-bold tracking-tight">RECEIVE</h2>
                 <button
                   onClick={onClose}
                   className="text-zinc-400 hover:text-white transition-colors"
