@@ -731,7 +731,7 @@ export const handleDeposit = async ({
     const bobPublicKeyBytes = pubKey.toBytes();
 
     console.log("🔒 Creating encrypted note...");
-    const encryptedNote = await createEncryptedNoteBlob(bobPublicKeyBytes, {
+    const encryptedNote = createEncryptedNoteBlob(bobPublicKeyBytes, {
       blinding: bobBlinding,
       leafIndex: bobLeafIndex,
       commitment: bobCommitment,

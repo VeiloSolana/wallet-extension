@@ -76,7 +76,10 @@ export async function syncNotesFromRelayer(
               // Update spent status if it differs
               const relayerSpent = encryptedNote.spent ?? false;
               if (relayerSpent && !existing.spent) {
-                await noteManager.markAsSpent(existing.id, encryptedNote.spentTx || "");
+                await noteManager.markAsSpent(
+                  existing.id,
+                  encryptedNote.spentTx || "",
+                );
               }
               return;
             }
@@ -87,7 +90,7 @@ export async function syncNotesFromRelayer(
             );
 
             // Decrypt note
-            const decrypted = await decryptNoteBlob(
+            const decrypted = decryptNoteBlob(
               privKeyBuffer,
               ephemeralPubKey,
               encryptedNote.encryptedBlob,

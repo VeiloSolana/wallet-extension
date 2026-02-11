@@ -7,10 +7,11 @@ const { decodeUTF8, encodeUTF8, encodeBase64, decodeBase64 } = util;
 
 /**
  * SHA-256 hash function (cross-platform compatible)
- * Using tweetnacl's hash function (SHA-512) and truncating to 256 bits
+ * MUST match encryption: Using tweetnacl's hash function (SHA-512) and truncating to 256 bits
+ * This is NOT real SHA-256, but it's what the encryption side uses!
  */
 function sha256(data: Uint8Array): Uint8Array {
-  // Using SHA-512 and taking first 32 bytes
+  // Using SHA-512 and taking first 32 bytes (matches encryption logic)
   const hash = nacl.hash(data);
   return hash.slice(0, 32);
 }
@@ -23,7 +24,7 @@ export function encryptSecretBox(
   plaintext: string,
   sharedSecret: Uint8Array,
 ): Uint8Array {
-  // Derive 256-bit key from shared secret (to match original behavior)
+  // Derive 256-bit key from shared secret (MUST match encryption)
   const key = sha256(sharedSecret);
 
   // Generate random nonce (24 bytes for secretbox)
@@ -50,6 +51,7 @@ export function decryptSecretBox(
   ciphertext: Uint8Array,
   sharedSecret: Uint8Array,
 ): Uint8Array {
+  // Derive key (MUST match encryption)
   const key = sha256(sharedSecret);
 
   // Extract nonce and encrypted data
@@ -71,11 +73,16 @@ export function decryptSecretBox(
  * Cross-platform compatible using ed2curve
  */
 export function deriveSharedSecret(
-  myPrivateKey: Uint8Array, // 32 bytes Ed25519 private key
+  myPrivateKey: Uint8Array,
   theirPublicKey: Uint8Array, // 32 bytes Ed25519 public key
 ): Uint8Array {
-  // Convert Ed25519 keys to X25519 (Curve25519) for ECDH
-  const myX25519Private = ed2curve.convertSecretKey(myPrivateKey);
+  // Simple approach that matches the working test:
+  // If we have 64 bytes, slice to get the first 32 (seed)
+  const privateKey32 =
+    myPrivateKey.length === 64 ? myPrivateKey.slice(0, 32) : myPrivateKey;
+
+  // Convert Ed25519 keys to X25519 for ECDH
+  const myX25519Private = ed2curve.convertSecretKey(privateKey32);
   const theirX25519Public = ed2curve.convertPublicKey(theirPublicKey);
 
   if (!myX25519Private || !theirX25519Public) {
@@ -108,7 +115,6 @@ export function createEncryptedNoteBlob(
 } {
   // 1. Generate ephemeral keypair for this transaction
   const ephemeralKeypair = Keypair.generate();
-  const ephemeralPrivateKey = ephemeralKeypair.secretKey.slice(0, 32);
   const ephemeralPublicKey = ephemeralKeypair.publicKey.toBytes();
 
   console.log("🔐 Generated ephemeral keypair for encryption");
@@ -117,9 +123,9 @@ export function createEncryptedNoteBlob(
     ephemeralKeypair.publicKey.toBase58(),
   );
 
-  // 2. Derive shared secret using ECDH
+  // 2. Derive shared secret using ECDH (pass full 64-byte secretKey)
   const sharedSecret = deriveSharedSecret(
-    ephemeralPrivateKey,
+    ephemeralKeypair.secretKey, // Full 64-byte secretKey
     recipientPublicKey,
   );
 

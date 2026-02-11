@@ -291,6 +291,44 @@ Every major Web3 wallet uses this same permission model:
 
 ---
 
+## Remote Code Compliance
+
+### ✅ No Remote Code Execution
+
+**Policy:** Extensions must not download or execute remote code.
+
+**Compliance:**
+
+- ✅ All JavaScript/TypeScript is bundled and included in the extension package
+- ✅ No dynamic code loading via `eval()`, `new Function()`, or similar
+- ✅ No external `.js` files downloaded at runtime
+- ✅ No remotely-hosted WebAssembly modules
+
+**Relayer Service Clarification:**
+
+Veilo communicates with a backend relay service ("Veilo Layer") to process privacy-preserving transactions. This is **NOT remote code** because:
+
+1. **Remote Data, Not Remote Code:** The relayer is an API service — we send requests and receive data responses
+2. **Server-Side Execution:** The relayer's code runs on our server, not in the extension
+3. **Bundled Processing:** The extension uses its own bundled code to process API responses
+4. **Standard API Pattern:** This is identical to how all Web3 wallets interact with RPC nodes and backend services
+
+**What the Relayer Does:**
+
+- Receives transaction requests from the extension
+- Processes and submits transactions to the Solana blockchain
+- Returns transaction status and data back to the extension
+
+**What the Relayer Does NOT Do:**
+
+- ❌ Does NOT send executable JavaScript to the extension
+- ❌ Does NOT provide code that gets evaluated or executed
+- ❌ Does NOT modify extension behavior at runtime
+
+This pattern is standard across the Web3 ecosystem and is used by MetaMask (Infura), Phantom, and all major wallet extensions.
+
+---
+
 ## Comparison to Approved Extensions
 
 | Extension           | host_permissions | Purpose                | Status       |

@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import * as anchor from "@coral-xyz/anchor";
 import type { Program, Idl } from "@coral-xyz/anchor";
 import { Connection, Keypair } from "@solana/web3.js";
+import bs58 from "bs58";
 
 import { Buffer } from "buffer";
 
@@ -42,8 +43,14 @@ import { useAuthStore } from "./store/useAuthStore";
 import {
   useRegisterUser,
   useRestoreAccount,
+  useGetChallenge,
 } from "./hooks/queries/useAuthQueries";
-// import * as bip39 from "bip39";
+import {
+  generateMnemonic,
+  deriveKeypairFromMnemonic,
+  signAuthMessage,
+  createAuthMessage,
+} from "./utils/keyGeneration";
 import { Wallet } from "./utils/wallet";
 import privacyPoolIdl from "../program/idl/privacy_pool.json";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -61,6 +68,7 @@ import {
 
 import { NoteManager } from "./lib/noteManager";
 import { syncNotesFromRelayer } from "./lib/noteSync";
+import { decryptVeiloKeyFromServer } from "./transactions/ECDH/helpers";
 // Note: Transaction handlers and helpers moved to hooks
 
 import { getRpcEndpoint } from "./lib/network";
@@ -84,6 +92,7 @@ function App() {
     useRegisterUser();
   const { mutateAsync: restoreAccountApi, isPending: isRestoring } =
     useRestoreAccount();
+  const { mutateAsync: getChallenge } = useGetChallenge();
 
   // Local error state (shared with useOnboarding)
   const [localError, setLocalError] = useState("");
@@ -296,56 +305,57 @@ function App() {
 
   const handleCreatePassword = async (password: string) => {
     try {
-      // 1. Register with backend
-      const response = await registerUser(username);
+      // 1. Generate mnemonic CLIENT-SIDE (never sent to server!)
+      const mnemonic = generateMnemonic();
 
-      // 2. Derive wallet from returned private key
-      const privateKeyHex = response.privateKey;
-      if (!privateKeyHex) throw new Error("No private key returned");
+      // 2. Derive keypair CLIENT-SIDE
+      const keypair = await deriveKeypairFromMnemonic(mnemonic);
+      const publicKey = keypair.publicKey.toString();
+      const privateKeyHex = Buffer.from(
+        keypair.secretKey.slice(0, 32),
+      ).toString("hex");
 
-      const privateKeyBytes = Buffer.from(privateKeyHex, "hex");
-      const keypair = Keypair.fromSecretKey(privateKeyBytes);
+      // 3. Register with server (only send publicKey + username, NOT private key or mnemonic)
+      const response = await registerUser({ username, publicKey });
 
-      // 3. Encrypt all sensitive data
+      // 4. Decrypt veiloPrivateKey from server response using ECDH
+      // NOTE: ephemeralPublicKey is base58 encoded (Solana public key format)
+      const serverEphemeralPubKey = bs58.decode(response.ephemeralPublicKey);
+      const veiloPrivateKey = decryptVeiloKeyFromServer(
+        keypair.secretKey,
+        serverEphemeralPubKey,
+        response.encryptedVeiloPrivateKey,
+      );
+      const veiloPublicKey = response.veiloPublicKey;
+
+      // 5. Encrypt all sensitive data with user's password (local only)
       const secretKeyStr = JSON.stringify(Array.from(keypair.secretKey));
       const encryptedSecretKey = await encrypt(secretKeyStr, password);
-
-      const mnemonic = response.encryptedMnemonic || "";
       const encryptedMnemonic = await encrypt(mnemonic, password);
-
-      const veiloPublicKey = response.veiloPublicKey || "";
       const encryptedVeiloPublicKey = await encrypt(veiloPublicKey, password);
+      const encryptedVeiloPrivateKey = await encrypt(veiloPrivateKey, password);
 
-      const veiloPrivateKeyHex = response.veiloPrivateKey || "";
-      const encryptedVeiloPrivateKey = await encrypt(
-        veiloPrivateKeyHex,
-        password,
-      );
-
-      // 4. Store all encrypted data
+      // 6. Store all encrypted data locally
       await saveWallet(
         {
           encryptedSecretKey,
           encryptedMnemonic,
           encryptedVeiloPublicKey,
           encryptedVeiloPrivateKey,
-          publicKey: response.publicKey,
+          publicKey,
           username: response.username,
         },
         response.token,
       );
 
-      // 5. Store password in state for session use
+      // 7. Store password in state for session use
       setPassword(password);
 
-      // 6. Initialize NoteManager with account context
-      const accountNoteManager = new NoteManager(
-        response.publicKey,
-        privateKeyHex,
-      );
+      // 8. Initialize NoteManager with account context
+      const accountNoteManager = new NoteManager(publicKey, privateKeyHex);
       setNoteManager(accountNoteManager);
 
-      // 7. Update UI
+      // 9. Update UI - show mnemonic to user
       setGeneratedPhrase(mnemonic.split(" "));
       setOnboardingStep("phrase");
 
@@ -368,17 +378,16 @@ function App() {
       ) as Program<any>;
       setProgram(programInstance);
 
-      setAuth({ username: response.username, publicKey: response.publicKey });
+      setAuth({ username: response.username, publicKey });
 
-      // useNotes hook auto-loads notes when isAuthenticated changes
-      // Just trigger a sync with relayer after a short delay
+      // Sync with relayer after a short delay
       setTimeout(async () => {
         try {
           await syncNotesFromRelayer(
             accountNoteManager,
-            response.publicKey,
+            publicKey,
             privateKeyHex,
-            veiloPrivateKeyHex,
+            veiloPrivateKey,
             veiloPublicKey,
           );
           // Reload notes after sync
@@ -389,6 +398,7 @@ function App() {
       }, 500);
     } catch (e) {
       console.error("Registration failed", e);
+      setError("Registration failed. Please try again.");
     }
   };
 
@@ -396,53 +406,68 @@ function App() {
 
   const handleRestorePassword = async (password: string) => {
     try {
-      // 1. Restore account from backend using mnemonic
-      const response = await restoreAccountApi(restoreMnemonic);
+      // 1. Derive keypair from mnemonic CLIENT-SIDE (never send mnemonic to server!)
+      const keypair = await deriveKeypairFromMnemonic(restoreMnemonic);
+      const publicKey = keypair.publicKey.toString();
+      const privateKeyHex = Buffer.from(
+        keypair.secretKey.slice(0, 32),
+      ).toString("hex");
 
-      // 2. Derive wallet from returned private key
-      const privateKeyHex = response.privateKey;
-      if (!privateKeyHex) throw new Error("No private key returned");
+      // 2. Get challenge from server for signature verification
+      const { challenge } = await getChallenge(publicKey);
 
-      const privateKeyBytes = Buffer.from(privateKeyHex, "hex");
-      const keypair = Keypair.fromSecretKey(privateKeyBytes);
+      // 3. Sign challenge to prove ownership (no SOL required - free off-chain signature!)
+      const authMessage = createAuthMessage(publicKey, challenge);
+      const { signature, message } = signAuthMessage(
+        authMessage,
+        keypair.secretKey,
+      );
 
-      // 3. Encrypt all sensitive data (same as create flow)
+      // 4. Restore account with signature proof (server verifies we own the keypair)
+      const response = await restoreAccountApi({
+        publicKey,
+        signature,
+        message,
+      });
+
+      // 5. Decrypt veiloPrivateKey from server response using ECDH
+      // NOTE: ephemeralPublicKey is base58 encoded (Solana public key format)
+      const serverEphemeralPubKey = bs58.decode(response.ephemeralPublicKey);
+      const veiloPrivateKey = decryptVeiloKeyFromServer(
+        keypair.secretKey,
+        serverEphemeralPubKey,
+        response.encryptedVeiloPrivateKey,
+      );
+      const veiloPublicKey = response.veiloPublicKey;
+
+      // 6. Encrypt all sensitive data with user's password (local only)
       const secretKeyStr = JSON.stringify(Array.from(keypair.secretKey));
       const encryptedSecretKey = await encrypt(secretKeyStr, password);
       const encryptedMnemonic = await encrypt(restoreMnemonic, password);
-      const encryptedVeiloPublicKey = await encrypt(
-        response.veiloPublicKey || "",
-        password,
-      );
-      const encryptedVeiloPrivateKey = await encrypt(
-        response.veiloPrivateKey || "",
-        password,
-      );
+      const encryptedVeiloPublicKey = await encrypt(veiloPublicKey, password);
+      const encryptedVeiloPrivateKey = await encrypt(veiloPrivateKey, password);
 
-      // 4. Store all encrypted data
+      // 7. Store all encrypted data locally
       await saveWallet(
         {
           encryptedSecretKey,
           encryptedMnemonic,
           encryptedVeiloPublicKey,
           encryptedVeiloPrivateKey,
-          publicKey: response.publicKey,
+          publicKey,
           username: response.username,
         },
         response.token,
       );
 
-      // 5. Store password in state for session use
+      // 8. Store password in state for session use
       setPassword(password);
 
-      // 6. Initialize NoteManager with account context
-      const accountNoteManager = new NoteManager(
-        response.publicKey,
-        privateKeyHex,
-      );
+      // 9. Initialize NoteManager with account context
+      const accountNoteManager = new NoteManager(publicKey, privateKeyHex);
       setNoteManager(accountNoteManager);
 
-      // 7. Initialize session immediately
+      // 10. Initialize session immediately
       const walletInstance = new Wallet(keypair);
       setWallet(walletInstance);
       setAddress(keypair.publicKey.toString());
@@ -461,20 +486,16 @@ function App() {
       ) as Program<any>;
       setProgram(programInstance);
 
-      // 8. Set auth and skip to done (no phrase display or walkthrough for restore)
-      setAuth({ username: response.username, publicKey: response.publicKey });
+      // 11. Set auth and skip to done (no phrase display or walkthrough for restore)
+      setAuth({ username: response.username, publicKey });
       setOnboardingStep("done");
 
-      // Get veilo keys for sync
-      const veiloPublicKey = response.veiloPublicKey || "";
-      const veiloPrivateKey = response.veiloPrivateKey || "";
-
-      // 9. Sync notes after restore
+      // 12. Sync notes after restore
       setTimeout(async () => {
         try {
           await syncNotesFromRelayer(
             accountNoteManager,
-            response.publicKey,
+            publicKey,
             privateKeyHex,
             veiloPrivateKey,
             veiloPublicKey,
@@ -487,7 +508,16 @@ function App() {
       }, 500);
     } catch (e: any) {
       console.error("Restore failed", e);
-      setError(e?.message || "Failed to restore account");
+      if (e.message?.includes("not found")) {
+        setError("No account found for this seed phrase");
+      } else if (
+        e.message?.includes("signature") ||
+        e.message?.includes("Invalid")
+      ) {
+        setError("Authentication failed. Please check your seed phrase.");
+      } else {
+        setError(e?.message || "Failed to restore account");
+      }
     }
   };
 
@@ -714,7 +744,9 @@ function App() {
         )}
 
         {/* Swap Tab Content */}
-        {activeTab === "swap" && <SwapPage keypair={wallet?.payer || null} password={password} />}
+        {activeTab === "swap" && (
+          <SwapPage keypair={wallet?.payer || null} password={password} />
+        )}
 
         {/* Preferences Tab Content */}
         {activeTab === "preferences" && (

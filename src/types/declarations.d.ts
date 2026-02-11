@@ -3,6 +3,44 @@ declare module "process" {
   export = process;
 }
 
+declare module "ed25519-hd-key" {
+  export function derivePath(
+    path: string,
+    seedHex: string,
+  ): { key: Uint8Array; chainCode: Uint8Array };
+  export function getMasterKeyFromSeed(seedHex: string): {
+    key: Uint8Array;
+    chainCode: Uint8Array;
+  };
+  export function getPublicKey(
+    privateKey: Uint8Array,
+    withZeroByte?: boolean,
+  ): Uint8Array;
+}
+
+declare module "ed2curve" {
+  /**
+   * Convert Ed25519 secret key (seed) to X25519 secret key
+   */
+  export function convertSecretKey(secretKey: Uint8Array): Uint8Array | null;
+
+  /**
+   * Convert Ed25519 public key to X25519 public key
+   */
+  export function convertPublicKey(publicKey: Uint8Array): Uint8Array | null;
+
+  /**
+   * Convert Ed25519 key pair to X25519 key pair
+   */
+  export function convertKeyPair(keyPair: {
+    publicKey: Uint8Array;
+    secretKey: Uint8Array;
+  }): {
+    publicKey: Uint8Array;
+    secretKey: Uint8Array;
+  } | null;
+}
+
 declare module "veilo-sdk-core" {
   import type {
     PublicKey,
@@ -42,10 +80,10 @@ declare module "veilo-sdk-core" {
   export interface Wallet {
     publicKey: PublicKey;
     signTransaction<T extends Transaction | VersionedTransaction>(
-      tx: T
+      tx: T,
     ): Promise<T>;
     signAllTransactions<T extends Transaction | VersionedTransaction>(
-      txs: T[]
+      txs: T[],
     ): Promise<T[]>;
   }
 
@@ -80,7 +118,7 @@ declare module "veilo-sdk-core" {
 
   export function createRandomNote(
     value: number,
-    owner: PublicKey
+    owner: PublicKey,
   ): SerializedNote;
   export function encodeNoteToBytes(note: SerializedNote): Uint8Array;
   export function commitNote(note: SerializedNote): Uint8Array;
@@ -95,7 +133,7 @@ declare module "veilo-sdk-core" {
   export function merkleLeafFromCommitment(commitment: Uint8Array): Uint8Array;
   export function merkleHashPair(
     left: Uint8Array,
-    right: Uint8Array
+    right: Uint8Array,
   ): Uint8Array;
   export function merkleRootFromLeaves(leaves: Uint8Array[]): Uint8Array;
 
