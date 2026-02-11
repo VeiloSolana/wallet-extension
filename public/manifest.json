@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Veilo Wallet",
   "version": "1.1.0",
-  "description": "The privacy-focused Solana wallet. Manage your crypto privately.",
+  "description": "A secure, non-custodial Solana wallet. Send crypto by username. Your keys, your coins.",
   "icons": {
     "16": "images/logo-main.png",
     "32": "images/logo-main.png",
