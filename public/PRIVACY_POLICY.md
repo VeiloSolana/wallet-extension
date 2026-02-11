@@ -17,7 +17,7 @@ This policy explains what information we collect, how we protect it, and what we
 | Recovery phrase (12 words) | Your device (encrypted) | Never               | —                                          |
 | Wallet private key         | Your device (encrypted) | Never               | —                                          |
 | Wallet address             | Your device             | Yes                 | To show your balance and make transactions |
-| Username                   | Your device             | Yes                 | To set up your account                     |
+| Username                   | Your device             | Yes                 | So others can send you private transfers   |
 | Veilo keys                 | Your device (encrypted) | Yes (encrypted)     | For enhanced transaction features          |
 | Token prices               | Not stored              | No info sent        | To show your portfolio value in dollars    |
 
@@ -33,13 +33,7 @@ This policy explains what information we collect, how we protect it, and what we
 - **Wallet keys** come from your recovery phrase — again, all generated on your device.
 - **Account recovery** works by signing a message to prove you own the wallet. Your recovery phrase stays private.
 - **Veilo keys** (used for enhanced features) are created by our server but encrypted so only you can use them.
-
-**What we see when you sign up:**
-
-- Your wallet address (this is public info, like a username)
-- Your chosen username
-- Your recovery phrase — we never see this
-- Your private key — we never see this either
+- **Username** lets other Veilo users send you private transfers by name instead of using long wallet addresses.
 
 ---
 
@@ -58,10 +52,10 @@ Veilo Wallet connects to **four services** to function properly. Here's what eac
 Handles your account setup and enhanced wallet features.
 
 - **Account creation & recovery:** We receive your wallet address and username to set up your account. We send back your encrypted Veilo keys.
-- **Encrypted notes (blind storage):** We store encrypted records as a blind storage system. The encrypted notes remain unreadable to our server unless you explicitly grant access by performing a private withdrawal or transfer — only then does your wallet decrypt and send the necessary transaction details.
-- **Enhanced transactions:** When you use private withdrawals or transfers, you grant our server temporary access to the decrypted transaction details needed to process your request.
+- **Encrypted notes storage:** We store encrypted transaction records on our server. These records stay encrypted and unreadable to us unless you choose to perform a private withdrawal or transfer — only then does your wallet decrypt and send the necessary transaction details to process your request.
+- **Enhanced transactions:** When you use private withdrawals or transfers, your wallet temporarily shares the decrypted transaction details with our server to process your request.
 
-**Important:** Our server acts as blind storage by default and never sees your private key, recovery phrase, or password. It only sees the contents of specific notes when you choose to withdraw or transfer, at which point you're granting temporary access to process that transaction.
+**Important:** We never see your private key, recovery phrase, or password. We only see transaction details when you actively choose to withdraw or transfer, giving us temporary access to complete that specific transaction.
 
 ### Solana Network
 
