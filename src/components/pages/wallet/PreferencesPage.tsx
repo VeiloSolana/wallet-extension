@@ -15,13 +15,11 @@ type RevealTarget = "phrase" | "privateKey" | null;
 interface PreferencesPageProps {
   address?: string;
   onLogout?: () => void;
-  password: string; // Required - used for decryption
 }
 
 export const PreferencesPage = ({
   address = "",
   onLogout,
-  password,
 }: PreferencesPageProps) => {
   const [copied, setCopied] = useState(false);
   const [network, setNetwork] = useState<NetworkType>(getSelectedNetwork());

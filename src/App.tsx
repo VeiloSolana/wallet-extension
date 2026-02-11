@@ -750,11 +750,7 @@ function App() {
 
         {/* Preferences Tab Content */}
         {activeTab === "preferences" && (
-          <PreferencesPage
-            address={address}
-            onLogout={logout}
-            password={password}
-          />
+          <PreferencesPage address={address} onLogout={logout} />
         )}
 
         <AnimatePresence>
