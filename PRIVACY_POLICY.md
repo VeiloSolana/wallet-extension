@@ -2,151 +2,159 @@
 
 **Last Updated:** February 11, 2026
 
-Veilo Wallet is a **browser extension** wallet for Solana that helps keep your transactions private. It runs entirely inside your Chrome or Firefox browser — your secret keys and recovery phrase never leave your device. This policy explains what data we collect, what we share, and why.
+Veilo Wallet is a **browser extension** for Solana that gives you full control over your crypto. Your keys, your coins — everything stays on your device. We're here to help you manage your crypto safely and easily.
 
-**Current Status:** Veilo supports standard wallet features (send, receive, swap) on Solana mainnet. The advanced privacy features are currently running on Solana devnet (a test network) using test tokens with no real value. Mainnet privacy features are coming soon.
+This policy explains what information we collect, how we protect it, and what we share (spoiler: very little).
 
----
-
-## 1. What We Collect (and What We Don't)
-
-| Your Data                  | Stored on Your Device? | Sent to Anyone?          | Why                                            |
-| -------------------------- | ---------------------- | ------------------------ | ---------------------------------------------- |
-| Recovery phrase (12 words) | ✅ Yes, encrypted      | ❌ Never                 | —                                              |
-| Private key                | ✅ Yes, encrypted      | ❌ Never                 | —                                              |
-| Wallet address (public)    | ✅ Yes                 | ✅ Yes                   | Needed to interact with the Solana blockchain  |
-| Username                   | ✅ Yes                 | ✅ Yes                   | To create or restore your Veilo Wallet account |
-| Veilo keys                 | ✅ Yes, encrypted      | ✅ Yes, encrypted        | To enable private transactions                 |
-| SOL price                  | ❌ No                  | ❌ No personal data sent | To show your balance in USD                    |
-
-**The bottom line:** Your recovery phrase and private key are **never** sent anywhere. They stay encrypted on your device, always.
+**Note:** Veilo currently supports standard wallet features (send, receive, swap) on Solana mainnet. We're also testing advanced features on Solana's devnet (a test network with test tokens that have no real value).
 
 ---
 
-## 2. How Your Keys Are Created
+## 1. What Information Do We Collect?
 
-- **Your recovery phrase** (12 words) is generated right on your device using the same industry standard every major Solana wallet uses. It never touches our servers.
-- **Your wallet keys** are derived from that phrase on your device — same method as Phantom, Solflare, and other popular wallets.
-- **To restore your account**, you prove you own the wallet by signing a challenge — your recovery phrase still never leaves your device.
-- **Veilo keys** are generated on our server but encrypted specifically for your wallet before being sent to you. Only your wallet can decrypt them.
+| Information                | Where It's Stored          | Shared With Anyone? | Why We Need It                             |
+| -------------------------- | -------------------------- | ------------------- | ------------------------------------------ |
+| Recovery phrase (12 words) | ✅ Your device (encrypted) | ❌ Never            | —                                          |
+| Wallet private key         | ✅ Your device (encrypted) | ❌ Never            | —                                          |
+| Wallet address             | ✅ Your device             | ✅ Yes              | To show your balance and make transactions |
+| Username                   | ✅ Your device             | ✅ Yes              | To set up your account                     |
+| Veilo keys                 | ✅ Your device (encrypted) | ✅ Yes (encrypted)  | For enhanced transaction features          |
+| Token prices               | ❌ Not stored              | ❌ No info sent     | To show your portfolio value in dollars    |
 
-**During sign-up, we only receive:**
+**Most importantly:** Your recovery phrase and private key **never leave your device**. We can't see them, and nobody else can either.
 
-- ✅ Your wallet address (this is public — like a bank account number)
+---
+
+## 2. How We Keep Your Wallet Secure
+
+**Your wallet, your control:**
+
+- **Recovery phrase** (12 words) is created on your device using the same proven method that Phantom, Solflare, and other major wallets use. It never leaves your device.
+- **Wallet keys** come from your recovery phrase — again, all generated on your device.
+- **Account recovery** works by signing a message to prove you own the wallet. Your recovery phrase stays private.
+- **Veilo keys** (used for enhanced features) are created by our server but encrypted so only you can use them.
+
+**What we see when you sign up:**
+
+- ✅ Your wallet address (this is public info, like a username)
 - ✅ Your chosen username
-- ❌ We **never** receive your recovery phrase
-- ❌ We **never** receive your private key
+- ❌ Your recovery phrase — we never see this
+- ❌ Your private key — we never see this either
 
 ---
 
-## 3. How Your Data Is Protected on Your Device
+## 3. How Your Information Is Protected
 
-All sensitive data stored by the extension is encrypted using a strong, industry-standard encryption method before being saved. Your password is used to lock and unlock your data — we never see or store your password itself.
+We use bank-level encryption to protect everything stored on your device. Your password locks everything up — we never see or store your password.
 
-| What's Stored             | Protected?                          |
-| ------------------------- | ----------------------------------- |
-| Private key               | ✅ Encrypted with your password     |
-| Recovery phrase           | ✅ Encrypted with your password     |
-| Veilo keys                | ✅ Encrypted with your password     |
-| Connected app wallet keys | ✅ Encrypted with your password     |
-| Wallet address & username | Not encrypted (these aren't secret) |
-| Login session             | Auto-expires after 7 days           |
+| What's Stored             | How It's Protected                 |
+| ------------------------- | ---------------------------------- |
+| Private key               | ✅ Encrypted with your password    |
+| Recovery phrase           | ✅ Encrypted with your password    |
+| Veilo keys                | ✅ Encrypted with your password    |
+| App connection keys       | ✅ Encrypted with your password    |
+| Wallet address & username | Not encrypted (public info)        |
+| Login session             | Automatically expires after 7 days |
 
 ---
 
-## 4. Who We Talk To and Why
+## 4. Services We Use
 
-Veilo connects to **four external services** to work. Here's what each one does and what data is involved.
+Veilo Wallet connects to **four services** to function properly. Here's what each one does:
 
-### Veilo Server (our backend)
+### Veilo Server (our own backend)
 
-Handles account creation, account restoration, encrypted note storage, and processing of private transactions.
+Handles your account setup and enhanced wallet features.
 
-- **Account setup & restore:** We receive your wallet address and username to create or restore your account. Your encrypted Veilo keys are returned to you.
-- **Privacy notes:** We store encrypted notes that represent your private balances. These notes are encrypted before they leave your device — our server stores them but cannot read them.
-- **Private transactions:** When you withdraw or transfer privately, the transaction details are encrypted before being sent to our server for processing.
+- **Account creation & recovery:** We receive your wallet address and username to set up your account. We send back your encrypted Veilo keys.
+- **Encrypted notes (blind storage):** We store encrypted records as a blind storage system. The encrypted notes remain unreadable to our server unless you explicitly grant access by performing a private withdrawal or transfer — only then does your wallet decrypt and send the necessary transaction details.
+- **Enhanced transactions:** When you use private withdrawals or transfers, you grant our server temporary access to the decrypted transaction details needed to process your request.
 
-> **About trust:** Our server helps process private transactions on your behalf, but it **never** has access to your private key, recovery phrase, or password.
+**Important:** Our server acts as blind storage by default and never sees your private key, recovery phrase, or password. It only sees the contents of specific notes when you choose to withdraw or transfer, at which point you're granting temporary access to process that transaction.
 
 ### Solana Network
 
-Standard Solana blockchain connections — the same ones every Solana wallet uses. Used to check your balances, load your transaction history, and submit transactions you've approved.
+Standard blockchain connection that all Solana wallets use. We connect to check your balances, load your transaction history, and submit transactions you approve.
 
-- We send your **wallet address** to look up balances and history.
-- We send your **signed transactions** when you approve a transfer, deposit, or swap.
-- We simulate transactions before you approve so you can see estimated fees.
+- We send your wallet address to look up balances and history
+- We send your signed transactions when you approve them
+- We check estimated fees before you confirm
 
 ### Jupiter (token swap service)
 
-When you swap one token for another, we use Jupiter to find the best rate across Solana exchanges.
+When you swap tokens, we use Jupiter to find the best rates across Solana exchanges.
 
-- We send the **tokens you want to swap**, the **amount**, and your **wallet address** (so the transaction is built for your wallet).
-- We do **not** send your private key or any other personal information.
+- We send which tokens you want to swap, the amount, and your wallet address
+- We don't send your private key or personal information
 
-### DexScreener (price feed)
+### DexScreener (price service)
 
-Used only to display the current SOL price in USD.
+We use this to show current token prices in dollars.
 
-- **No wallet address, username, or personal data is ever sent.** We only request the current token price.
-
----
-
-## 5. Browser Permissions
-
-| Permission                 | Why we need it                                                         |
-| -------------------------- | ---------------------------------------------------------------------- |
-| Storage                    | To save your encrypted wallet data on your device                      |
-| Access to websites (host)  | To connect to the Solana network, our server, Jupiter, and DexScreener |
-| Content script on websites | To let Solana apps detect and connect to your Veilo Wallet             |
-
-**We do NOT request** access to your tabs, browsing history, cookies, location, camera, microphone, or any other sensitive browser data.
+- No wallet address or personal information is sent
+- We only request current price data
 
 ---
 
-## 6. What We Will Never Do
+## 5. Browser Permissions Explained
 
-- ❌ **No tracking.** We don't use any analytics or tracking tools.
-- ❌ **No data sales.** We never sell, share, or monetize your data.
-- ❌ **No browsing surveillance.** We don't monitor what websites you visit.
-- ❌ **No remote code.** Everything the extension runs is included at install time. Nothing is downloaded from the internet.
-- ❌ **No keylogging.** We only read what you type inside the Veilo Wallet popup — never on other websites or tabs.
+| Permission          | Why We Need It                                         |
+| ------------------- | ------------------------------------------------------ |
+| Storage             | To save your encrypted wallet on your device           |
+| Internet access     | To connect to Solana and check prices/balances         |
+| Website integration | So crypto apps (like exchanges) can detect your wallet |
 
----
-
-## 7. Connecting to Apps (DApps)
-
-When you connect Veilo Wallet to a Solana app (like a DEX or NFT marketplace):
-
-- The app only gets your **wallet address** — and only after you approve the connection.
-- Your private key **never** leaves the extension. Transactions are signed inside Veilo Wallet.
-- You must **approve every transaction** before it's sent.
-- Transactions are simulated first so you can see estimated fees and catch errors before approving.
+**We do NOT access** your browsing history, passwords, cookies, location, camera, microphone, or any personal files.
 
 ---
 
-## 8. How Long We Keep Data
+## 6. Our Promises to You
 
-- **On your device:** Your data stays until you uninstall the extension or clear your browser data.
-- **Session:** Cleared when you close the browser or lock the wallet.
-- **On our server:** We store your wallet address, username, and encrypted notes. We **never** store your private key, recovery phrase, or password.
+- ✅ **No tracking** — We don't use Google Analytics or any tracking tools
+- ✅ **No selling your data** — Your information is never sold or shared for profit
+- ✅ **No spying** — We can't see what websites you visit
+- ✅ **No hidden downloads** — All code is included when you install. Nothing sneaky.
+- ✅ **No keylogging** — We only see what you type in the Veilo Wallet popup, nowhere else
+
+---
+
+## 7. Using Veilo With Other Apps
+
+When you connect to a Solana app (like an exchange or NFT site):
+
+- The app only sees your **wallet address** — and only after you click "Connect"
+- Your private key **stays locked** inside Veilo Wallet
+- You **approve every transaction** — nothing happens without your permission
+- We show you estimated fees before you confirm
+
+---
+
+## 8. How Long We Keep Your Information
+
+- **On your device:** Everything stays until you uninstall Veilo Wallet or clear your browser data
+- **Active session:** Cleared when you close your browser or lock the wallet
+- **On our server:** We keep your wallet address, username, and encrypted notes (we can't read the notes)
+- **Never stored:** Your private key, recovery phrase, or password
 
 ---
 
 ## 9. Open Source
 
-Veilo Wallet is open source. You can read our code and verify every claim in this policy yourself.
+Veilo Wallet is open source. You can read our code and verify everything in this policy yourself.
 
 ---
 
-## 10. Liability
+## 10. Important Legal Stuff
 
-Veilo Wallet is provided "as is" without warranties. We are not liable for any loss of funds, data, or damages from using the extension, third-party services, or unexpected failures.
+Veilo Wallet is provided free of charge, and like all software, it comes with no guarantees. We work hard to keep your funds safe, but cryptocurrency involves risk. We're not responsible for losses caused by the extension, third-party services, user error, or network issues.
+
+**Always keep your recovery phrase safe and never share it with anyone.**
 
 ---
 
-## 11. Contact
+## 11. Contact Us
 
-Questions? Reach out:
+Have questions? Reach out:
 
 - **Twitter:** @VeiloWallet
 - **Email:** support@veilo.network
@@ -156,16 +164,15 @@ Questions? Reach out:
 
 ## 12. Chrome Web Store Compliance
 
-- We follow the Chrome Web Store User Data Policy, including Limited Use requirements.
-- We only share your data with third parties when it's essential for the wallet to work (blockchain transactions, token swaps).
-- We don't use your data for anything unrelated to the wallet.
-- We don't use your data for advertising, credit scoring, or lending.
+- We follow the Chrome Web Store User Data Policy, including Limited Use requirements
+- We only share your data when absolutely necessary (blockchain transactions, token swaps)
+- We don't use your data for advertising, credit checks, or anything unrelated to the wallet
 
 ---
 
-## 13. Changes to This Policy
+## 13. Updates to This Policy
 
-We may update this policy from time to time. If we make significant changes, we'll let you know through extension update notes or on our website. Continuing to use Veilo Wallet after changes means you accept the updated policy.
+We may update this policy occasionally to reflect new features or requirements. If we make big changes, we'll let you know through the extension or on our website. By continuing to use Veilo Wallet, you agree to the updated terms.
 
 ---
 
