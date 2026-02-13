@@ -149,7 +149,7 @@ Have questions? Reach out:
 
 ## 12. Chrome Web Store Compliance
 
-- We follow the Chrome Web Store User Data Policy, including Limited Use requirements
+- The use of information received from Google APIs will adhere to the Chrome Web Store User Data Policy, including the Limited Use requirements.
 - We only share your data when absolutely necessary (blockchain transactions, token swaps)
 - We don't use your data for advertising, credit checks, or anything unrelated to the wallet
 
