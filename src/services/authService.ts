@@ -44,8 +44,8 @@ export const authService = {
    */
   checkUsername: async (username: string): Promise<CheckUsernameResponse> => {
     const response = await api.get<CheckUsernameResponse>(
-      `/api/auth/checkUsername`,
-      { params: { username } }
+      `/auth/checkUsername`,
+      { params: { username } },
     );
     return response.data;
   },
@@ -54,7 +54,7 @@ export const authService = {
    * Get a challenge for signature-based authentication (restore flow)
    */
   getChallenge: async (publicKey: string): Promise<ChallengeResponse> => {
-    const response = await api.post<ChallengeResponse>("/api/auth/challenge", {
+    const response = await api.post<ChallengeResponse>("/auth/challenge", {
       publicKey,
     });
     return response.data;
@@ -67,9 +67,9 @@ export const authService = {
    */
   register: async (
     username: string,
-    publicKey: string
+    publicKey: string,
   ): Promise<RegisterResponse> => {
-    const response = await api.post<RegisterResponse>("/api/auth/register", {
+    const response = await api.post<RegisterResponse>("/auth/register", {
       username,
       publicKey,
     });
@@ -83,9 +83,9 @@ export const authService = {
   restore: async (
     publicKey: string,
     signature: string,
-    message: string
+    message: string,
   ): Promise<RestoreResponse> => {
-    const response = await api.post<RestoreResponse>("/api/auth/restore", {
+    const response = await api.post<RestoreResponse>("/auth/restore", {
       publicKey,
       signature,
       message,
