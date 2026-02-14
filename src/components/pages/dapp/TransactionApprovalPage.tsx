@@ -82,6 +82,15 @@ export const TransactionApprovalPage = ({
   const [parsedInstructions, setParsedInstructions] = useState<
     ParsedInstruction[]
   >([]);
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+  const [faviconError, setFaviconError] = useState(false);
+
+  // Fetch favicon from the requesting site
+  useEffect(() => {
+    // Use Google's favicon service (most reliable)
+    const googleFavicon = `https://www.google.com/s2/favicons?domain=${request.origin}&sz=64`;
+    setFaviconUrl(googleFavicon);
+  }, [request.origin]);
 
   // Parse transaction instructions
   const parseTransactionInstructions = (
@@ -265,20 +274,29 @@ export const TransactionApprovalPage = ({
       <div className="relative flex-1 flex flex-col px-5 py-5 overflow-y-auto">
         {/* Site Info */}
         <div className="flex items-center gap-3 mb-5 p-3 bg-zinc-900/40 border border-white/10">
-          <div className="w-10 h-10 bg-zinc-800 border border-white/10 flex items-center justify-center">
-            <svg
-              className="w-5 h-5 text-white/70"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+          <div className="w-10 h-10 bg-zinc-800 border border-white/10 flex items-center justify-center overflow-hidden">
+            {faviconUrl && !faviconError ? (
+              <img
+                src={faviconUrl}
+                alt={`${displayOrigin} icon`}
+                className="w-6 h-6 object-contain"
+                onError={() => setFaviconError(true)}
               />
-            </svg>
+            ) : (
+              <svg
+                className="w-5 h-5 text-white/70"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                />
+              </svg>
+            )}
           </div>
           <div className="flex-1">
             <div className="text-white text-sm font-medium">

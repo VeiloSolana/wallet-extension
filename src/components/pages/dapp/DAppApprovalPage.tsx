@@ -30,6 +30,8 @@ export const DAppApprovalPage = ({
     name: string;
     publicKey: string;
   } | null>(null);
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+  const [faviconError, setFaviconError] = useState(false);
 
   useEffect(() => {
     const fetchConnectingWallet = async () => {
@@ -56,6 +58,21 @@ export const DAppApprovalPage = ({
 
     fetchConnectingWallet();
   }, []);
+
+  // Fetch favicon from the requesting site
+  useEffect(() => {
+    const fetchFavicon = async () => {
+      try {
+        // Try Google's favicon service first (most reliable)
+        const googleFavicon = `https://www.google.com/s2/favicons?domain=${request.origin}&sz=64`;
+        setFaviconUrl(googleFavicon);
+      } catch {
+        setFaviconError(true);
+      }
+    };
+
+    fetchFavicon();
+  }, [request.origin]);
 
   const getTitle = () => {
     switch (request.method) {
@@ -127,23 +144,32 @@ export const DAppApprovalPage = ({
         {/* Origin / Site Info */}
         <div className="flex flex-col items-center justify-center mb-6">
           <CyberCard
-            className="w-16 h-16 flex items-center justify-center mb-4 !bg-zinc-900/60 !rounded-xl"
+            className="w-16 h-16 flex items-center justify-center mb-4 !bg-zinc-900/60 !rounded-xl overflow-hidden"
             hoverable={false}
           >
-            {/* Fallback Icon for Site */}
-            <svg
-              className="w-8 h-8 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+            {faviconUrl && !faviconError ? (
+              <img
+                src={faviconUrl}
+                alt={`${displayOrigin} icon`}
+                className="w-10 h-10 object-contain"
+                onError={() => setFaviconError(true)}
               />
-            </svg>
+            ) : (
+              /* Fallback Icon for Site */
+              <svg
+                className="w-8 h-8 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                />
+              </svg>
+            )}
           </CyberCard>
           <h2 className="text-xl font-light text-white mb-2 tracking-tight">
             {displayOrigin}
