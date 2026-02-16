@@ -99,7 +99,6 @@ class VeiloWallet implements Wallet {
   private _pendingRequests: Map<string, PendingRequest> = new Map();
 
   constructor() {
-    console.log("[Veilo] Initializing VeiloWallet constructor");
     // Listen for responses from content script
     window.addEventListener("message", (event) => {
       // Only accept messages from same window (not iframes)
@@ -108,10 +107,6 @@ class VeiloWallet implements Wallet {
       if (event.origin !== window.location.origin) return;
 
       if (event.data?.source === "veilo-content") {
-        console.log(
-          "[Veilo] Received message from content script:",
-          event.data,
-        );
         const { id, result, error } = event.data;
         const pending = this._pendingRequests.get(id);
 
@@ -121,15 +116,13 @@ class VeiloWallet implements Wallet {
             console.error(`[Veilo] Request ${id} failed:`, error);
             pending.reject(new Error(error));
           } else {
-            console.log(`[Veilo] Request ${id} succeeded:`, result);
             pending.resolve(result);
           }
         } else {
-          console.warn(`[Veilo] No pending request found for id ${id}`);
+          // Orphan response - no matching request
         }
       }
     });
-    console.log("[Veilo] VeiloWallet constructor complete");
   }
 
   get accounts(): readonly WalletAccount[] {
@@ -173,9 +166,7 @@ class VeiloWallet implements Wallet {
   }
 
   private _connect: StandardConnectMethod = async (input) => {
-    console.log("[Veilo] Connect called with input:", input);
     try {
-      console.log("[Veilo] Sending connect request to content script...");
       const response = (await this._request(
         "connect",
         input ? { ...input } : {},
@@ -183,14 +174,12 @@ class VeiloWallet implements Wallet {
         publicKey: number[];
       };
 
-      console.log("[Veilo] Received connect response:", response);
       const publicKeyBytes = new Uint8Array(response.publicKey);
       const account = new VeiloWalletAccount(publicKeyBytes);
       this._accounts = [account];
 
       this._emitChange();
 
-      console.log("[Veilo] Connected successfully, accounts:", this._accounts);
       return { accounts: this._accounts };
     } catch (error) {
       console.error("[Veilo] Connect error:", error);
@@ -327,13 +316,11 @@ class VeiloWallet implements Wallet {
     method: string,
     params: Record<string, unknown>,
   ): Promise<unknown> {
-    console.log(`[Veilo] Making request: ${method}`, params);
     return new Promise((resolve, reject) => {
       const id = `veilo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       this._pendingRequests.set(id, { resolve, reject });
 
-      console.log(`[Veilo] Posting message to window for request ${id}`);
       window.postMessage(
         {
           source: "veilo-injected",
@@ -388,18 +375,12 @@ class VeiloWallet implements Wallet {
 (function () {
   "use strict";
 
-  console.log("[Veilo] Starting wallet initialization...");
-
   // Prevent multiple injections
   if ((window as unknown as { veilo?: VeiloWallet }).veilo) {
-    console.log("[Veilo] Wallet already initialized, skipping");
     return;
   }
 
-  console.log("[Veilo] Creating wallet instance...");
   const veilo = new VeiloWallet();
-
-  console.log("[Veilo] Registering with Wallet Standard...");
   // Register with Wallet Standard
   registerWallet(veilo);
 
@@ -416,14 +397,9 @@ class VeiloWallet implements Wallet {
     const data = event.data;
 
     if (data?.source === "veilo-content" && data?.event === "disconnect") {
-      console.log("[Veilo] Disconnect event received, clearing accounts");
       // Clear accounts to trigger disconnect
       (veilo as any)._accounts = [];
       (veilo as any)._emitChange();
     }
   });
-
-  console.log("[Veilo] Wallet provider initialized successfully");
-  console.log("[Veilo] Wallet object:", veilo);
-  console.log("[Veilo] Available at window.veilo");
 })();

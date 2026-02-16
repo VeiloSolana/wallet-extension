@@ -1,5 +1,5 @@
 /// <reference types="chrome"/>
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 import * as anchor from "@coral-xyz/anchor";
 import type { Program, Idl } from "@coral-xyz/anchor";
@@ -63,8 +63,16 @@ import {
   saveWallet,
   loadWallet,
   saveSessionWithPassword,
-  // Note: loadSession, clearSession, isSessionValid moved to useOnboarding hook
+  clearWallet,
+  clearSession,
+  setSessionTimeoutMs,
+  // Note: loadSession, isSessionValid moved to useOnboarding hook
 } from "./utils/storage";
+
+import {
+  loadSecuritySettings,
+  getAutoLockTimeoutMs,
+} from "./store/useSecurityStore";
 
 import { NoteManager } from "./lib/noteManager";
 import { syncNotesFromRelayer } from "./lib/noteSync";
@@ -96,6 +104,25 @@ function App() {
 
   // Local error state (shared with useOnboarding)
   const [localError, setLocalError] = useState("");
+
+  // Security settings are now loaded in useOnboarding before session check.
+  // This effect keeps the in-memory timeout in sync if settings change externally.
+  useEffect(() => {
+    loadSecuritySettings().then(() => {
+      setSessionTimeoutMs(getAutoLockTimeoutMs());
+    });
+  }, []);
+
+  // Handle wallet reset (clears all data, returns to welcome)
+  const handleResetWallet = useCallback(async () => {
+    try {
+      await clearWallet();
+      await clearSession();
+      logout();
+    } catch (err) {
+      console.error("Reset wallet error:", err);
+    }
+  }, [logout]);
 
   // Handle login for returning users (moved before useOnboarding so it can be passed)
   const handleLogin = useCallback(
@@ -750,7 +777,11 @@ function App() {
 
         {/* Preferences Tab Content */}
         {activeTab === "preferences" && (
-          <PreferencesPage address={address} onLogout={logout} />
+          <PreferencesPage
+            address={address}
+            onLogout={logout}
+            onResetWallet={handleResetWallet}
+          />
         )}
 
         <AnimatePresence>

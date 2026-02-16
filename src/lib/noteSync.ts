@@ -50,6 +50,12 @@ export async function syncNotesFromRelayer(
 
     console.log(`📬 Found ${response.notes.length} candidate notes.`);
 
+    // Load existing notes ONCE to avoid O(n*m) lookups
+    const existingNotes = await noteManager.getAllNotes();
+    const existingCommitmentMap = new Map(
+      existingNotes.map((n) => [n.commitment, n]),
+    );
+
     // Cache for merkle trees by mint+treeId to avoid rebuilding
     const merkleTreeCache = new Map<string, any>();
 
@@ -60,16 +66,16 @@ export async function syncNotesFromRelayer(
 
     // Process notes in parallel batches for decryption
     // Batch size balances parallelism (faster) vs memory usage
-    // 10-15 is optimal for crypto operations without overwhelming the browser
-    const batchSize = 10;
+    // Increased from 10 to 20 for better throughput
+    const batchSize = 20;
     for (let i = 0; i < response.notes.length; i += batchSize) {
       const batch = response.notes.slice(i, i + batchSize);
 
       await Promise.all(
         batch.map(async (encryptedNote) => {
           try {
-            // Check if we already have this note
-            const existing = await noteManager.getNoteByCommitment(
+            // Check if we already have this note (O(1) lookup)
+            const existing = existingCommitmentMap.get(
               encryptedNote.commitment,
             );
             if (existing) {

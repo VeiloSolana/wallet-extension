@@ -117,23 +117,10 @@ export function createEncryptedNoteBlob(
   const ephemeralKeypair = Keypair.generate();
   const ephemeralPublicKey = ephemeralKeypair.publicKey.toBytes();
 
-  console.log("🔐 Generated ephemeral keypair for encryption");
-  console.log(
-    "   Ephemeral Public Key:",
-    ephemeralKeypair.publicKey.toBase58(),
-  );
-
   // 2. Derive shared secret using ECDH (pass full 64-byte secretKey)
   const sharedSecret = deriveSharedSecret(
     ephemeralKeypair.secretKey, // Full 64-byte secretKey
     recipientPublicKey,
-  );
-
-  console.log(
-    "🔑 Derived shared secret:",
-    Array.from(sharedSecret.slice(0, 8))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("") + "...",
   );
 
   // 3. Prepare note data as JSON
@@ -151,16 +138,9 @@ export function createEncryptedNoteBlob(
     treeId: noteData.treeId,
   });
 
-  console.log("📦 Note data prepared for encryption:", noteJson);
-
   // 4. Encrypt the note data using NaCl secretbox with shared secret
   const encryptedBuffer = encryptSecretBox(noteJson, sharedSecret);
   const encryptedBlob = encodeBase64(encryptedBuffer);
-
-  console.log(
-    "🔒 Encrypted blob created (base64):",
-    encryptedBlob.slice(0, 32) + "...",
-  );
 
   return {
     ephemeralPublicKey,
@@ -188,19 +168,10 @@ export function decryptNoteBlob(
   // 1. Derive the same shared secret Bob and Alice computed
   const sharedSecret = deriveSharedSecret(myPrivateKey, ephemeralPublicKey);
 
-  console.log(
-    "🔑 Bob derived shared secret:",
-    Array.from(sharedSecret.slice(0, 8))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("") + "...",
-  );
-
   // 2. Decrypt the blob
   const encryptedBuffer = decodeBase64(encryptedBlob);
   const decryptedBuffer = decryptSecretBox(encryptedBuffer, sharedSecret);
   const noteJson = encodeUTF8(decryptedBuffer);
-
-  console.log("🔓 Decrypted note data:", noteJson);
 
   // 3. Parse and return the note data
   const parsed = JSON.parse(noteJson);

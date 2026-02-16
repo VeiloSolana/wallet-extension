@@ -85,9 +85,6 @@ export function useDAppRequests({
   useEffect(() => {
     // Skip if not in extension context
     if (typeof chrome === "undefined" || !chrome.storage) {
-      console.log(
-        "Not in Chrome extension context, skipping dApp request check",
-      );
       return;
     }
 

@@ -6,23 +6,46 @@ import {
   getSelectedNetwork,
   setSelectedNetwork,
 } from "../../../lib/network";
-import { loadWallet } from "../../../utils/storage";
+import {
+  loadWallet,
+  clearWallet,
+  setSessionTimeoutMs,
+} from "../../../utils/storage";
 import { decrypt } from "../../../utils/encryption";
 import bs58 from "bs58";
+import {
+  type AutoLockTimeout,
+  AUTO_LOCK_OPTIONS,
+  loadSecuritySettings,
+  saveAutoLockTimeout,
+  getAutoLockTimeoutMs,
+} from "../../../store/useSecurityStore";
 
 type RevealTarget = "phrase" | "privateKey" | null;
 
 interface PreferencesPageProps {
   address?: string;
   onLogout?: () => void;
+  onResetWallet?: () => void;
 }
 
 export const PreferencesPage = ({
   address = "",
   onLogout,
+  onResetWallet,
 }: PreferencesPageProps) => {
   const [copied, setCopied] = useState(false);
   const [network, setNetwork] = useState<NetworkType>(getSelectedNetwork());
+
+  // Auto-lock state
+  const [autoLockTimeout, setAutoLockTimeoutState] =
+    useState<AutoLockTimeout>(300);
+  const [showAutoLockOptions, setShowAutoLockOptions] = useState(false);
+
+  // Reset wallet state
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
 
   // Reveal state
   const [revealTarget, setRevealTarget] = useState<RevealTarget>(null);
@@ -31,6 +54,14 @@ export const PreferencesPage = ({
   const [revealError, setRevealError] = useState("");
   const [isRevealing, setIsRevealing] = useState(false);
   const [copiedRevealed, setCopiedRevealed] = useState(false);
+
+  // Load security settings on mount
+  useEffect(() => {
+    loadSecuritySettings().then(({ autoLockTimeout: saved }) => {
+      setAutoLockTimeoutState(saved);
+      setSessionTimeoutMs(getAutoLockTimeoutMs());
+    });
+  }, []);
 
   useEffect(() => {
     const handleNetworkChange = (e: CustomEvent<NetworkType>) => {
@@ -59,6 +90,35 @@ export const PreferencesPage = ({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleAutoLockChange = async (timeout: AutoLockTimeout) => {
+    await saveAutoLockTimeout(timeout);
+    setAutoLockTimeoutState(timeout);
+    setSessionTimeoutMs(timeout * 1000);
+    setShowAutoLockOptions(false);
+  };
+
+  const handleResetWallet = async () => {
+    if (resetConfirmText !== "RESET") return;
+    setIsResetting(true);
+    try {
+      await clearWallet();
+      setShowResetConfirm(false);
+      if (onResetWallet) {
+        onResetWallet();
+      } else if (onLogout) {
+        onLogout();
+      }
+    } catch (err) {
+      console.error("Reset wallet error:", err);
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const currentAutoLockLabel =
+    AUTO_LOCK_OPTIONS.find((o) => o.value === autoLockTimeout)?.label ||
+    "5 minutes";
 
   const handleRevealRequest = (target: RevealTarget) => {
     setRevealTarget(target);
@@ -187,6 +247,96 @@ export const PreferencesPage = ({
           <p className="text-[9px] font-mono text-zinc-600 pl-1">
             Tap to switch networks
           </p>
+        </div>
+
+        {/* Security Section - Auto-Lock */}
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2">
+            <h2 className="text-xs font-mono text-white font-bold tracking-widest uppercase">
+              Security
+            </h2>
+          </div>
+
+          {/* Auto-Lock Timeout */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest pl-1">
+              Auto-Lock
+            </label>
+            <button
+              onClick={() => setShowAutoLockOptions(!showAutoLockOptions)}
+              className="w-full flex items-center justify-between p-3 bg-zinc-900/40 border border-white/10 hover:border-white/30 relative group overflow-hidden transition-colors cursor-pointer"
+            >
+              {/* Corner Accents */}
+              <div className="absolute top-0 left-0 w-1.5 h-1.5 border-l border-t border-white/20 group-hover:border-neon-green/50 transition-colors" />
+              <div className="absolute top-0 right-0 w-1.5 h-1.5 border-r border-t border-white/20 group-hover:border-neon-green/50 transition-colors" />
+              <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-l border-b border-white/20 group-hover:border-neon-green/50 transition-colors" />
+              <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-r border-b border-white/20 group-hover:border-neon-green/50 transition-colors" />
+
+              <div className="flex items-center gap-3">
+                <svg
+                  className="w-4 h-4 text-zinc-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.5"
+                    d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="text-xs font-mono text-white tracking-wide">
+                  {currentAutoLockLabel}
+                </span>
+              </div>
+              <svg
+                className={`w-3 h-3 text-zinc-500 transition-transform ${showAutoLockOptions ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            <AnimatePresence>
+              {showAutoLockOptions && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden border border-white/10 border-t-0 bg-zinc-900/60"
+                >
+                  {AUTO_LOCK_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => handleAutoLockChange(option.value)}
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors border-b border-white/5 last:border-b-0 ${
+                        autoLockTimeout === option.value
+                          ? "bg-neon-green/10 text-neon-green"
+                          : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      <span className="text-xs font-mono">{option.label}</span>
+                      {autoLockTimeout === option.value && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-neon-green" />
+                      )}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <p className="text-[9px] font-mono text-zinc-600 pl-1">
+              Lock wallet after being inactive
+            </p>
+          </div>
         </div>
 
         {/* Account Security Section */}
@@ -327,8 +477,171 @@ export const PreferencesPage = ({
               DISCONNECT SESSION
             </CyberButton>
           )}
+
+          {/* Reset Wallet - Danger Zone */}
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/40 transition-all group"
+          >
+            <svg
+              className="w-4 h-4 text-red-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.5"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+              />
+            </svg>
+            <span className="text-xs font-mono text-red-400 font-bold uppercase tracking-widest">
+              Reset Wallet
+            </span>
+          </button>
         </div>
       </div>
+
+      {/* Reset Wallet Confirmation Modal */}
+      <AnimatePresence>
+        {showResetConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center"
+            onClick={() => setShowResetConfirm(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative bg-black border border-red-500/30 shadow-lg max-w-md w-full mx-4"
+            >
+              {/* Corner brackets */}
+              <svg
+                className="absolute -top-px -left-px w-3 h-3 text-red-500"
+                viewBox="0 0 12 12"
+              >
+                <path
+                  d="M0 0 L0 8 M0 0 L8 0"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  fill="none"
+                />
+              </svg>
+              <svg
+                className="absolute -top-px -right-px w-3 h-3 text-red-500"
+                viewBox="0 0 12 12"
+              >
+                <path
+                  d="M12 0 L12 8 M12 0 L4 0"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  fill="none"
+                />
+              </svg>
+              <svg
+                className="absolute -bottom-px -left-px w-3 h-3 text-red-500"
+                viewBox="0 0 12 12"
+              >
+                <path
+                  d="M0 12 L0 4 M0 12 L8 12"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  fill="none"
+                />
+              </svg>
+              <svg
+                className="absolute -bottom-px -right-px w-3 h-3 text-red-500"
+                viewBox="0 0 12 12"
+              >
+                <path
+                  d="M12 12 L12 4 M12 12 L4 12"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  fill="none"
+                />
+              </svg>
+
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3 border-b border-red-500/20 pb-2">
+                  <h2 className="text-[10px] font-mono font-bold uppercase tracking-widest text-red-400">
+                    ⚠️ Reset Wallet
+                  </h2>
+                  <button
+                    onClick={() => setShowResetConfirm(false)}
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="mb-4 p-2.5 bg-red-500/10 border border-red-500/30">
+                  <p className="text-xs font-mono text-red-300 leading-relaxed">
+                    This will permanently delete your wallet from this device.
+                    You will need your 12-word recovery phrase to restore it.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[10px] text-zinc-400 font-mono tracking-widest uppercase block mb-1.5">
+                      Type "RESET" to confirm
+                    </label>
+                    <input
+                      type="text"
+                      value={resetConfirmText}
+                      onChange={(e) =>
+                        setResetConfirmText(e.target.value.toUpperCase())
+                      }
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleResetWallet()
+                      }
+                      placeholder="RESET"
+                      className="w-full px-3 py-2 bg-zinc-900/60 border border-white/10 text-white placeholder-zinc-600 focus:outline-none focus:border-red-500/50 transition-colors font-mono text-sm uppercase"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setShowResetConfirm(false);
+                        setResetConfirmText("");
+                      }}
+                      className="flex-1 px-3 py-2 text-[10px] font-mono font-bold text-zinc-400 bg-zinc-900 hover:bg-zinc-800 border border-white/10 uppercase tracking-widest transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleResetWallet}
+                      disabled={resetConfirmText !== "RESET" || isResetting}
+                      className="flex-1 px-3 py-2 text-[10px] font-mono font-bold text-white bg-red-600 hover:bg-red-700 uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      {isResetting ? "Resetting..." : "Reset Wallet"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Password Confirmation & Reveal Modal */}
       <AnimatePresence>

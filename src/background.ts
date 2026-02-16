@@ -3,8 +3,6 @@
  * Handles communication between content script and popup
  */
 
-console.log("[Veilo Background] Service worker initialized");
-
 interface VeiloRequest {
   type: string;
   method: string;
@@ -38,7 +36,6 @@ chrome.runtime.onMessage.addListener(
     sender,
     sendResponse,
   ) => {
-    console.log("[Veilo Background] Received message:", message);
     if (message.type === "VEILO_REQUEST") {
       handleWalletRequest(message as VeiloRequest, sender, sendResponse);
       return true; // Keep message channel open for async response
@@ -292,5 +289,15 @@ function handlePopupResponse(message: {
 
 // Handle extension install/update
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("Veilo Wallet extension installed/updated");
+  // Extension installed or updated
 });
+
+// Allow chrome.storage.session to be accessible from the popup (not just service worker)
+// This is required for session persistence across popup open/close cycles
+try {
+  chrome.storage.session.setAccessLevel({
+    accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
+  });
+} catch (e) {
+  console.warn("[Veilo] Failed to set session storage access level:", e);
+}

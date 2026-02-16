@@ -3,16 +3,12 @@
  * Bridges communication between injected script and extension background/popup
  */
 
-console.log("[Veilo Content] Content script loaded");
-
 // Inject the provider script into the page context
 const injectScript = (): void => {
-  console.log("[Veilo Content] Injecting provider script...");
   const script = document.createElement("script");
   script.src = chrome.runtime.getURL("injected.js");
   // Don't set type="module" - the script is already bundled
   script.onload = () => {
-    console.log("[Veilo Content] Provider script loaded successfully");
     script.remove();
   };
   script.onerror = (error) => {
@@ -23,7 +19,6 @@ const injectScript = (): void => {
 
 // Wait for DOM to be ready
 if (document.readyState === "loading") {
-  console.log("[Veilo Content] Waiting for DOMContentLoaded...");
   document.addEventListener("DOMContentLoaded", injectScript);
 } else {
   injectScript();

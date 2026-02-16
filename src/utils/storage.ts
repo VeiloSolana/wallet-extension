@@ -80,7 +80,20 @@ export const clearWallet = async (): Promise<void> => {
 
 // --- Session Management ---
 const SESSION_STORAGE_KEY = "veilo_session";
-const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (reduced from 10 for security)
+const DEFAULT_SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (default fallback)
+
+/** Import dynamically to avoid circular deps – consumers can also override via setSessionTimeoutMs */
+let _sessionTimeoutMs: number | null = null;
+
+/** Set a custom session timeout (called when auto-lock settings load) */
+export const setSessionTimeoutMs = (ms: number) => {
+  _sessionTimeoutMs = ms;
+};
+
+/** Get the current session timeout in ms */
+const getSessionTimeoutMs = (): number => {
+  return _sessionTimeoutMs ?? DEFAULT_SESSION_TIMEOUT_MS;
+};
 
 export interface SessionData {
   timestamp: number;
@@ -88,6 +101,8 @@ export interface SessionData {
   username: string;
   // AES-GCM encrypted password for session unlock
   encryptedPassword?: EncryptedData;
+  // Session key encoded in base64 (stored separately to preserve the real salt)
+  sessionKeyB64?: string;
 }
 
 // Save session data
@@ -123,8 +138,11 @@ export const clearSession = async (): Promise<void> => {
 
 // Check if session is still valid (within timeout)
 export const isSessionValid = (session: SessionData): boolean => {
+  const timeoutMs = getSessionTimeoutMs();
+  // If timeout is 0, session is never valid (lock immediately)
+  if (timeoutMs === 0) return false;
   const now = Date.now();
-  return now - session.timestamp < SESSION_TIMEOUT_MS;
+  return now - session.timestamp < timeoutMs;
 };
 
 // Update session timestamp (call this on user activity)
@@ -154,18 +172,15 @@ export const saveSessionWithPassword = async (
   // Encrypt password with AES-256-GCM using the random session key
   const encryptedPassword = await encrypt(password, sessionKey);
 
-  // Store the encrypted password and session key in session storage
+  // Store the encrypted password in session storage
+  // The session key is kept in a separate field so the original PBKDF2 salt is preserved
   // Note: sessionKey is stored in memory-only chrome.storage.session (cleared on browser close)
   const sessionData: SessionData = {
     timestamp: Date.now(),
     publicKey,
     username,
-    encryptedPassword: {
-      ...encryptedPassword,
-      // Embed the session key in the salt field for retrieval
-      // This is acceptable since session storage is memory-only and cleared on exit
-      salt: btoa(sessionKey),
-    },
+    encryptedPassword, // keep cipherText, iv, and salt intact
+    sessionKeyB64: btoa(sessionKey),
   };
 
   await saveSession(sessionData);
@@ -185,10 +200,12 @@ export const getSessionPassword = async (): Promise<string | null> => {
     // Import decrypt function from encryption.ts
     const { decrypt } = await import("./encryption");
 
-    // Extract session key from the salt field
-    const sessionKey = atob(session.encryptedPassword.salt);
+    // Extract session key from the dedicated field (or legacy salt field for backwards compat)
+    const sessionKey = session.sessionKeyB64
+      ? atob(session.sessionKeyB64)
+      : atob(session.encryptedPassword.salt);
 
-    // Decrypt password with AES-256-GCM
+    // Decrypt password with AES-256-GCM using the original salt
     const decrypted = await decrypt(
       {
         cipherText: session.encryptedPassword.cipherText,
@@ -200,7 +217,12 @@ export const getSessionPassword = async (): Promise<string | null> => {
 
     return decrypted;
   } catch (error) {
-    console.error("Failed to decrypt session password:", error);
+    // Session data is corrupted (likely saved with old broken format) — clear it
+    console.warn(
+      "Session password unrecoverable, clearing stale session.",
+      error,
+    );
+    await clearSession();
     return null;
   }
 };

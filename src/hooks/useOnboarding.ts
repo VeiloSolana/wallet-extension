@@ -5,7 +5,13 @@ import {
   clearSession,
   isSessionValid,
   getSessionPassword,
+  setSessionTimeoutMs,
+  updateSessionTimestamp,
 } from "../utils/storage";
+import {
+  loadSecuritySettings,
+  getAutoLockTimeoutMs,
+} from "../store/useSecurityStore";
 
 // ============================================================================
 // Types
@@ -93,9 +99,12 @@ export function useOnboarding({
   // ---------------------------------------------------------------------------
   useEffect(() => {
     const checkWalletAndSession = async () => {
+      // Load security settings FIRST so session timeout is correct
+      await loadSecuritySettings();
+      setSessionTimeoutMs(getAutoLockTimeoutMs());
+
       const encryptedWallet = await loadWallet();
       if (encryptedWallet) {
-        console.log("Encrypted wallet found, checking session...");
         setHasWallet(true);
 
         const session = await loadSession();
@@ -103,13 +112,11 @@ export function useOnboarding({
           // Try to get the session password for auto-login
           const sessionPassword = await getSessionPassword();
           if (sessionPassword && onAutoLogin) {
-            console.log(
-              "Valid session with password found, auto-logging in...",
-            );
             setIsAutoLoggingIn(true);
             try {
               await onAutoLogin(sessionPassword);
-              console.log("Auto-login successful");
+              // Refresh the session timestamp on successful auto-login
+              await updateSessionTimestamp();
             } catch (e) {
               console.error("Auto-login failed:", e);
               await clearSession();
@@ -117,16 +124,11 @@ export function useOnboarding({
               setIsAutoLoggingIn(false);
             }
           } else {
-            console.log(
-              "Valid session found but no password, user must login.",
-            );
           }
         } else if (session) {
-          console.log("Session expired, clearing...");
           await clearSession();
         }
       } else {
-        console.log("No wallet found, starting onboarding");
       }
       setIsInitialized(true);
     };
