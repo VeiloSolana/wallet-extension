@@ -141,6 +141,27 @@ export const TransferPage = ({
           </svg>
         </button>
         <h1 className="text-base font-bold tracking-tight">PRIVATE TRANSFER</h1>
+        <div className="group relative ml-1">
+          <svg
+            className="w-4 h-4 text-zinc-400 hover:text-neon-green cursor-help transition-colors"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <div className="hidden group-hover:block absolute top-6 right-0 w-64 bg-black border border-neon-green/50 p-3 text-xs z-50 shadow-lg shadow-neon-green/20">
+            <p className="text-white font-mono leading-relaxed">
+              A 0.5% relayer fee applies to private transfers.
+            </p>
+            <p className="text-zinc-400 font-mono mt-2 leading-relaxed">
+              The relayer processes your transaction privately on your behalf.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Main content */}
@@ -601,7 +622,49 @@ export const TransferPage = ({
               disabled={isProcessing}
               className="w-full px-3 py-2 bg-zinc-900/60 border border-white/10 focus:border-neon-green/50 outline-none text-xs font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             />
+            {amount && parseFloat(amount) > 0 && (
+              <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-1.5 font-mono">
+                <svg
+                  className="w-3 h-3 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>0.5% relayer fee applies</span>
+              </div>
+            )}
           </div>
+
+          {/* Fee Breakdown */}
+          {amount && parseFloat(amount) > 0 && (
+            <div className="bg-zinc-900/50 border border-white/10 rounded p-2 space-y-1">
+              <div className="flex justify-between text-[10px]">
+                <span className="text-zinc-400 font-mono">Amount</span>
+                <span className="text-white font-mono">
+                  {parseFloat(amount).toFixed(4)} {selectedToken}
+                </span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-zinc-400 font-mono">
+                  Relayer Fee (0.5%)
+                </span>
+                <span className="text-yellow-500 font-mono">
+                  -{(parseFloat(amount) * 0.005).toFixed(4)} {selectedToken}
+                </span>
+              </div>
+              <div className="border-t border-white/10 pt-1 mt-1 flex justify-between text-[10px]">
+                <span className="text-white font-mono">Recipient Receives</span>
+                <span className="text-neon-green font-mono">
+                  {(parseFloat(amount) * 0.995).toFixed(4)} {selectedToken}
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="pt-3 flex gap-2">

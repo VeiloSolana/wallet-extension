@@ -111,6 +111,30 @@ export const DepositModal = ({
               </div>
 
               <div className="space-y-2.5">
+                {/* No Fee Callout */}
+                <div className="p-2.5 bg-green-900/20 border border-neon-green/50">
+                  <div className="flex gap-2">
+                    <svg
+                      className="w-5 h-5 text-neon-green flex-shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <div className="text-xs font-mono">
+                      <p className="text-zinc-300 leading-relaxed">
+                        Transfers/withdrawals: 0.5% relayer fee
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Info Box */}
                 <div className="p-2.5 bg-zinc-900/60 border border-neon-green/20">
                   <p className="text-xs font-mono text-zinc-300 leading-relaxed">

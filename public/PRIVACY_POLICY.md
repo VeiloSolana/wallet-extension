@@ -6,20 +6,18 @@ Veilo Wallet is a **browser extension** for Solana that gives you full control o
 
 This policy explains what information we collect, how we protect it, and what we share (spoiler: very little).
 
-**Note:** Veilo currently supports standard wallet features (send, receive, swap) on Solana mainnet. We're also testing advanced features on Solana's devnet (a test network with test tokens that have no real value).
-
 ---
 
 ## 1. What Information Do We Collect?
 
-| Information                | Where It's Stored       | Shared With Anyone? | Why We Need It                             |
-| -------------------------- | ----------------------- | ------------------- | ------------------------------------------ |
-| Recovery phrase (12 words) | Your device (encrypted) | Never               | —                                          |
-| Wallet private key         | Your device (encrypted) | Never               | —                                          |
-| Wallet address             | Your device             | Yes                 | To show your balance and make transactions |
-| Username                   | Your device             | Yes                 | So others can send you private transfers   |
-| Veilo keys                 | Your device (encrypted) | Yes (encrypted)     | For enhanced transaction features          |
-| Token prices               | Not stored              | No info sent        | To show your portfolio value in dollars    |
+| Information                | Where It's Stored          | Shared With Anyone? | Why We Need It                             |
+| -------------------------- | -------------------------- | ------------------- | ------------------------------------------ |
+| Recovery phrase (12 words) | ✅ Your device (encrypted) | ❌ Never            | —                                          |
+| Wallet private key         | ✅ Your device (encrypted) | ❌ Never            | —                                          |
+| Wallet address             | ✅ Your device             | ✅ Yes              | To show your balance and make transactions |
+| Username                   | ✅ Your device             | ✅ Yes              | So others can send you private transfers   |
+| Veilo keys                 | ✅ Your device (encrypted) | ✅ Yes (encrypted)  | For enhanced transaction features          |
+| Token prices               | ❌ Not stored              | ❌ No info sent     | To show your portfolio value in dollars    |
 
 **Most importantly:** Your recovery phrase and private key **never leave your device**. We can't see them, and nobody else can either.
 
@@ -41,6 +39,15 @@ This policy explains what information we collect, how we protect it, and what we
 
 We use bank-level encryption to protect everything stored on your device. Your password locks everything up — we never see or store your password.
 
+| What's Stored             | How It's Protected                 |
+| ------------------------- | ---------------------------------- |
+| Private key               | ✅ Encrypted with your password    |
+| Recovery phrase           | ✅ Encrypted with your password    |
+| Veilo keys                | ✅ Encrypted with your password    |
+| App connection keys       | ✅ Encrypted with your password    |
+| Wallet address & username | Not encrypted (public info)        |
+| Login session             | Automatically expires after 7 days |
+
 ---
 
 ## 4. Services We Use
@@ -53,7 +60,7 @@ Handles your account setup and enhanced wallet features.
 
 - **Account creation & recovery:** We receive your wallet address and username to set up your account. We send back your encrypted Veilo keys.
 - **Encrypted notes storage:** We store encrypted transaction records on our server. These records stay encrypted and unreadable to us unless you choose to perform a private withdrawal or transfer — only then does your wallet decrypt and send the necessary transaction details to process your request.
-- **Enhanced transactions:** When you use private withdrawals or transfers, your wallet temporarily shares the decrypted transaction details with our server to process your request.
+- **Enhanced transactions:** When you use private withdrawals or transfers, your wallet temporarily shares the decrypted transaction details with our server to process your request. A **0.5% relayer fee** is deducted from these transactions to cover processing costs. Deposits are free.
 
 **Important:** We never see your private key, recovery phrase, or password. We only see transaction details when you actively choose to withdraw or transfer, giving us temporary access to complete that specific transaction.
 
@@ -89,17 +96,17 @@ We use this to show current token prices in dollars.
 | Internet access     | To connect to Solana and check prices/balances         |
 | Website integration | So crypto apps (like exchanges) can detect your wallet |
 
-We do NOT access your browsing history, passwords, cookies, location, camera, microphone, or any personal files.
+**We do NOT access** your browsing history, passwords, cookies, location, camera, microphone, or any personal files.
 
 ---
 
 ## 6. Our Promises to You
 
-- No tracking — We don't use Google Analytics or any tracking tools
-- No selling your data — Your information is never sold or shared for profit
-- No spying — We can't see what websites you visit
-- No hidden downloads — All code is included when you install. Nothing sneaky.
-- No keylogging — We only see what you type in the Veilo Wallet popup, nowhere else
+- ✅ **No tracking** — We don't use Google Analytics or any tracking tools
+- ✅ **No selling your data** — Your information is never sold or shared for profit
+- ✅ **No spying** — We can't see what websites you visit
+- ✅ **No hidden downloads** — All code is included when you install. Nothing sneaky.
+- ✅ **No keylogging** — We only see what you type in the Veilo Wallet popup, nowhere else
 
 ---
 
@@ -107,19 +114,19 @@ We do NOT access your browsing history, passwords, cookies, location, camera, mi
 
 When you connect to a Solana app (like an exchange or NFT site):
 
-- The app only sees your wallet address — and only after you click "Connect"
-- Your private key stays locked inside Veilo Wallet
-- You approve every transaction — nothing happens without your permission
+- The app only sees your **wallet address** — and only after you click "Connect"
+- Your private key **stays locked** inside Veilo Wallet
+- You **approve every transaction** — nothing happens without your permission
 - We show you estimated fees before you confirm
 
 ---
 
 ## 8. How Long We Keep Your Information
 
-- On your device: Everything stays until you uninstall Veilo Wallet or clear your browser data
-- Active session: Cleared when you close your browser or lock the wallet
-- On our server: We keep your wallet address, username, and encrypted notes (we can't read the notes)
-- Never stored: Your private key, recovery phrase, or password
+- **On your device:** Everything stays until you uninstall Veilo Wallet or clear your browser data
+- **Active session:** Cleared when you close your browser or lock the wallet
+- **On our server:** We keep your wallet address, username, and encrypted notes (we can't read the notes)
+- **Never stored:** Your private key, recovery phrase, or password
 
 ---
 
@@ -129,7 +136,15 @@ Veilo Wallet is open source. You can read our code and verify everything in this
 
 ---
 
-## 10. Important Legal Stuff
+## 10. Fees
+
+- **Deposits:** Free — processed directly on-chain.
+- **Private transfers & withdrawals:** A 0.5% relayer fee is deducted from the transaction amount. The fee is clearly shown in the wallet before you confirm.
+- **Token swaps:** Standard network fees apply. No Veilo fee.
+
+---
+
+## 11. Important Legal Stuff
 
 Veilo Wallet is provided free of charge, and like all software, it comes with no guarantees. We work hard to keep your funds safe, but cryptocurrency involves risk. We're not responsible for losses caused by the extension, third-party services, user error, or network issues.
 
@@ -137,17 +152,17 @@ Veilo Wallet is provided free of charge, and like all software, it comes with no
 
 ---
 
-## 11. Contact Us
+## 12. Contact Us
 
 Have questions? Reach out:
 
-- Twitter: @VeiloWallet
-- Email: support@veilo.network
-- Website: https://wallet.veilo.network/
+- **Twitter:** @VeiloWallet
+- **Email:** support@veilo.network
+- **Website:** https://wallet.veilo.network/
 
 ---
 
-## 12. Chrome Web Store Compliance
+## 13. Chrome Web Store Compliance
 
 - The use of information received from Google APIs will adhere to the Chrome Web Store User Data Policy, including the Limited Use requirements.
 - We only share your data when absolutely necessary (blockchain transactions, token swaps)
@@ -155,7 +170,7 @@ Have questions? Reach out:
 
 ---
 
-## 13. Updates to This Policy
+## 14. Updates to This Policy
 
 We may update this policy occasionally to reflect new features or requirements. If we make big changes, we'll let you know through the extension or on our website. By continuing to use Veilo Wallet, you agree to the updated terms.
 

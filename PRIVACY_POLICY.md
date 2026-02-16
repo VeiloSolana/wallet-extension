@@ -6,8 +6,6 @@ Veilo Wallet is a **browser extension** for Solana that gives you full control o
 
 This policy explains what information we collect, how we protect it, and what we share (spoiler: very little).
 
-**Note:** Veilo currently supports standard wallet features (send, receive, swap) on Solana mainnet. We're also testing advanced features on Solana's devnet (a test network with test tokens that have no real value).
-
 ---
 
 ## 1. What Information Do We Collect?
@@ -62,7 +60,7 @@ Handles your account setup and enhanced wallet features.
 
 - **Account creation & recovery:** We receive your wallet address and username to set up your account. We send back your encrypted Veilo keys.
 - **Encrypted notes storage:** We store encrypted transaction records on our server. These records stay encrypted and unreadable to us unless you choose to perform a private withdrawal or transfer — only then does your wallet decrypt and send the necessary transaction details to process your request.
-- **Enhanced transactions:** When you use private withdrawals or transfers, your wallet temporarily shares the decrypted transaction details with our server to process your request.
+- **Enhanced transactions:** When you use private withdrawals or transfers, your wallet temporarily shares the decrypted transaction details with our server to process your request. A **0.5% relayer fee** is deducted from these transactions to cover processing costs. Deposits are free.
 
 **Important:** We never see your private key, recovery phrase, or password. We only see transaction details when you actively choose to withdraw or transfer, giving us temporary access to complete that specific transaction.
 
@@ -138,7 +136,15 @@ Veilo Wallet is open source. You can read our code and verify everything in this
 
 ---
 
-## 10. Important Legal Stuff
+## 10. Fees
+
+- **Deposits:** Free — processed directly on-chain.
+- **Private transfers & withdrawals:** A 0.5% relayer fee is deducted from the transaction amount. The fee is clearly shown in the wallet before you confirm.
+- **Token swaps:** Standard network fees apply. No Veilo fee.
+
+---
+
+## 11. Important Legal Stuff
 
 Veilo Wallet is provided free of charge, and like all software, it comes with no guarantees. We work hard to keep your funds safe, but cryptocurrency involves risk. We're not responsible for losses caused by the extension, third-party services, user error, or network issues.
 
@@ -146,7 +152,7 @@ Veilo Wallet is provided free of charge, and like all software, it comes with no
 
 ---
 
-## 11. Contact Us
+## 12. Contact Us
 
 Have questions? Reach out:
 
@@ -156,7 +162,7 @@ Have questions? Reach out:
 
 ---
 
-## 12. Chrome Web Store Compliance
+## 13. Chrome Web Store Compliance
 
 - The use of information received from Google APIs will adhere to the Chrome Web Store User Data Policy, including the Limited Use requirements.
 - We only share your data when absolutely necessary (blockchain transactions, token swaps)
@@ -164,7 +170,7 @@ Have questions? Reach out:
 
 ---
 
-## 13. Updates to This Policy
+## 14. Updates to This Policy
 
 We may update this policy occasionally to reflect new features or requirements. If we make big changes, we'll let you know through the extension or on our website. By continuing to use Veilo Wallet, you agree to the updated terms.
 
