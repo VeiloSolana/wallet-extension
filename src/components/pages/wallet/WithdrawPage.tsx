@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CyberButton } from "../../common/ui/CyberButton";
 import { PublicKey } from "@solana/web3.js";
 import solLogo from "/images/sol-logo.svg";
@@ -43,6 +43,23 @@ export const WithdrawPage = ({
   const [selectedToken, setSelectedToken] = useState("SOL");
   const [transactionPhase, setTransactionPhase] =
     useState<TransactionPhase>("idle");
+
+  // Auto-dismiss success overlay after 3 seconds
+  const dismissSuccess = useCallback(() => {
+    setTransactionPhase("idle");
+    setAmount("");
+    setRecipient("");
+    setStatus("");
+    setError("");
+    onBack();
+  }, [onBack]);
+
+  useEffect(() => {
+    if (transactionPhase === "success") {
+      const timer = setTimeout(dismissSuccess, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [transactionPhase, dismissSuccess]);
 
   // Debug tokenBalances
   useEffect(() => {
@@ -342,7 +359,8 @@ export const WithdrawPage = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/95 backdrop-blur-sm z-10 flex flex-col items-center justify-center"
+              className="absolute inset-0 bg-black/95 backdrop-blur-sm z-10 flex flex-col items-center justify-center cursor-pointer"
+              onClick={dismissSuccess}
             >
               <div className="relative w-28 h-28">
                 {[0, 1, 2].map((i) => (

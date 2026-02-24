@@ -228,7 +228,7 @@ export const SettingsModal = ({
                 {/* Footer / Version */}
                 <div className="pt-2 flex justify-center border-t border-white/5 mt-4">
                   <p className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest mt-4">
-                    Veilo Client v0.1.0-beta
+                    Veilo v1.0.0
                   </p>
                 </div>
               </div>

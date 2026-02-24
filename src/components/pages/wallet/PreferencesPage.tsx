@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CyberButton } from "../../common/ui/CyberButton";
 import {
   type NetworkType,
   getSelectedNetwork,
@@ -36,6 +35,11 @@ export const PreferencesPage = ({
 }: PreferencesPageProps) => {
   const [copied, setCopied] = useState(false);
   const [network, setNetwork] = useState<NetworkType>(getSelectedNetwork());
+  const [showNetworkConfirm, setShowNetworkConfirm] = useState(false);
+  const [pendingNetwork, setPendingNetwork] = useState<NetworkType | null>(
+    null,
+  );
+  const [showPassword, setShowPassword] = useState(false);
 
   // Auto-lock state
   const [autoLockTimeout, setAutoLockTimeoutState] =
@@ -80,9 +84,18 @@ export const PreferencesPage = ({
 
   const handleNetworkToggle = () => {
     const newNetwork = network === "devnet" ? "mainnet" : "devnet";
-    setSelectedNetwork(newNetwork);
-    setNetwork(newNetwork);
-    window.location.reload();
+    setPendingNetwork(newNetwork);
+    setShowNetworkConfirm(true);
+  };
+
+  const confirmNetworkSwitch = () => {
+    if (pendingNetwork) {
+      setSelectedNetwork(pendingNetwork);
+      setNetwork(pendingNetwork);
+      setShowNetworkConfirm(false);
+      setPendingNetwork(null);
+      window.location.reload();
+    }
   };
 
   const handleCopy = () => {
@@ -133,6 +146,7 @@ export const PreferencesPage = ({
     setRevealedData(null);
     setRevealError("");
     setCopiedRevealed(false);
+    setShowPassword(false);
   };
 
   const handleConfirmReveal = async () => {
@@ -417,7 +431,7 @@ export const PreferencesPage = ({
                 <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 group-hover:bg-neon-green transition-colors" />
               </div>
               <p className="text-[10px] font-mono text-zinc-300 uppercase tracking-wider mb-0.5">
-                Recovery Phrase
+                Seed Phrase
               </p>
               <p className="text-[9px] text-zinc-600">View recovery words</p>
             </button>
@@ -457,51 +471,119 @@ export const PreferencesPage = ({
               <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
                 Client Version
               </p>
-              <p className="text-xs font-mono text-white mt-0.5">v0.1.0 Beta</p>
+              <p className="text-xs font-mono text-white mt-0.5">v1.0.0</p>
             </div>
             <div className="text-right">
               <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
-                Build
+                Network
               </p>
-              <p className="text-xs font-mono text-white mt-0.5">Development</p>
+              <p className="text-xs font-mono text-white mt-0.5">
+                {network === "mainnet" ? "Mainnet" : "Devnet"}
+              </p>
             </div>
           </div>
 
-          {onLogout && (
-            <CyberButton
-              onClick={onLogout}
-              variant="secondary"
-              fullWidth
-              className="border-red-500/20 text-red-500 hover:bg-red-500/10 hover:border-red-500/40"
+          <div className="flex gap-2">
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="flex-1 px-3 py-2.5 text-[10px] font-mono font-bold text-zinc-400 bg-zinc-900 hover:bg-zinc-800 border border-white/10 uppercase tracking-widest transition-all"
+              >
+                Disconnect
+              </button>
+            )}
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/40 transition-all"
             >
-              DISCONNECT SESSION
-            </CyberButton>
-          )}
-
-          {/* Reset Wallet - Danger Zone */}
-          <button
-            onClick={() => setShowResetConfirm(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/40 transition-all group"
-          >
-            <svg
-              className="w-4 h-4 text-red-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.5"
-                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-              />
-            </svg>
-            <span className="text-xs font-mono text-red-400 font-bold uppercase tracking-widest">
-              Reset Wallet
-            </span>
-          </button>
+              <svg
+                className="w-3.5 h-3.5 text-red-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                />
+              </svg>
+              <span className="text-[10px] font-mono text-red-400 font-bold uppercase tracking-widest">
+                Reset Wallet
+              </span>
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Network Switch Confirmation Modal */}
+      <AnimatePresence>
+        {showNetworkConfirm && pendingNetwork && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center"
+            onClick={() => {
+              setShowNetworkConfirm(false);
+              setPendingNetwork(null);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-zinc-900 border border-white/10 p-5 mx-4 max-w-sm w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-center mb-4">
+                <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center">
+                  <svg
+                    className="w-5 h-5 text-yellow-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.5"
+                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-mono font-bold text-white uppercase tracking-widest mb-2">
+                  Switch Network
+                </h3>
+                <p className="text-xs font-mono text-zinc-400 leading-relaxed">
+                  {pendingNetwork === "mainnet"
+                    ? "You are switching to Mainnet. Transactions will use real SOL and have real value."
+                    : "You are switching to Devnet. This is a test network with no real value."}
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setShowNetworkConfirm(false);
+                    setPendingNetwork(null);
+                  }}
+                  className="flex-1 px-3 py-2 text-[10px] font-mono font-bold text-zinc-400 bg-zinc-800 hover:bg-zinc-700 uppercase tracking-widest transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmNetworkSwitch}
+                  className="flex-1 px-3 py-2 text-[10px] font-mono font-bold text-black bg-neon-green hover:bg-neon-green/90 uppercase tracking-widest transition-all"
+                >
+                  Switch
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Reset Wallet Confirmation Modal */}
       <AnimatePresence>
@@ -708,9 +790,26 @@ export const PreferencesPage = ({
 
               <div className="p-4">
                 <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
-                  <h2 className="text-[10px] font-mono font-bold uppercase tracking-widest text-yellow-400">
-                    ⚠️ Security Warning
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 text-neon-green"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.5"
+                        d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+                      />
+                    </svg>
+                    <h2 className="text-[10px] font-mono font-bold uppercase tracking-widest text-white">
+                      {revealTarget === "phrase"
+                        ? "Seed Phrase"
+                        : "Private Key"}
+                    </h2>
+                  </div>
                   <button
                     onClick={handleCloseReveal}
                     className="text-zinc-400 hover:text-white transition-colors"
@@ -736,27 +835,73 @@ export const PreferencesPage = ({
                     <div className="mb-4 p-2.5 bg-yellow-500/10 border border-yellow-500/30">
                       <p className="text-xs font-mono text-yellow-300 leading-relaxed">
                         {revealTarget === "phrase"
-                          ? "Never share your recovery phrase. Anyone with access can steal your funds."
-                          : "Never share your private key. Anyone with access can steal your funds."}
+                          ? "Never share your seed phrase. Anyone with these words can access your wallet and steal your funds."
+                          : "Never share your private key. Anyone with this key has full control of your wallet."}
                       </p>
                     </div>
 
                     <div className="space-y-3">
                       <div>
                         <label className="text-[10px] text-zinc-400 font-mono tracking-widest uppercase block mb-1.5">
-                          Enter Password to Reveal
+                          Enter Password to Continue
                         </label>
-                        <input
-                          type="password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          onKeyDown={(e) =>
-                            e.key === "Enter" && handleConfirmReveal()
-                          }
-                          placeholder="Enter your password"
-                          className="w-full px-3 py-2 bg-zinc-900/60 border border-white/10 text-white placeholder-zinc-600 focus:outline-none focus:border-neon-green/50 transition-colors font-mono text-sm"
-                          autoFocus
-                        />
+                        <div className="relative">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            value={confirmPassword}
+                            onChange={(e) => {
+                              setConfirmPassword(e.target.value);
+                              setRevealError("");
+                            }}
+                            onKeyDown={(e) =>
+                              e.key === "Enter" && handleConfirmReveal()
+                            }
+                            placeholder="Your wallet password"
+                            className="w-full px-3 py-2 pr-10 bg-zinc-900/60 border border-white/10 text-white placeholder-zinc-600 focus:outline-none focus:border-neon-green/50 transition-colors font-mono text-sm"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                          >
+                            {showPassword ? (
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="1.5"
+                                  d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="1.5"
+                                  d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="1.5"
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
                       </div>
 
                       {revealError && (
@@ -772,9 +917,13 @@ export const PreferencesPage = ({
                       <button
                         onClick={handleConfirmReveal}
                         disabled={isRevealing || !confirmPassword}
-                        className="w-full px-3 py-2 text-[10px] font-mono font-bold text-black bg-white hover:bg-zinc-200 uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-3 py-2 text-[10px] font-mono font-bold text-black bg-neon-green hover:bg-neon-green/90 uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {isRevealing ? "Verifying..." : "Reveal"}
+                        {isRevealing
+                          ? "Verifying..."
+                          : revealTarget === "phrase"
+                            ? "Reveal Seed Phrase"
+                            : "Reveal Private Key"}
                       </button>
                     </div>
                   </>
@@ -783,7 +932,7 @@ export const PreferencesPage = ({
                     <div className="mb-4">
                       <label className="text-[10px] text-zinc-400 font-mono tracking-widest uppercase block mb-2">
                         {revealTarget === "phrase"
-                          ? "Your Recovery Phrase"
+                          ? "Your Seed Phrase"
                           : "Your Private Key (Base58)"}
                       </label>
                       {revealTarget === "phrase" ? (
@@ -813,9 +962,59 @@ export const PreferencesPage = ({
 
                     <button
                       onClick={handleCopyRevealed}
-                      className="w-full mt-3 px-3 py-2 text-[10px] font-mono font-bold text-black bg-white hover:bg-zinc-200 uppercase tracking-widest transition-all"
+                      className="w-full px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-widest transition-all border border-white/10 hover:border-white/30 flex items-center justify-center gap-1.5"
                     >
-                      {copiedRevealed ? "✓ Copied" : "Copy to Clipboard"}
+                      {copiedRevealed ? (
+                        <>
+                          <svg
+                            className="w-3.5 h-3.5 text-neon-green"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                          <span className="text-neon-green">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg
+                            className="w-3.5 h-3.5 text-zinc-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="1.5"
+                              d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
+                            />
+                          </svg>
+                          <span className="text-zinc-400">
+                            Copy to Clipboard
+                          </span>
+                        </>
+                      )}
+                    </button>
+
+                    <div className="mt-3 p-2.5 bg-yellow-500/10 border border-yellow-500/30">
+                      <p className="text-[10px] font-mono text-yellow-300 leading-relaxed">
+                        Store this safely offline. Do not screenshot or share
+                        digitally.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={handleCloseReveal}
+                      className="w-full mt-3 px-3 py-2 text-[10px] font-mono font-bold text-white bg-zinc-800 hover:bg-zinc-700 uppercase tracking-widest transition-all"
+                    >
+                      Done
                     </button>
                   </>
                 )}

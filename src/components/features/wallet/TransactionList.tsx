@@ -1,9 +1,14 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useCryptoPrices } from "../../../hooks/useSolPrice";
+import {
+  useCryptoPrices,
+  formatTokenAmount,
+  formatCurrency,
+  formatPercentage,
+} from "../../../hooks/useSolPrice";
 import type { Transaction } from "../../../types/transaction";
 import solLogo from "/images/sol-logo.svg";
-  // usd1: require("../../assets/images/coins/usdt1-logo.png"),
+// usd1: require("../../assets/images/coins/usdt1-logo.png"),
 
 import usdcLogo from "/images/usdc-logo.svg";
 import usd1Logo from "/images/usd1-logo.png";
@@ -13,6 +18,7 @@ interface TransactionListProps {
   transactions: Transaction[];
   onViewAll?: () => void;
   onSelectTransaction?: (tx: Transaction) => void;
+  onSelectToken?: (symbol: string) => void;
   tokenBalances?: {
     sol: number;
     usdc: number;
@@ -29,10 +35,10 @@ export const TransactionList = ({
   transactions,
   onViewAll,
   onSelectTransaction,
+  onSelectToken,
   tokenBalances = { sol: 0, usdc: 0, usdt: 0, usd1: 0, veilo: 0 },
   isLoadingNotes = false,
 }: TransactionListProps) => {
-
   // console.log({ transactions });
   const [activeTab, setActiveTab] = useState<TabType>("history");
   const {
@@ -67,10 +73,11 @@ export const TransactionList = ({
       <div className="flex border-b border-white/10 bg-black/40 backdrop-blur-md shrink-0 px-4">
         <button
           onClick={() => setActiveTab("balances")}
-          className={`flex-1 py-3 text-xs font-medium tracking-widest uppercase transition-all relative ${activeTab === "balances"
+          className={`flex-1 py-3 text-xs font-medium tracking-widest uppercase transition-all relative ${
+            activeTab === "balances"
               ? "text-white"
               : "text-zinc-400 hover:text-white"
-            }`}
+          }`}
         >
           BALANCES
           {activeTab === "balances" && (
@@ -83,10 +90,11 @@ export const TransactionList = ({
         </button>
         <button
           onClick={() => setActiveTab("history")}
-          className={`flex-1 py-3 text-xs font-medium tracking-widest uppercase transition-all relative ${activeTab === "history"
+          className={`flex-1 py-3 text-xs font-medium tracking-widest uppercase transition-all relative ${
+            activeTab === "history"
               ? "text-white"
               : "text-zinc-400 hover:text-white"
-            }`}
+          }`}
         >
           HISTORY
           {activeTab === "history" && (
@@ -102,7 +110,10 @@ export const TransactionList = ({
       {activeTab === "balances" ? (
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {/* SOL Balance */}
-          <div className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group">
+          <div
+            onClick={() => onSelectToken?.("sol")}
+            className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group cursor-pointer"
+          >
             {/* Corner Brackets */}
             <svg
               className="absolute top-0 left-0 w-2.5 h-2.5 text-neon-green/40"
@@ -151,33 +162,39 @@ export const TransactionList = ({
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <img src={solLogo} alt="SOL" className="w-8 h-8" />
+                <img src={solLogo} alt="SOL" className="w-7 h-7" />
                 <div>
-                  <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-medium mb-0.5">
-                    Solana
-                  </p>
-                  <p className="text-xs text-white font-medium">SOL</p>
+                  <p className="text-xs text-white font-medium">Solana</p>
+                  <p className="text-[10px] text-zinc-400">SOL</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-mono font-light text-white">
-                  {tokenBalances.sol.toFixed(4)}
+                <p className="text-xs font-mono text-white">
+                  {formatTokenAmount(tokenBalances.sol)}
                 </p>
-                <p className="text-[10px] text-zinc-400 font-mono">
-                  {isPriceLoading ? (
-                    <span>--</span>
-                  ) : (
-                    <span>
-                      ≈ ${(tokenBalances.sol * (sol?.price || 0)).toFixed(2)}
+                <div className="flex items-center justify-end gap-1">
+                  <span className="text-[10px] text-zinc-400 font-mono">
+                    {isPriceLoading
+                      ? "--"
+                      : formatCurrency(tokenBalances.sol * (sol?.price || 0))}
+                  </span>
+                  {!isPriceLoading && (
+                    <span
+                      className={`text-[10px] font-mono ${(sol?.priceChange24h ?? 0) >= 0 ? "text-neon-green" : "text-red-500"}`}
+                    >
+                      {formatPercentage(sol?.priceChange24h ?? 0)}
                     </span>
                   )}
-                </p>
+                </div>
               </div>
             </div>
           </div>
 
           {/* USDC Balance */}
-          <div className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group">
+          <div
+            onClick={() => onSelectToken?.("usdc")}
+            className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group cursor-pointer"
+          >
             {/* Corner Brackets */}
             <svg
               className="absolute top-0 left-0 w-2.5 h-2.5 text-neon-green/40"
@@ -226,31 +243,39 @@ export const TransactionList = ({
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <img src={usdcLogo} alt="USDC" className="w-8 h-8" />
+                <img src={usdcLogo} alt="USDC" className="w-7 h-7" />
                 <div>
-                  <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-medium mb-0.5">
-                    USD Coin
-                  </p>
-                  <p className="text-xs text-white font-medium">USDC</p>
+                  <p className="text-xs text-white font-medium">USD Coin</p>
+                  <p className="text-[10px] text-zinc-400">USDC</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-mono font-light text-white">
-                  {tokenBalances.usdc.toFixed(2)}
+                <p className="text-xs font-mono text-white">
+                  {formatTokenAmount(tokenBalances.usdc, 2)}
                 </p>
-                <p className="text-[10px] text-zinc-400 font-mono">
-                  {isPriceLoading
-                    ? "--"
-                    : `≈ $${(tokenBalances.usdc * (usdc?.price || 0)).toFixed(
-                      2,
-                    )}`}
-                </p>
+                <div className="flex items-center justify-end gap-1">
+                  <span className="text-[10px] text-zinc-400 font-mono">
+                    {isPriceLoading
+                      ? "--"
+                      : formatCurrency(tokenBalances.usdc * (usdc?.price || 0))}
+                  </span>
+                  {!isPriceLoading && (
+                    <span
+                      className={`text-[10px] font-mono ${(usdc?.priceChange24h ?? 0) >= 0 ? "text-neon-green" : "text-red-500"}`}
+                    >
+                      {formatPercentage(usdc?.priceChange24h ?? 0)}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
           {/* USDT Balance */}
-          <div className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group">
+          <div
+            onClick={() => onSelectToken?.("usdt")}
+            className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group cursor-pointer"
+          >
             {/* Corner Brackets */}
             <svg
               className="absolute top-0 left-0 w-2.5 h-2.5 text-neon-green/40"
@@ -299,29 +324,37 @@ export const TransactionList = ({
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <img src={usdtLogo} alt="USDT" className="w-8 h-8" />
+                <img src={usdtLogo} alt="USDT" className="w-7 h-7" />
                 <div>
-                  <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-medium mb-0.5">
-                    Tether
-                  </p>
-                  <p className="text-xs text-white font-medium">USDT</p>
+                  <p className="text-xs text-white font-medium">Tether</p>
+                  <p className="text-[10px] text-zinc-400">USDT</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-mono font-light text-white">
-                  {tokenBalances.usdt.toFixed(2)}
+                <p className="text-xs font-mono text-white">
+                  {formatTokenAmount(tokenBalances.usdt, 2)}
                 </p>
-                <p className="text-[10px] text-zinc-400 font-mono">
-                  {isPriceLoading
-                    ? "--"
-                    : `≈ $${(tokenBalances.usdt * (usdt?.price || 0)).toFixed(
-                      2,
-                    )}`}
-                </p>
+                <div className="flex items-center justify-end gap-1">
+                  <span className="text-[10px] text-zinc-400 font-mono">
+                    {isPriceLoading
+                      ? "--"
+                      : formatCurrency(tokenBalances.usdt * (usdt?.price || 0))}
+                  </span>
+                  {!isPriceLoading && (
+                    <span
+                      className={`text-[10px] font-mono ${(usdt?.priceChange24h ?? 0) >= 0 ? "text-neon-green" : "text-red-500"}`}
+                    >
+                      {formatPercentage(usdt?.priceChange24h ?? 0)}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-          <div className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group">
+          <div
+            onClick={() => onSelectToken?.("usd1")}
+            className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group cursor-pointer"
+          >
             {/* Corner Brackets */}
             <svg
               className="absolute top-0 left-0 w-2.5 h-2.5 text-neon-green/40"
@@ -370,32 +403,39 @@ export const TransactionList = ({
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <img src={usd1Logo} alt="USDT" className="w-8 h-8" />
+                <img src={usd1Logo} alt="USD1" className="w-7 h-7" />
                 <div>
-                  <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-medium mb-0.5">
-                    USD ONE
-                  </p>
-                  <p className="text-xs text-white font-medium">USD1</p>
+                  <p className="text-xs text-white font-medium">USD One</p>
+                  <p className="text-[10px] text-zinc-400">USD1</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-mono font-light text-white">
-                  {tokenBalances.usd1.toFixed(2)}
+                <p className="text-xs font-mono text-white">
+                  {formatTokenAmount(tokenBalances.usd1, 2)}
                 </p>
-                <p className="text-[10px] text-zinc-400 font-mono">
-                  {isPriceLoading
-                    ? "--"
-                    : `≈ $${(tokenBalances.usd1 * (usd1?.price || 0)).toFixed(
-                      2,
-                    )}`}
-                </p>
+                <div className="flex items-center justify-end gap-1">
+                  <span className="text-[10px] text-zinc-400 font-mono">
+                    {isPriceLoading
+                      ? "--"
+                      : formatCurrency(tokenBalances.usd1 * (usd1?.price || 0))}
+                  </span>
+                  {!isPriceLoading && (
+                    <span
+                      className={`text-[10px] font-mono ${(usd1?.priceChange24h ?? 0) >= 0 ? "text-neon-green" : "text-red-500"}`}
+                    >
+                      {formatPercentage(usd1?.priceChange24h ?? 0)}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-           
 
           {/* VEILO Balance */}
-          <div className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group">
+          <div
+            onClick={() => onSelectToken?.("veilo")}
+            className="p-3 bg-zinc-900/40 border border-white/10 hover:border-white/40 transition-all relative overflow-hidden group cursor-pointer"
+          >
             {/* Corner Brackets */}
             <svg
               className="absolute top-0 left-0 w-2.5 h-2.5 text-neon-green/40"
@@ -444,27 +484,36 @@ export const TransactionList = ({
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-neon-green/10 border border-neon-green/30 flex items-center justify-center">
-                  <span className="text-xs font-bold text-neon-green">V</span>
+                <div className="w-7 h-7 rounded-full bg-neon-green/10 border border-neon-green/30 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-neon-green">
+                    V
+                  </span>
                 </div>
                 <div>
-                  <p className="text-[9px] text-zinc-400 uppercase tracking-widest font-medium mb-0.5">
-                    Veilo
-                  </p>
-                  <p className="text-xs text-white font-medium">VEILO</p>
+                  <p className="text-xs text-white font-medium">Veilo</p>
+                  <p className="text-[10px] text-zinc-400">VEILO</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-mono font-light text-white">
-                  {tokenBalances.veilo.toFixed(2)}
+                <p className="text-xs font-mono text-white">
+                  {formatTokenAmount(tokenBalances.veilo, 2)}
                 </p>
-                <p className="text-[10px] text-zinc-400 font-mono">
-                  {isPriceLoading
-                    ? "--"
-                    : `≈ $${(tokenBalances.veilo * (veilo?.price || 0)).toFixed(
-                      2,
-                    )}`}
-                </p>
+                <div className="flex items-center justify-end gap-1">
+                  <span className="text-[10px] text-zinc-400 font-mono">
+                    {isPriceLoading
+                      ? "--"
+                      : formatCurrency(
+                          tokenBalances.veilo * (veilo?.price || 0),
+                        )}
+                  </span>
+                  {!isPriceLoading && (
+                    <span
+                      className={`text-[10px] font-mono ${(veilo?.priceChange24h ?? 0) >= 0 ? "text-neon-green" : "text-red-500"}`}
+                    >
+                      {formatPercentage(veilo?.priceChange24h ?? 0)}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -554,10 +603,11 @@ export const TransactionList = ({
                   <div
                     className={`
                     w-6 h-6 rounded-full flex items-center justify-center
-                    ${tx.type === "send"
+                    ${
+                      tx.type === "send"
                         ? "bg-red-500/10 border border-red-500/30"
                         : "bg-neon-green/10 border border-neon-green/30"
-                      }
+                    }
                   `}
                   >
                     {tx.type === "send" ? (
@@ -602,10 +652,11 @@ export const TransactionList = ({
                         )}
                       </span>
                       <span
-                        className={`text-xs font-mono ${tx.type === "send"
+                        className={`text-xs font-mono ${
+                          tx.type === "send"
                             ? "text-red-500"
                             : "text-neon-green"
-                          }`}
+                        }`}
                       >
                         {tx.type === "send" ? "-" : "+"}
                         {tx.amount} {tx.token || "SOL"}

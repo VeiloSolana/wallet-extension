@@ -25,6 +25,7 @@ import { WithdrawPage } from "./components/pages/wallet/WithdrawPage";
 import { ReceiveModal } from "./components/features/wallet/modals/ReceiveModal";
 import { DepositModal } from "./components/features/wallet/modals/DepositModal";
 import { TransferPage } from "./components/pages/wallet/TransferPage";
+import { TokenDetailsPage } from "./components/pages/wallet/TokenDetailsPage";
 import { WelcomePage } from "./components/pages/auth/WelcomePage";
 import { CreatePasswordPage } from "./components/pages/auth/CreatePasswordPage";
 import { SecretPhrasePage } from "./components/pages/auth/SecretPhrasePage";
@@ -264,8 +265,14 @@ function App() {
 
   // Navigation State - includes pages for withdraw and transfer
   const [view, setView] = useState<
-    "dashboard" | "activity" | "details" | "withdraw" | "transfer"
+    | "dashboard"
+    | "activity"
+    | "details"
+    | "withdraw"
+    | "transfer"
+    | "tokenDetails"
   >("dashboard");
+  const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const [lastView, setLastView] = useState<"dashboard" | "activity">(
     "dashboard",
   );
@@ -748,6 +755,10 @@ function App() {
                 setLastView("dashboard");
                 setView("details");
               }}
+              onSelectToken={(symbol) => {
+                setSelectedToken(symbol);
+                setView("tokenDetails");
+              }}
               tokenBalances={tokenBalances}
               isLoadingNotes={isLoadingNotes}
             />
@@ -801,6 +812,12 @@ function App() {
             <TransactionDetailsPage
               onBack={() => setView(lastView)}
               transaction={selectedTransaction}
+            />
+          )}
+          {view === "tokenDetails" && selectedToken && (
+            <TokenDetailsPage
+              onBack={() => setView("dashboard")}
+              tokenSymbol={selectedToken}
             />
           )}
         </AnimatePresence>

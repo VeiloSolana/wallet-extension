@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import {
   useCryptoPrices,
-  usePortfolio24hChange,
+  calculateWeightedPortfolioChange,
+  formatCurrency,
+  formatPercentage,
 } from "../../../hooks/useSolPrice";
 
 interface BalanceDisplayProps {
@@ -9,6 +11,7 @@ interface BalanceDisplayProps {
     sol: number;
     usdc: number;
     usdt: number;
+    usd1: number;
     veilo: number;
   };
   onSend?: () => void;
@@ -18,7 +21,7 @@ interface BalanceDisplayProps {
 }
 
 export const BalanceDisplay = ({
-  tokenBalances = { sol: 0, usdc: 0, usdt: 0, veilo: 0 },
+  tokenBalances = { sol: 0, usdc: 0, usdt: 0, usd1: 0, veilo: 0 },
   onSend,
   onSync,
   isSyncing,
@@ -27,20 +30,27 @@ export const BalanceDisplay = ({
     sol,
     usdc,
     usdt,
+    usd1,
     veilo,
     isLoading: isPriceLoading,
   } = useCryptoPrices();
 
-  // Calculate USD balance from all tokens
+  // Calculate USD balance from all tokens (including usd1)
   const usdBalance =
     tokenBalances.sol * (sol?.price || 0) +
     tokenBalances.usdc * (usdc?.price || 0) +
     tokenBalances.usdt * (usdt?.price || 0) +
+    tokenBalances.usd1 * (usd1?.price || 0) +
     tokenBalances.veilo * (veilo?.price || 0);
 
-  // Use calculated portfolio 24h change
-  const { change24h, isLoading: isChangeLoading } =
-    usePortfolio24hChange(usdBalance);
+  // Weighted-average portfolio 24h change — matches mobile app
+  const change24h = calculateWeightedPortfolioChange(tokenBalances, {
+    sol,
+    usdc,
+    usdt,
+    usd1,
+    veilo,
+  });
 
   const isPositive = change24h >= 0;
 
@@ -58,25 +68,23 @@ export const BalanceDisplay = ({
             {isPriceLoading ? (
               <span className="text-zinc-500">Loading...</span>
             ) : (
-              <>${usdBalance.toFixed(2)}</>
+              <>{formatCurrency(usdBalance)}</>
             )}
           </div>
           <div
             className={`text-xs font-medium flex items-center gap-1 ${
-              // If loading/no data, use neutral color, otherwise green/red
-              isChangeLoading
+              isPriceLoading
                 ? "text-zinc-500"
                 : isPositive
                   ? "text-green-500"
                   : "text-red-500"
             }`}
           >
-            {isChangeLoading || isPriceLoading ? (
+            {isPriceLoading ? (
               <span className="text-zinc-500">--</span>
             ) : (
               <>
-                {isPositive ? "+" : ""}
-                {change24h.toFixed(2)}%
+                {formatPercentage(change24h)}
                 <span className="text-zinc-500 text-[10px]">24h</span>
               </>
             )}

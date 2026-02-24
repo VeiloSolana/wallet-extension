@@ -47,7 +47,9 @@ interface DAppPageProps {
   onWithdrawToWallet?: (
     toAddress: string,
     amount: number,
-    setTransactionPhase: (value: React.SetStateAction<TransactionPhase>) => void
+    setTransactionPhase: (
+      value: React.SetStateAction<TransactionPhase>,
+    ) => void,
   ) => Promise<void>;
 }
 
@@ -70,6 +72,18 @@ export const DAppPage = ({
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [transactionPhase, setTransactionPhase] =
     useState<TransactionPhase>("idle");
+
+  // Auto-dismiss success overlay after 3 seconds
+  const dismissSuccess = useCallback(() => {
+    setTransactionPhase("idle");
+  }, []);
+
+  useEffect(() => {
+    if (transactionPhase === "success") {
+      const timer = setTimeout(dismissSuccess, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [transactionPhase, dismissSuccess]);
   const [displayAmount, setDisplayAmount] = useState<number>(0);
 
   // Custom modal state
@@ -297,11 +311,7 @@ export const DAppPage = ({
           setTransactionPhase("processing");
           setDisplayAmount(amount);
           try {
-            await onWithdrawToWallet(
-              publicKey,
-              amount,
-              setTransactionPhase,
-            );
+            await onWithdrawToWallet(publicKey, amount, setTransactionPhase);
           } catch (e) {
             setTransactionPhase("idle");
             throw e;
@@ -1650,7 +1660,8 @@ export const DAppPage = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center"
+            className="absolute inset-0 bg-black/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center cursor-pointer"
+            onClick={dismissSuccess}
           >
             <div className="relative w-28 h-28">
               {[0, 1, 2].map((i) => (

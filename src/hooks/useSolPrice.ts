@@ -14,10 +14,9 @@ interface PricesData {
   lastUpdated: number;
 }
 
-// DexScreener API - Get SOL price from SOL/USDC pair on Raydium
-// SOL token address on Solana
-const SOL_TOKEN_ADDRESS = "So11111111111111111111111111111111111111112";
-const DEXSCREENER_API_URL = `https://api.dexscreener.com/latest/dex/tokens/${SOL_TOKEN_ADDRESS}`;
+// CoinGecko API — matches mobile app
+const COINGECKO_IDS = "solana,usd-coin,tether,usd1-wlfi";
+const COINGECKO_API_URL = `https://api.coingecko.com/api/v3/simple/price?ids=${COINGECKO_IDS}&vs_currencies=usd&include_24hr_change=true`;
 
 // Cache price data for 60 seconds to avoid rate limiting
 const CACHE_DURATION_MS = 60 * 1000;
@@ -36,49 +35,36 @@ const fetchPrices = async (): Promise<PricesData> => {
   }
 
   try {
-    const response = await fetch(DEXSCREENER_API_URL);
+    const response = await fetch(COINGECKO_API_URL);
     if (!response.ok) {
-      throw new Error("Failed to fetch prices from DexScreener");
+      throw new Error("Failed to fetch prices from CoinGecko");
     }
 
     const data = await response.json();
 
-    // Find the best SOL/USDC pair (highest liquidity)
-    const pairs = data.pairs || [];
-    const solUsdcPair = pairs
-      .filter(
-        (p: any) =>
-          p.quoteToken?.symbol === "USDC" ||
-          p.quoteToken?.symbol === "USDT" ||
-          p.baseToken?.symbol === "USDC" ||
-          p.baseToken?.symbol === "USDT"
-      )
-      .sort(
-        (a: any, b: any) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0)
-      )[0];
-
-    const solPrice = solUsdcPair ? parseFloat(solUsdcPair.priceUsd) : 0;
-    const solPriceChange = solUsdcPair?.priceChange?.h24 || 0;
+    const solData = data["solana"] || {};
+    const usdcData = data["usd-coin"] || {};
+    const usdtData = data["tether"] || {};
+    const usd1Data = data["usd1-wlfi"] || {};
 
     cachedData = {
       sol: {
-        price: solPrice,
-        priceChange24h: solPriceChange,
+        price: solData.usd ?? 0,
+        priceChange24h: solData.usd_24h_change ?? 0,
       },
-      // Stablecoins are always ~$1
       usdc: {
-        price: 1,
-        priceChange24h: 0,
+        price: usdcData.usd ?? 1,
+        priceChange24h: usdcData.usd_24h_change ?? 0,
       },
       usdt: {
-        price: 1,
-        priceChange24h: 0,
+        price: usdtData.usd ?? 1,
+        priceChange24h: usdtData.usd_24h_change ?? 0,
       },
       usd1: {
-        price: 1,
-        priceChange24h: 0,
+        price: usd1Data.usd ?? 1,
+        priceChange24h: usd1Data.usd_24h_change ?? 0,
       },
-      // VEILO fixed price
+      // VEILO — no CoinGecko listing yet
       veilo: {
         price: 0.003,
         priceChange24h: 0,
@@ -89,7 +75,7 @@ const fetchPrices = async (): Promise<PricesData> => {
 
     return cachedData;
   } catch (error) {
-    console.error("Error fetching prices from DexScreener:", error);
+    console.error("Error fetching prices from CoinGecko:", error);
     // Return fallback data if fetch fails
     if (cachedData) {
       return cachedData;
@@ -104,6 +90,66 @@ const fetchPrices = async (): Promise<PricesData> => {
       lastUpdated: now,
     };
   }
+};
+
+// Formatting utilities — matches mobile app
+export const formatCurrency = (amount: number, decimals = 2): string => {
+  return `$${amount.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
+};
+
+export const formatTokenAmount = (amount: number, decimals = 4): string => {
+  if (amount === 0) return "0";
+  if (amount > 0 && amount < 0.0001) return "<0.0001";
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals,
+  });
+};
+
+export const formatPercentage = (value: number): string => {
+  const sign = value >= 0 ? "+" : "";
+  return `${sign}${value.toFixed(2)}%`;
+};
+
+// Weighted-average portfolio 24h change — matches mobile app
+export const calculateWeightedPortfolioChange = (
+  tokenBalances: {
+    sol: number;
+    usdc: number;
+    usdt: number;
+    usd1: number;
+    veilo: number;
+  },
+  prices: {
+    sol: TokenPriceData;
+    usdc: TokenPriceData;
+    usdt: TokenPriceData;
+    usd1: TokenPriceData;
+    veilo: TokenPriceData;
+  },
+): number => {
+  const values = {
+    sol: tokenBalances.sol * (prices.sol?.price || 0),
+    usdc: tokenBalances.usdc * (prices.usdc?.price || 0),
+    usdt: tokenBalances.usdt * (prices.usdt?.price || 0),
+    usd1: tokenBalances.usd1 * (prices.usd1?.price || 0),
+    veilo: tokenBalances.veilo * (prices.veilo?.price || 0),
+  };
+  const totalValue = Object.values(values).reduce((s, v) => s + v, 0);
+  if (totalValue === 0) return 0;
+
+  const weightedChange =
+    (values.sol * (prices.sol?.priceChange24h || 0) +
+      values.usdc * (prices.usdc?.priceChange24h || 0) +
+      values.usdt * (prices.usdt?.priceChange24h || 0) +
+      values.usd1 * (prices.usd1?.priceChange24h || 0) +
+      values.veilo * (prices.veilo?.priceChange24h || 0)) /
+    totalValue;
+
+  return weightedChange;
 };
 
 const HISTORY_STORAGE_KEY = "veilo_portfolio_history_v2";
@@ -149,10 +195,7 @@ const savePortfolioSnapshot = async (valueUsd: number): Promise<void> => {
   const lastSnapshot = history[history.length - 1];
 
   // Only save if enough time has passed or history is empty
-  if (
-    !lastSnapshot ||
-    now - lastSnapshot.timestamp >= SNAPSHOT_INTERVAL_MS
-  ) {
+  if (!lastSnapshot || now - lastSnapshot.timestamp >= SNAPSHOT_INTERVAL_MS) {
     const newSnapshot: PortfolioSnapshot = {
       timestamp: now,
       valueUsd,
@@ -160,7 +203,7 @@ const savePortfolioSnapshot = async (valueUsd: number): Promise<void> => {
 
     // Add new snapshot and filter out old ones
     const updatedHistory = [...history, newSnapshot].filter(
-      (s) => now - s.timestamp <= HISTORY_RETENTION_MS
+      (s) => now - s.timestamp <= HISTORY_RETENTION_MS,
     );
 
     await saveHistory(updatedHistory);
@@ -169,11 +212,11 @@ const savePortfolioSnapshot = async (valueUsd: number): Promise<void> => {
 
 // Calculate portfolio-based 24h change
 export const calculatePortfolio24hChange = async (
-  currentValueUsd: number
+  currentValueUsd: number,
 ): Promise<number> => {
   const now = Date.now();
   const oneDayMs = 24 * 60 * 60 * 1000;
-  
+
   // Save current state first
   if (currentValueUsd > 0) {
     await savePortfolioSnapshot(currentValueUsd);
@@ -183,14 +226,14 @@ export const calculatePortfolio24hChange = async (
   if (history.length === 0) return 0;
 
   // Find snapshot closest to 24h ago
-  // We want something between 23h and 25h ago preferably, 
+  // We want something between 23h and 25h ago preferably,
   // but logically we just want the point that is closest to (now - 24h)
   const targetTime = now - oneDayMs;
-  
+
   // If oldest data is less than 6 hours old, show 0 change or handle differently?
   // For now, if we don't have data older than 1 hour, we return 0. (avoid noise)
   if (now - history[0].timestamp < 60 * 60 * 1000) {
-    return 0; 
+    return 0;
   }
 
   // Find the snapshot with timestamp closest to targetTime
@@ -208,11 +251,13 @@ export const calculatePortfolio24hChange = async (
   // Calculate change
   if (closestSnapshot.valueUsd > 0) {
     // If the closest snapshot is actually quite recent (e.g. user just started 2h ago),
-    // calculating "24h change" is misleading. 
+    // calculating "24h change" is misleading.
     // Ideally we extrapolate or just show change "since start".
     // Let's rely on the closest point we have.
     const change =
-      ((currentValueUsd - closestSnapshot.valueUsd) / closestSnapshot.valueUsd) * 100;
+      ((currentValueUsd - closestSnapshot.valueUsd) /
+        closestSnapshot.valueUsd) *
+      100;
     return change;
   }
 
