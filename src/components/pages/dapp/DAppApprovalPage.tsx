@@ -15,6 +15,7 @@ interface DAppApprovalPageProps {
   onApprove: () => void;
   onReject: () => void;
   isProcessing?: boolean;
+  onNavigateToDApp?: () => void;
 }
 
 import { CyberButton } from "../../common/ui/CyberButton";
@@ -25,11 +26,13 @@ export const DAppApprovalPage = ({
   onApprove,
   onReject,
   isProcessing = false,
+  onNavigateToDApp,
 }: DAppApprovalPageProps) => {
   const [connectingWallet, setConnectingWallet] = useState<{
     name: string;
     publicKey: string;
   } | null>(null);
+  const [hasDappWallet, setHasDappWallet] = useState<boolean | null>(null);
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
   const [faviconError, setFaviconError] = useState(false);
 
@@ -37,22 +40,25 @@ export const DAppApprovalPage = ({
     const fetchConnectingWallet = async () => {
       try {
         const storedWallet = await loadWallet();
-        if (!storedWallet) return;
-
-        // Default to main wallet
-        let name = "Main Account";
-        let publicKey = storedWallet.publicKey;
+        if (!storedWallet) {
+          setHasDappWallet(false);
+          return;
+        }
 
         // Check for DApp wallets
         const dappWallets = await getDappWallets();
         if (dappWallets.length > 0) {
-          name = dappWallets[0].name;
-          publicKey = dappWallets[0].publicKey;
+          setHasDappWallet(true);
+          setConnectingWallet({
+            name: dappWallets[0].name,
+            publicKey: dappWallets[0].publicKey,
+          });
+        } else {
+          setHasDappWallet(false);
         }
-
-        setConnectingWallet({ name, publicKey });
       } catch (error) {
         console.error("Failed to load connecting wallet info", error);
+        setHasDappWallet(false);
       }
     };
 
@@ -123,12 +129,102 @@ export const DAppApprovalPage = ({
     return `${addr.slice(0, 4)}...${addr.slice(-4)}`;
   };
 
+  // Show "Create DApp Wallet" prompt when no dApp wallet exists
+  if (hasDappWallet === false && request.method === "connect") {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="h-screen w-full bg-black flex flex-col font-sans"
+      >
+        <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
+
+        {/* Header */}
+        <div className="relative px-6 py-4 border-b border-white/10 bg-black/40 backdrop-blur-md">
+          <h1 className="text-base font-medium text-white text-center tracking-tight">
+            Connection Blocked
+          </h1>
+        </div>
+
+        {/* Content */}
+        <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-6">
+          {/* Warning Icon */}
+          <CyberCard
+            className="w-20 h-20 flex items-center justify-center mb-6 !bg-amber-500/5 !border-amber-500/20 !rounded-xl"
+            hoverable={false}
+          >
+            <svg
+              className="w-10 h-10 text-amber-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </CyberCard>
+
+          <h2 className="text-xl font-light text-white mb-3 tracking-tight text-center">
+            DApp Wallet Required
+          </h2>
+
+          <p className="text-sm text-zinc-400 text-center mb-8 max-w-xs leading-relaxed">
+            <span className="text-white font-medium">{displayOrigin}</span>{" "}
+            wants to connect. Create a DApp wallet first.
+          </p>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Buttons */}
+          <div className="flex gap-4 pt-4 w-full max-w-xs">
+            <CyberButton onClick={onReject} variant="secondary" fullWidth>
+              Cancel
+            </CyberButton>
+            <CyberButton
+              onClick={() => {
+                onReject();
+                if (onNavigateToDApp) {
+                  onNavigateToDApp();
+                }
+              }}
+              variant="primary"
+              fullWidth
+            >
+              Create Wallet
+            </CyberButton>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Still loading wallet check
+  if (hasDappWallet === null) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="h-screen w-full bg-black flex items-center justify-center"
+      >
+        <div className="text-zinc-500 text-sm font-mono animate-pulse">
+          Checking wallet...
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="h-screen w-screen bg-black flex flex-col font-sans"
+      className="h-screen w-full bg-black flex flex-col font-sans"
     >
       <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
 

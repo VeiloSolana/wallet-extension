@@ -216,6 +216,7 @@ async function requestUserApproval(
       method,
       params,
       origin,
+      timestamp: Date.now(),
     },
   });
 
@@ -241,7 +242,7 @@ async function requestUserApproval(
     }
 
     // Create a popup window
-    await chrome.windows.create({
+    const popup = await chrome.windows.create({
       url: popupUrl,
       type: "popup",
       width: 400,
@@ -250,6 +251,29 @@ async function requestUserApproval(
       top: top,
       focused: true,
     });
+
+    // Lock popup size — snap back on resize
+    if (popup?.id) {
+      const popupId = popup.id;
+      const onBoundsChanged = (window: chrome.windows.Window) => {
+        if (
+          window.id === popupId &&
+          (window.width !== 400 || window.height !== 640)
+        ) {
+          chrome.windows.update(popupId, { width: 400, height: 640 });
+        }
+      };
+      chrome.windows.onBoundsChanged.addListener(onBoundsChanged);
+
+      // Clean up listener when popup closes
+      const onRemoved = (windowId: number) => {
+        if (windowId === popupId) {
+          chrome.windows.onBoundsChanged.removeListener(onBoundsChanged);
+          chrome.windows.onRemoved.removeListener(onRemoved);
+        }
+      };
+      chrome.windows.onRemoved.addListener(onRemoved);
+    }
   } catch (e) {
     console.error("Failed to open popup window:", e);
   }

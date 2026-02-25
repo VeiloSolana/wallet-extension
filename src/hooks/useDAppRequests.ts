@@ -91,8 +91,33 @@ export function useDAppRequests({
     const checkPendingRequest = () => {
       chrome.storage.local.get(["pendingRequest"], (result) => {
         if (result.pendingRequest) {
-          console.log("📱 Found pending dApp request:", result.pendingRequest);
-          setPendingDAppRequest(result.pendingRequest as PendingDAppRequest);
+          const request = result.pendingRequest as PendingDAppRequest;
+
+          // Check if this request is stale (older than 2 minutes)
+          // Requests are created right before the popup opens, so any
+          // request still lingering from a previous session is stale.
+          const requestAge = Date.now() - (request as any).timestamp;
+          if ((request as any).timestamp && requestAge > 2 * 60 * 1000) {
+            console.log("🗑️ Clearing stale dApp request:", request.id);
+            chrome.storage.local.remove("pendingRequest");
+            setPendingDAppRequest(null);
+            return;
+          }
+
+          // If there's no timestamp (old format), clear it — it's from
+          // before this fix and is definitely stale.
+          if (!(request as any).timestamp) {
+            console.log(
+              "🗑️ Clearing legacy dApp request (no timestamp):",
+              request.id,
+            );
+            chrome.storage.local.remove("pendingRequest");
+            setPendingDAppRequest(null);
+            return;
+          }
+
+          console.log("📱 Found pending dApp request:", request);
+          setPendingDAppRequest(request);
         } else {
           setPendingDAppRequest(null);
         }
@@ -144,15 +169,16 @@ export function useDAppRequests({
       }
 
       if (pendingDAppRequest.method === "connect") {
-        // Try to get DApp wallet first
+        // Require a DApp wallet — do not fall back to the main wallet
         const dappWallets = await getDappWallets();
-        let publicKeyToConnect = storedWallet.publicKey; // Fallback to main wallet
-
-        if (dappWallets.length > 0) {
-          // Use the first DApp wallet
-          publicKeyToConnect = dappWallets[0].publicKey;
-          console.log("Connecting with DApp Wallet:", publicKeyToConnect);
+        if (dappWallets.length === 0) {
+          throw new Error(
+            "No DApp wallet found. Please create one before connecting to dApps.",
+          );
         }
+
+        const publicKeyToConnect = dappWallets[0].publicKey;
+        console.log("Connecting with DApp Wallet:", publicKeyToConnect);
 
         // Get public key as array of bytes
         const publicKeyBytes = Array.from(

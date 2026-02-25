@@ -27,6 +27,7 @@ interface TransactionApprovalPageProps {
   onApprove: () => void;
   onReject: () => void;
   isProcessing?: boolean;
+  onNavigateToDApp?: () => void;
 }
 
 interface SimulationResult {
@@ -71,11 +72,13 @@ export const TransactionApprovalPage = ({
   onApprove,
   onReject,
   isProcessing = false,
+  onNavigateToDApp,
 }: TransactionApprovalPageProps) => {
   const [connectingWallet, setConnectingWallet] = useState<{
     name: string;
     publicKey: string;
   } | null>(null);
+  const [hasDappWallet, setHasDappWallet] = useState<boolean | null>(null);
   const [simulation, setSimulation] = useState<SimulationResult | null>(null);
   const [isSimulating, setIsSimulating] = useState(true);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -134,16 +137,22 @@ export const TransactionApprovalPage = ({
     const init = async () => {
       try {
         const storedWallet = await loadWallet();
-        if (!storedWallet) return;
+        if (!storedWallet) {
+          setHasDappWallet(false);
+          setIsSimulating(false);
+          return;
+        }
 
         const dappWallets = await getDappWallets();
-        let name = "Main Account";
-        let publicKey = storedWallet.publicKey;
-
-        if (dappWallets.length > 0) {
-          name = dappWallets[0].name;
-          publicKey = dappWallets[0].publicKey;
+        if (dappWallets.length === 0) {
+          setHasDappWallet(false);
+          setIsSimulating(false);
+          return;
         }
+
+        setHasDappWallet(true);
+        const name = dappWallets[0].name;
+        const publicKey = dappWallets[0].publicKey;
 
         setConnectingWallet({ name, publicKey });
 
@@ -253,12 +262,94 @@ export const TransactionApprovalPage = ({
     }
   };
 
+  // Show "Create DApp Wallet" prompt when no dApp wallet exists
+  if (hasDappWallet === false) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="h-screen w-full bg-black flex flex-col font-sans"
+      >
+        <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
+
+        <div className="relative px-6 py-4 border-b border-white/10 bg-black/40 backdrop-blur-md">
+          <h1 className="text-base font-medium text-white text-center tracking-tight">
+            Transaction Blocked
+          </h1>
+        </div>
+
+        <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-6">
+          <div className="w-20 h-20 flex items-center justify-center mb-6 bg-red-500/5 border border-red-500/20 rounded-xl">
+            <svg
+              className="w-10 h-10 text-red-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+              />
+            </svg>
+          </div>
+
+          <h2 className="text-xl font-light text-white mb-3 tracking-tight text-center">
+            DApp Wallet Required
+          </h2>
+
+          <p className="text-sm text-zinc-400 text-center mb-8 max-w-xs leading-relaxed">
+            <span className="text-white font-medium">{displayOrigin}</span>{" "}
+            wants to sign a transaction. Create a DApp wallet first.
+          </p>
+
+          <div className="flex-1" />
+
+          <div className="flex gap-4 pt-4 w-full max-w-xs">
+            <CyberButton onClick={onReject} variant="secondary" fullWidth>
+              Cancel
+            </CyberButton>
+            <CyberButton
+              onClick={() => {
+                onReject();
+                if (onNavigateToDApp) {
+                  onNavigateToDApp();
+                }
+              }}
+              variant="primary"
+              fullWidth
+            >
+              Create Wallet
+            </CyberButton>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Still loading wallet check
+  if (hasDappWallet === null) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="h-screen w-full bg-black flex items-center justify-center"
+      >
+        <div className="text-zinc-500 text-sm font-mono animate-pulse">
+          Checking wallet...
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="h-screen w-screen bg-black flex flex-col font-sans relative"
+      className="h-screen w-full bg-black flex flex-col font-sans relative"
     >
       {/* Grid Background */}
       <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />

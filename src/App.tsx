@@ -661,6 +661,7 @@ function App() {
           onApprove={handleDAppApproval}
           onReject={handleDAppRejection}
           isProcessing={isApprovalProcessing}
+          onNavigateToDApp={() => setActiveTab("dapp")}
         />
       );
     }
@@ -672,6 +673,7 @@ function App() {
         onApprove={handleDAppApproval}
         onReject={handleDAppRejection}
         isProcessing={isApprovalProcessing}
+        onNavigateToDApp={() => setActiveTab("dapp")}
       />
     );
   }

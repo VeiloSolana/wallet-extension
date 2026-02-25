@@ -1,7 +1,9 @@
 /* Veilo Wallet App Styles */
 #root {
-  width: 380px;
-  height: 600px;
+  min-width: 380px;
+  width: 100%;
+  min-height: 600px;
+  height: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
