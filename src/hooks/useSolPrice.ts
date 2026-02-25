@@ -18,13 +18,54 @@ interface PricesData {
 const COINGECKO_IDS = "solana,usd-coin,tether,usd1-wlfi";
 const COINGECKO_API_URL = `https://api.coingecko.com/api/v3/simple/price?ids=${COINGECKO_IDS}&vs_currencies=usd&include_24hr_change=true`;
 
-// Cache price data for 60 seconds to avoid rate limiting
-const CACHE_DURATION_MS = 60 * 1000;
+// Cache price data for 2 minutes to avoid rate limiting
+const CACHE_DURATION_MS = 2 * 60 * 1000;
+const PRICES_STORAGE_KEY = "veilo_cached_prices_v1";
 
 let cachedData: PricesData | null = null;
 let lastFetchTime = 0;
 
 const defaultPriceData: TokenPriceData = { price: 0, priceChange24h: 0 };
+
+const ULTIMATE_FALLBACK: PricesData = {
+  sol: defaultPriceData,
+  usdc: { price: 1, priceChange24h: 0 },
+  usdt: { price: 1, priceChange24h: 0 },
+  usd1: { price: 1, priceChange24h: 0 },
+  veilo: { price: 0.003, priceChange24h: 0 },
+  lastUpdated: 0,
+};
+
+const isExtensionStorage = () =>
+  typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
+
+// Persist prices so they survive page/popup reloads
+const persistPrices = async (data: PricesData) => {
+  try {
+    if (isExtensionStorage()) {
+      await chrome.storage.local.set({ [PRICES_STORAGE_KEY]: data });
+    } else {
+      localStorage.setItem(PRICES_STORAGE_KEY, JSON.stringify(data));
+    }
+  } catch {
+    // silent
+  }
+};
+
+// Load last-known prices from storage
+const loadPersistedPrices = async (): Promise<PricesData | null> => {
+  try {
+    if (isExtensionStorage()) {
+      const result = await chrome.storage.local.get([PRICES_STORAGE_KEY]);
+      return (result[PRICES_STORAGE_KEY] as PricesData) || null;
+    } else {
+      const stored = localStorage.getItem(PRICES_STORAGE_KEY);
+      return stored ? (JSON.parse(stored) as PricesData) : null;
+    }
+  } catch {
+    return null;
+  }
+};
 
 const fetchPrices = async (): Promise<PricesData> => {
   const now = Date.now();
@@ -34,13 +75,30 @@ const fetchPrices = async (): Promise<PricesData> => {
     return cachedData;
   }
 
+  // On first call, hydrate from storage so we never start with zeros
+  if (!cachedData) {
+    const persisted = await loadPersistedPrices();
+    if (persisted) {
+      cachedData = persisted;
+      if (now - persisted.lastUpdated < CACHE_DURATION_MS) {
+        lastFetchTime = persisted.lastUpdated;
+        return cachedData;
+      }
+    }
+  }
+
   try {
     const response = await fetch(COINGECKO_API_URL);
     if (!response.ok) {
-      throw new Error("Failed to fetch prices from CoinGecko");
+      throw new Error(`CoinGecko returned ${response.status}`);
     }
 
     const data = await response.json();
+
+    // Guard against 429 / error payloads that return JSON but no price keys
+    if (!data["solana"] && !data["usd-coin"]) {
+      throw new Error("CoinGecko returned empty price data");
+    }
 
     const solData = data["solana"] || {};
     const usdcData = data["usd-coin"] || {};
@@ -73,22 +131,22 @@ const fetchPrices = async (): Promise<PricesData> => {
     };
     lastFetchTime = now;
 
+    // Persist good data for next popup open
+    persistPrices(cachedData);
+
     return cachedData;
   } catch (error) {
     console.error("Error fetching prices from CoinGecko:", error);
-    // Return fallback data if fetch fails
+    // Return stale in-memory or persisted cache — never zeros
     if (cachedData) {
       return cachedData;
     }
-    // Ultimate fallback
-    return {
-      sol: defaultPriceData,
-      usdc: { price: 1, priceChange24h: 0 },
-      usdt: { price: 1, priceChange24h: 0 },
-      usd1: { price: 1, priceChange24h: 0 },
-      veilo: { price: 0.003, priceChange24h: 0 },
-      lastUpdated: now,
-    };
+    const persisted = await loadPersistedPrices();
+    if (persisted) {
+      cachedData = persisted;
+      return persisted;
+    }
+    return ULTIMATE_FALLBACK;
   }
 };
 
@@ -161,15 +219,9 @@ interface PortfolioSnapshot {
   valueUsd: number;
 }
 
-const isExtension = () => {
-  return (
-    typeof chrome !== "undefined" && chrome.storage && chrome.storage.local
-  );
-};
-
 const getHistory = async (): Promise<PortfolioSnapshot[]> => {
   try {
-    if (isExtension()) {
+    if (isExtensionStorage()) {
       const result = await chrome.storage.local.get([HISTORY_STORAGE_KEY]);
       return (result[HISTORY_STORAGE_KEY] as PortfolioSnapshot[]) || [];
     } else {
@@ -182,7 +234,7 @@ const getHistory = async (): Promise<PortfolioSnapshot[]> => {
 };
 
 const saveHistory = async (history: PortfolioSnapshot[]) => {
-  if (isExtension()) {
+  if (isExtensionStorage()) {
     await chrome.storage.local.set({ [HISTORY_STORAGE_KEY]: history });
   } else {
     localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
