@@ -429,6 +429,70 @@ export async function submitPrivateTransfer(
   }
 }
 
+// =============================================================================
+// Private Swap
+// =============================================================================
+
+export interface PrivateSwapRequest {
+  notes: Note[];
+  sourceMintAddress: string;
+  destMintAddress: string;
+  swapAmountRaw: string;
+  minAmountOut: string;
+  slippageBps: number;
+  userPublicKey: string;
+  veiloPublicKey: string;
+}
+
+export interface PrivateSwapResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    txSignature: string;
+    swapAmountRaw: string;
+    outputAmount: string;
+    minAmountOut: string;
+    changeAmount: string;
+  };
+}
+
+export async function submitPrivateSwap(
+  data: PrivateSwapRequest,
+): Promise<PrivateSwapResponse> {
+  try {
+    const minifiedData = {
+      ...data,
+      timestamp: Date.now(),
+      nonce: crypto.randomBytes(32).toString("hex"),
+    };
+    const encryptedPayload = encryptForRelayer(minifiedData);
+
+    const response = await fetch(
+      `${RELAYER_API_URL}/api/transact/private-swap`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ encryptedPayload }),
+      },
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      const errorMessage =
+        result.error || result.message || "Private swap request failed";
+      throw new Error(errorMessage);
+    }
+
+    return result;
+  } catch (error: unknown) {
+    console.error("Error submitting private swap:", error);
+    throw error;
+  }
+}
+
 export interface VeiloPublicKeyResponse {
   success: boolean;
   username: string;
