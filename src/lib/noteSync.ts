@@ -36,8 +36,6 @@ export async function syncNotesFromRelayer(
 ) {
   const poseidon = await buildPoseidon();
   try {
-    console.log("📡 Syncing notes from relayer...");
-
     // 1. Query notes by wallet public key
     const response = await queryEncryptedNotes({
       walletPublicKey: publicKey,
@@ -47,8 +45,6 @@ export async function syncNotesFromRelayer(
     if (response.notes.length === 0) {
       return 0;
     }
-
-    console.log(`📬 Found ${response.notes.length} candidate notes.`);
 
     // Load existing notes ONCE to avoid O(n*m) lookups
     const existingNotes = await noteManager.getAllNotes();
@@ -155,9 +151,6 @@ export async function syncNotesFromRelayer(
     let savedIds: string[] = [];
     if (notesToSave.length > 0) {
       savedIds = await noteManager.saveNotesBatch(notesToSave);
-      console.log(`✅ Sync complete. ${savedIds.length} new notes saved.`);
-    } else {
-      console.log("✅ Sync complete. No new notes.");
     }
 
     // Update last sync timestamp

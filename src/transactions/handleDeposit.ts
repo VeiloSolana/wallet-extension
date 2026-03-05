@@ -99,17 +99,16 @@ function encodeTreeId(treeId: number): Buffer {
   return buffer;
 }
 
+// Nullifier markers are global (no tree_id) to prevent cross-tree double-spend
 function getNullifierMarkerPda(
   programId: PublicKey,
   mintAddress: PublicKey,
-  treeId: number,
   nullifier: Uint8Array,
 ): PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
     [
       Buffer.from("nullifier_v3"),
       mintAddress.toBuffer(),
-      encodeTreeId(treeId),
       Buffer.from(nullifier),
     ],
     programId,
@@ -367,17 +366,6 @@ export const handleDeposit = async ({
   mintAddress = SOL_MINT,
   userTokenAccount,
 }: DepositParams): Promise<DepositNote> => {
-  console.log("\n🔵 ========== DEPOSIT PROCESS STARTED ==========");
-  console.log("📊 Deposit Parameters:", {
-    depositor: depositor.publicKey.toBase58(),
-    depositAmount: depositAmount.toString(),
-    recipientPublicKey: recipientPublicKey.toString(),
-    recipientWallet: pubKey.toBase58(),
-    mintAddress: mintAddress.toBase58(),
-    isToken: !mintAddress.equals(SOL_MINT),
-    userTokenAccount: userTokenAccount?.toBase58() || "N/A",
-  });
-
   const program = getProgram(connection, depositor);
   const provider = program.provider;
   const isToken = !mintAddress.equals(SOL_MINT);
@@ -566,7 +554,6 @@ export const handleDeposit = async ({
   const zeroPathElements = zeros
     .slice(0, 22)
     .map((z: Uint8Array) => bytesToBigIntBE(z));
-  console.log("🔐 Generating ZK proof...");
   const proof = await generateTransactionProof({
     root: onchainRoot,
     publicAmount: depositAmount,
@@ -595,24 +582,18 @@ export const handleDeposit = async ({
     outputBlindings: [bobBlinding, dummyOutputBlinding],
   });
 
-  console.log("✅ ZK proof generated successfully");
-
   const nullifierMarker0 = getNullifierMarkerPda(
     program.programId,
     mintAddress,
-    inputTreeId,
     dummyNullifier0,
   );
   const nullifierMarker1 = getNullifierMarkerPda(
     program.programId,
     mintAddress,
-    inputTreeId,
     dummyNullifier1,
   );
 
   const publicAmount = new BN(depositAmount.toString());
-
-  console.log("📝 Building transaction...");
 
   try {
     const tx = await program.methods
@@ -627,6 +608,7 @@ export const handleDeposit = async ({
         Array.from(dummyNullifier1),
         Array.from(bobCommitment),
         Array.from(dummyOutputCommitment),
+        new BN(9999999999), // deadline (far future)
         extData,
         proof,
       )
@@ -666,9 +648,6 @@ export const handleDeposit = async ({
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = depositor.publicKey;
 
-    console.log("✅ Transaction built successfully");
-    console.log("✍️  Signing transaction...");
-
     // Sign the transaction first so we can extract the signature
     const signedTransaction = await depositor.signTransaction(transaction);
     const rawTransaction = signedTransaction.serialize();
@@ -679,9 +658,6 @@ export const handleDeposit = async ({
       throw new Error("Failed to get transaction signature");
     }
     const signature = bs58.encode(txSignature.signature);
-
-    console.log("✅ Transaction signed, signature:", signature);
-    console.log("📤 Sending transaction to network...");
 
     try {
       // Send the raw transaction with skipPreflight: true to prevent "already processed" errors
@@ -706,8 +682,6 @@ export const handleDeposit = async ({
           `Transaction failed: ${JSON.stringify(confirmation.value.err)}`,
         );
       }
-
-      console.log("✅ Transaction confirmed on-chain!");
     } catch (sendError) {
       // Handle "already processed" error - the transaction actually succeeded
       if (
@@ -721,16 +695,13 @@ export const handleDeposit = async ({
     }
 
     // Insert commitments into offchain tree AFTER successful transaction
-    console.log("🌳 Updating merkle tree with new commitments...");
     offchainTree.insert(bobCommitment);
     offchainTree.insert(dummyOutputCommitment);
-    console.log("✅ Merkle tree updated");
 
     const signatureStatus = await connection.getSignatureStatus(signature);
     const blockHeight = signatureStatus?.value?.slot || 0;
     const bobPublicKeyBytes = pubKey.toBytes();
 
-    console.log("🔒 Creating encrypted note...");
     const encryptedNote = createEncryptedNoteBlob(bobPublicKeyBytes, {
       blinding: bobBlinding,
       leafIndex: bobLeafIndex,
@@ -757,21 +728,12 @@ export const handleDeposit = async ({
       recipientWalletPublicKey: pubKey.toBase58(),
     };
 
-    console.log("✅ Encrypted note created");
-    console.log("💾 Saving note to relayer...", {
-      commitment: relayerPayload.commitment.slice(0, 16) + "...",
-      leafIndex: bobLeafIndex,
-      mintAddress: mintAddress.toBase58(),
-      recipientWallet: pubKey.toBase58(),
-    });
-
     try {
       const response = await saveEncryptedNoteWithRetry(relayerPayload);
 
       if (!response.success) {
         throw new Error(response.message || "Failed to save note");
       }
-      console.log("✅ Note saved to relayer successfully!");
     } catch (saveError) {
       // Add to persistent retry queue for background processing
       console.warn(
@@ -795,30 +757,14 @@ export const handleDeposit = async ({
       treeId: outputTreeId,
     };
 
-    console.log("\n✅ ========== DEPOSIT COMPLETED SUCCESSFULLY ==========");
-    console.log("📦 Note details:", {
-      amount: depositAmount.toString(),
-      leafIndex: bobLeafIndex,
-      treeId: outputTreeId,
-      mintAddress: mintAddress.toBase58(),
-      txSignature: signature,
-    });
-    console.log("🔵 =================================================\n");
-
     return noteToSave;
   } catch (e) {
-    console.error("\n❌ ========== DEPOSIT FAILED ==========");
-    console.error("💥 Error details:", e);
     if (e instanceof SendTransactionError) {
       const logs = await e.getLogs(provider.connection);
-      console.error("📜 Transaction Logs:", logs);
-    } else if (e instanceof Error) {
-      console.error("📋 Error message:", e.message);
-      console.error("📋 Error stack:", e.stack);
+      console.error("Deposit failed:", logs);
     } else {
-      console.error("❓ Unknown error:", e);
+      console.error("Deposit failed:", e);
     }
-    console.error("🔴 =======================================\n");
     throw e;
   }
 };

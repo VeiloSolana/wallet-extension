@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/privacy_pool.json`.
  */
 export type PrivacyPool = {
-  address: "6Cq2rfH7hcreu6Lz4LFoVvZC37Q5uzNq1cStuTnjFdBU";
+  address: "GYy4kM6GHhpgLCUscuABbzkD2ZbJ2fneYryaZ6Ch7fFU";
   metadata: {
     name: "privacyPool";
     version: "0.1.0";
@@ -41,13 +41,13 @@ export type PrivacyPool = {
                   103,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
                 kind: "arg";
                 path: "mintAddress";
-              }
+              },
             ];
           };
         },
@@ -78,7 +78,7 @@ export type PrivacyPool = {
                   101,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
@@ -88,19 +88,22 @@ export type PrivacyPool = {
               {
                 kind: "arg";
                 path: "treeId";
-              }
+              },
             ];
           };
         },
         {
-          name: "payer";
+          name: "relayer";
+          docs: [
+            "Relayer who can add trees (must be registered in config.relayers)",
+          ];
           writable: true;
           signer: true;
         },
         {
           name: "systemProgram";
           address: "11111111111111111111111111111111";
-        }
+        },
       ];
       args: [
         {
@@ -110,7 +113,7 @@ export type PrivacyPool = {
         {
           name: "treeId";
           type: "u16";
-        }
+        },
       ];
     },
     {
@@ -141,22 +144,25 @@ export type PrivacyPool = {
                   103,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
                 kind: "arg";
                 path: "mintAddress";
-              }
+              },
             ];
           };
         },
         {
           name: "admin";
-          writable: true;
+          docs: [
+            "has_one = admin ensures this matches config.admin.",
+            "When using Squads, the vault PDA signs after multisig approval.",
+          ];
           signer: true;
           relations: ["config"];
-        }
+        },
       ];
       args: [
         {
@@ -166,7 +172,7 @@ export type PrivacyPool = {
         {
           name: "newRelayer";
           type: "pubkey";
-        }
+        },
       ];
     },
     {
@@ -197,13 +203,13 @@ export type PrivacyPool = {
                   103,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
                 kind: "arg";
                 path: "mintAddress";
-              }
+              },
             ];
           };
         },
@@ -230,13 +236,13 @@ export type PrivacyPool = {
                   116,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
                 kind: "arg";
                 path: "mintAddress";
-              }
+              },
             ];
           };
         },
@@ -268,7 +274,7 @@ export type PrivacyPool = {
                   101,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
@@ -278,7 +284,7 @@ export type PrivacyPool = {
               {
                 kind: "const";
                 value: [0, 0];
-              }
+              },
             ];
           };
         },
@@ -310,26 +316,36 @@ export type PrivacyPool = {
                   115,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
                 kind: "arg";
                 path: "mintAddress";
-              }
+              },
             ];
           };
         },
         {
           name: "admin";
+          docs: [
+            "When using Squads multisig, this should be the vault PDA.",
+            "Squads will sign this account after multisig approval.",
+          ];
+          signer: true;
+        },
+        {
+          name: "payer";
+          docs: [
+            "Transaction fee payer (can be anyone, separate from admin authority)",
+          ];
           writable: true;
           signer: true;
-          address: "H6QRuiRsguQgpRSJpP79h75EfDYRS2wN78oj7a4auZtP";
         },
         {
           name: "systemProgram";
           address: "11111111111111111111111111111111";
-        }
+        },
       ];
       args: [
         {
@@ -363,7 +379,7 @@ export type PrivacyPool = {
           type: {
             option: "u64";
           };
-        }
+        },
       ];
     },
     {
@@ -393,22 +409,29 @@ export type PrivacyPool = {
                   103,
                   95,
                   118,
-                  49
+                  49,
                 ];
-              }
+              },
             ];
           };
         },
         {
           name: "admin";
+          docs: ["When using Squads multisig, this should be the vault PDA."];
+          signer: true;
+        },
+        {
+          name: "payer";
+          docs: [
+            "Transaction fee payer (can be anyone, separate from admin authority)",
+          ];
           writable: true;
           signer: true;
-          address: "H6QRuiRsguQgpRSJpP79h75EfDYRS2wN78oj7a4auZtP";
         },
         {
           name: "systemProgram";
           address: "11111111111111111111111111111111";
-        }
+        },
       ];
       args: [];
     },
@@ -423,7 +446,7 @@ export type PrivacyPool = {
         "- input_tree_id: Tree containing input notes (for root validation)",
         "- output_tree_id: Tree for new output commitments",
         "- Can be the same tree or different trees",
-        "- Allows withdrawals even when input tree is full (outputs go to new tree)"
+        "- Allows withdrawals even when input tree is full (outputs go to new tree)",
       ];
       discriminator: [217, 149, 130, 143, 221, 52, 252, 119];
       accounts: [
@@ -451,13 +474,13 @@ export type PrivacyPool = {
                   103,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
                 kind: "arg";
                 path: "mintAddress";
-              }
+              },
             ];
           };
         },
@@ -483,9 +506,9 @@ export type PrivacyPool = {
                   103,
                   95,
                   118,
-                  49
+                  49,
                 ];
-              }
+              },
             ];
           };
         },
@@ -512,20 +535,20 @@ export type PrivacyPool = {
                   116,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
                 kind: "arg";
                 path: "mintAddress";
-              }
+              },
             ];
           };
         },
         {
           name: "inputTree";
           docs: [
-            "Input tree - where input notes came from (for root validation)"
+            "Input tree - where input notes came from (for root validation)",
           ];
           writable: true;
           pda: {
@@ -552,7 +575,7 @@ export type PrivacyPool = {
                   101,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
@@ -562,7 +585,7 @@ export type PrivacyPool = {
               {
                 kind: "arg";
                 path: "inputTreeId";
-              }
+              },
             ];
           };
         },
@@ -594,7 +617,7 @@ export type PrivacyPool = {
                   101,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
@@ -604,7 +627,7 @@ export type PrivacyPool = {
               {
                 kind: "arg";
                 path: "outputTreeId";
-              }
+              },
             ];
           };
         },
@@ -636,13 +659,13 @@ export type PrivacyPool = {
                   115,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
                 kind: "arg";
                 path: "mintAddress";
-              }
+              },
             ];
           };
         },
@@ -650,7 +673,8 @@ export type PrivacyPool = {
           name: "nullifierMarker0";
           docs: [
             "First nullifier marker (must not exist for withdrawals - ensures nullifier is fresh)",
-            "For deposits (public_amount > 0), this should be the zero nullifier marker (reusable)"
+            "For deposits (public_amount > 0), this should be the zero nullifier marker (reusable)",
+            "NOTE: Nullifier markers are global (no tree_id) to prevent cross-tree double-spend",
           ];
           writable: true;
           pda: {
@@ -669,7 +693,7 @@ export type PrivacyPool = {
                   114,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
@@ -678,12 +702,8 @@ export type PrivacyPool = {
               },
               {
                 kind: "arg";
-                path: "inputTreeId";
-              },
-              {
-                kind: "arg";
                 path: "inputNullifier0";
-              }
+              },
             ];
           };
         },
@@ -691,7 +711,8 @@ export type PrivacyPool = {
           name: "nullifierMarker1";
           docs: [
             "Second nullifier marker (must not exist for withdrawals - ensures nullifier is fresh)",
-            "For deposits (public_amount > 0), this should be the zero nullifier marker (reusable)"
+            "For deposits (public_amount > 0), this should be the zero nullifier marker (reusable)",
+            "NOTE: Nullifier markers are global (no tree_id) to prevent cross-tree double-spend",
           ];
           writable: true;
           pda: {
@@ -710,7 +731,7 @@ export type PrivacyPool = {
                   114,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
@@ -719,12 +740,8 @@ export type PrivacyPool = {
               },
               {
                 kind: "arg";
-                path: "inputTreeId";
-              },
-              {
-                kind: "arg";
                 path: "inputNullifier1";
-              }
+              },
             ];
           };
         },
@@ -766,7 +783,7 @@ export type PrivacyPool = {
         {
           name: "systemProgram";
           address: "11111111111111111111111111111111";
-        }
+        },
       ];
       args: [
         {
@@ -822,6 +839,10 @@ export type PrivacyPool = {
           };
         },
         {
+          name: "deadline";
+          type: "i64";
+        },
+        {
           name: "extData";
           type: {
             defined: {
@@ -836,7 +857,744 @@ export type PrivacyPool = {
               name: "transactionProof";
             };
           };
-        }
+        },
+      ];
+    },
+    {
+      name: "transactSwap";
+      docs: [
+        "Atomic cross-pool private swap",
+        "Consumes notes from source pool, swaps via Raydium CPMM (no Serum), creates notes in dest pool",
+        "All in one transaction - see swap.rs for implementation details",
+      ];
+      discriminator: [36, 133, 230, 184, 198, 10, 202, 249];
+      accounts: [
+        {
+          name: "sourceConfig";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  112,
+                  114,
+                  105,
+                  118,
+                  97,
+                  99,
+                  121,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  95,
+                  118,
+                  51,
+                ];
+              },
+              {
+                kind: "arg";
+                path: "sourceMint";
+              },
+            ];
+          };
+        },
+        {
+          name: "globalConfig";
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  95,
+                  118,
+                  49,
+                ];
+              },
+            ];
+          };
+        },
+        {
+          name: "sourceVault";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  112,
+                  114,
+                  105,
+                  118,
+                  97,
+                  99,
+                  121,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  95,
+                  118,
+                  51,
+                ];
+              },
+              {
+                kind: "arg";
+                path: "sourceMint";
+              },
+            ];
+          };
+        },
+        {
+          name: "sourceTree";
+          docs: ["Source tree - where input notes came from"];
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  112,
+                  114,
+                  105,
+                  118,
+                  97,
+                  99,
+                  121,
+                  95,
+                  110,
+                  111,
+                  116,
+                  101,
+                  95,
+                  116,
+                  114,
+                  101,
+                  101,
+                  95,
+                  118,
+                  51,
+                ];
+              },
+              {
+                kind: "arg";
+                path: "sourceMint";
+              },
+              {
+                kind: "arg";
+                path: "sourceTreeId";
+              },
+            ];
+          };
+        },
+        {
+          name: "sourceNullifiers";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  112,
+                  114,
+                  105,
+                  118,
+                  97,
+                  99,
+                  121,
+                  95,
+                  110,
+                  117,
+                  108,
+                  108,
+                  105,
+                  102,
+                  105,
+                  101,
+                  114,
+                  115,
+                  95,
+                  118,
+                  51,
+                ];
+              },
+              {
+                kind: "arg";
+                path: "sourceMint";
+              },
+            ];
+          };
+        },
+        {
+          name: "sourceNullifierMarker0";
+          docs: [
+            "First nullifier marker for source pool",
+            "NOTE: Nullifier markers are global (no tree_id) to prevent cross-tree double-spend",
+          ];
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  110,
+                  117,
+                  108,
+                  108,
+                  105,
+                  102,
+                  105,
+                  101,
+                  114,
+                  95,
+                  118,
+                  51,
+                ];
+              },
+              {
+                kind: "arg";
+                path: "sourceMint";
+              },
+              {
+                kind: "arg";
+                path: "inputNullifier0";
+              },
+            ];
+          };
+        },
+        {
+          name: "sourceNullifierMarker1";
+          docs: [
+            "Second nullifier marker for source pool",
+            "NOTE: Nullifier markers are global (no tree_id) to prevent cross-tree double-spend",
+          ];
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  110,
+                  117,
+                  108,
+                  108,
+                  105,
+                  102,
+                  105,
+                  101,
+                  114,
+                  95,
+                  118,
+                  51,
+                ];
+              },
+              {
+                kind: "arg";
+                path: "sourceMint";
+              },
+              {
+                kind: "arg";
+                path: "inputNullifier1";
+              },
+            ];
+          };
+        },
+        {
+          name: "sourceVaultTokenAccount";
+          docs: [
+            "Source vault's token account — must be the canonical ATA to prevent non-canonical account abuse (AUDIT-003)",
+          ];
+          writable: true;
+        },
+        {
+          name: "sourceMintAccount";
+          docs: ["Source token mint"];
+        },
+        {
+          name: "destConfig";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  112,
+                  114,
+                  105,
+                  118,
+                  97,
+                  99,
+                  121,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103,
+                  95,
+                  118,
+                  51,
+                ];
+              },
+              {
+                kind: "arg";
+                path: "destMint";
+              },
+            ];
+          };
+        },
+        {
+          name: "destVault";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  112,
+                  114,
+                  105,
+                  118,
+                  97,
+                  99,
+                  121,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  95,
+                  118,
+                  51,
+                ];
+              },
+              {
+                kind: "arg";
+                path: "destMint";
+              },
+            ];
+          };
+        },
+        {
+          name: "destTree";
+          docs: [
+            "Destination tree - where output commitments will be inserted",
+          ];
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  112,
+                  114,
+                  105,
+                  118,
+                  97,
+                  99,
+                  121,
+                  95,
+                  110,
+                  111,
+                  116,
+                  101,
+                  95,
+                  116,
+                  114,
+                  101,
+                  101,
+                  95,
+                  118,
+                  51,
+                ];
+              },
+              {
+                kind: "arg";
+                path: "destMint";
+              },
+              {
+                kind: "arg";
+                path: "destTreeId";
+              },
+            ];
+          };
+        },
+        {
+          name: "destVaultTokenAccount";
+          docs: [
+            "Destination vault's token account — must be the canonical ATA to prevent non-canonical account abuse (AUDIT-003)",
+          ];
+          writable: true;
+        },
+        {
+          name: "destMintAccount";
+          docs: ["Destination token mint"];
+        },
+        {
+          name: "executor";
+          docs: [
+            "Executor PDA - holds tokens during swap",
+            "Seeds include source_mint, dest_mint, nullifier, AND relayer key to prevent front-running DoS",
+            "(AUDIT-001: Adding relayer key prevents attackers from pre-creating executor PDAs)",
+          ];
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  115,
+                  119,
+                  97,
+                  112,
+                  95,
+                  101,
+                  120,
+                  101,
+                  99,
+                  117,
+                  116,
+                  111,
+                  114,
+                ];
+              },
+              {
+                kind: "arg";
+                path: "sourceMint";
+              },
+              {
+                kind: "arg";
+                path: "destMint";
+              },
+              {
+                kind: "arg";
+                path: "inputNullifier0";
+              },
+              {
+                kind: "account";
+                path: "relayer";
+              },
+            ];
+          };
+        },
+        {
+          name: "executorSourceToken";
+          docs: [
+            "Executor's source token account (receives from source vault)",
+          ];
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "account";
+                path: "executor";
+              },
+              {
+                kind: "const";
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169,
+                ];
+              },
+              {
+                kind: "account";
+                path: "sourceMintAccount";
+              },
+            ];
+            program: {
+              kind: "const";
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89,
+              ];
+            };
+          };
+        },
+        {
+          name: "executorDestToken";
+          docs: [
+            "Executor's destination token account (receives swapped tokens)",
+          ];
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "account";
+                path: "executor";
+              },
+              {
+                kind: "const";
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169,
+                ];
+              },
+              {
+                kind: "account";
+                path: "destMintAccount";
+              },
+            ];
+            program: {
+              kind: "const";
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89,
+              ];
+            };
+          };
+        },
+        {
+          name: "relayer";
+          docs: ["Relayer who submits transaction (pays rent, receives fee)"];
+          writable: true;
+          signer: true;
+        },
+        {
+          name: "relayerTokenAccount";
+          docs: ["Relayer's token account for fees (dest token)"];
+          writable: true;
+        },
+        {
+          name: "swapProgram";
+          docs: ["Raydium Swap program (CPMM or AMM)"];
+        },
+        {
+          name: "jupiterEventAuthority";
+          docs: ["Jupiter Event Authority (required for Jupiter V6 swaps)"];
+        },
+        {
+          name: "tokenProgram";
+          address: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+        },
+        {
+          name: "systemProgram";
+          address: "11111111111111111111111111111111";
+        },
+        {
+          name: "associatedTokenProgram";
+          address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+        },
+      ];
+      args: [
+        {
+          name: "proof";
+          type: {
+            defined: {
+              name: "swapProof";
+            };
+          };
+        },
+        {
+          name: "sourceRoot";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "sourceTreeId";
+          type: "u16";
+        },
+        {
+          name: "sourceMint";
+          type: "pubkey";
+        },
+        {
+          name: "inputNullifier0";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "inputNullifier1";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "destTreeId";
+          type: "u16";
+        },
+        {
+          name: "destMint";
+          type: "pubkey";
+        },
+        {
+          name: "outputCommitment0";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "outputCommitment1";
+          type: {
+            array: ["u8", 32];
+          };
+        },
+        {
+          name: "swapParams";
+          type: {
+            defined: {
+              name: "swapParams";
+            };
+          };
+        },
+        {
+          name: "swapAmount";
+          type: "u64";
+        },
+        {
+          name: "swapData";
+          type: "bytes";
+        },
+        {
+          name: "extData";
+          type: {
+            defined: {
+              name: "extData";
+            };
+          };
+        },
       ];
     },
     {
@@ -866,17 +1624,18 @@ export type PrivacyPool = {
                   103,
                   95,
                   118,
-                  49
+                  49,
                 ];
-              }
+              },
             ];
           };
         },
         {
           name: "admin";
+          docs: ["has_one = admin ensures this matches global_config.admin."];
           signer: true;
           relations: ["globalConfig"];
-        }
+        },
       ];
       args: [];
     },
@@ -908,13 +1667,13 @@ export type PrivacyPool = {
                   103,
                   95,
                   118,
-                  51
+                  51,
                 ];
               },
               {
                 kind: "arg";
                 path: "mintAddress";
-              }
+              },
             ];
           };
         },
@@ -922,7 +1681,7 @@ export type PrivacyPool = {
           name: "admin";
           signer: true;
           relations: ["config"];
-        }
+        },
       ];
       args: [
         {
@@ -970,9 +1729,21 @@ export type PrivacyPool = {
           type: {
             option: "u16";
           };
-        }
+        },
+        {
+          name: "minSwapFee";
+          type: {
+            option: "u64";
+          };
+        },
+        {
+          name: "swapFeeBps";
+          type: {
+            option: "u16";
+          };
+        },
       ];
-    }
+    },
   ];
   accounts: [
     {
@@ -996,9 +1767,13 @@ export type PrivacyPool = {
       discriminator: [165, 149, 218, 209, 148, 237, 242, 159];
     },
     {
+      name: "swapExecutor";
+      discriminator: [28, 237, 82, 118, 158, 162, 39, 225];
+    },
+    {
       name: "vault";
       discriminator: [211, 8, 232, 43, 2, 152, 117, 119];
-    }
+    },
   ];
   events: [
     {
@@ -1008,7 +1783,11 @@ export type PrivacyPool = {
     {
       name: "nullifierSpent";
       discriminator: [166, 111, 130, 54, 212, 115, 152, 215];
-    }
+    },
+    {
+      name: "swapExecutedEvent";
+      discriminator: [183, 28, 219, 210, 164, 184, 62, 12];
+    },
   ];
   errors: [
     {
@@ -1283,9 +2062,39 @@ export type PrivacyPool = {
     },
     {
       code: 6054;
-      name: "nullifierTreeMismatch";
-      msg: "Nullifier marker tree_id mismatch - nullifier already used in different tree";
-    }
+      name: "invalidSwapProgram";
+      msg: "Invalid swap program: must be Raydium CPMM or AMM";
+    },
+    {
+      code: 6055;
+      name: "executorNotStale";
+      msg: "Executor PDA exists and is not stale - cannot reclaim yet";
+    },
+    {
+      code: 6056;
+      name: "invalidRemainingAccounts";
+      msg: "Invalid remaining accounts: wrong count or ownership";
+    },
+    {
+      code: 6057;
+      name: "jupiterInsufficientAccounts";
+      msg: "Jupiter swap requires additional routing accounts";
+    },
+    {
+      code: 6058;
+      name: "jupiterInvalidInstruction";
+      msg: "Jupiter instruction data invalid or unsupported version";
+    },
+    {
+      code: 6059;
+      name: "invalidSwapParams";
+      msg: "Swap params mints do not match instruction mints";
+    },
+    {
+      code: 6060;
+      name: "deadlineExpired";
+      msg: "Transaction deadline has expired";
+    },
   ];
   types: [
     {
@@ -1320,7 +2129,7 @@ export type PrivacyPool = {
           {
             name: "treeId";
             type: "u16";
-          }
+          },
         ];
       };
     },
@@ -1328,7 +2137,7 @@ export type PrivacyPool = {
       name: "extData";
       docs: [
         "External data that gets hashed into ext_data_hash",
-        "These are public parameters that affect financial flows"
+        "These are public parameters that affect financial flows",
       ];
       type: {
         kind: "struct";
@@ -1352,7 +2161,7 @@ export type PrivacyPool = {
             name: "refund";
             docs: ["Refund to user in lamports"];
             type: "u64";
-          }
+          },
         ];
       };
     },
@@ -1370,14 +2179,14 @@ export type PrivacyPool = {
             name: "admin";
             docs: ["Admin who can configure global settings"];
             type: "pubkey";
-          }
+          },
         ];
       };
     },
     {
       name: "merkleTreeAccount";
       docs: [
-        "Layout tests verify 9107 bytes total with 1-byte alignment. Breaking this corrupts all accounts."
+        "Layout tests verify 9107 bytes total with 1-byte alignment. Breaking this corrupts all accounts.",
       ];
       serialization: "bytemuckunsafe";
       repr: {
@@ -1427,7 +2236,7 @@ export type PrivacyPool = {
                 {
                   array: ["u8", 32];
                 },
-                22
+                22,
               ];
             };
           },
@@ -1439,10 +2248,10 @@ export type PrivacyPool = {
                 {
                   array: ["u8", 32];
                 },
-                256
+                256,
               ];
             };
-          }
+          },
         ];
       };
     },
@@ -1472,7 +2281,7 @@ export type PrivacyPool = {
           {
             name: "treeId";
             docs: [
-              "Tree ID this nullifier belongs to (prevents cross-tree double-spend)"
+              "Tree ID this nullifier belongs to (prevents cross-tree double-spend)",
             ];
             type: "u16";
           },
@@ -1480,14 +2289,14 @@ export type PrivacyPool = {
             name: "bump";
             docs: ["PDA bump"];
             type: "u8";
-          }
+          },
         ];
       };
     },
     {
       name: "nullifierSet";
       docs: [
-        "Nullifier set metadata (actual nullifiers stored as individual PDAs)."
+        "Nullifier set metadata (actual nullifiers stored as individual PDAs).",
       ];
       type: {
         kind: "struct";
@@ -1499,7 +2308,7 @@ export type PrivacyPool = {
           {
             name: "count";
             type: "u32";
-          }
+          },
         ];
       };
     },
@@ -1525,7 +2334,7 @@ export type PrivacyPool = {
           {
             name: "treeId";
             type: "u16";
-          }
+          },
         ];
       };
     },
@@ -1557,7 +2366,7 @@ export type PrivacyPool = {
           {
             name: "minWithdrawalFee";
             docs: [
-              "Minimum fee for withdrawals (in lamports) to ensure relayer compensation"
+              "Minimum fee for withdrawals (in lamports) to ensure relayer compensation",
             ];
             type: "u64";
           },
@@ -1566,7 +2375,7 @@ export type PrivacyPool = {
             docs: [
               "Fee error margin in basis points (e.g., 500 = 5%)",
               "Allows fee variance to prevent timing attacks where identical fees",
-              "could correlate deposits/withdrawals"
+              "could correlate deposits/withdrawals",
             ];
             type: "u16";
           },
@@ -1578,35 +2387,35 @@ export type PrivacyPool = {
           {
             name: "mintAddress";
             docs: [
-              "Token mint address (for now: SOL, future: multi-token support)"
+              "Token mint address (for now: SOL, future: multi-token support)",
             ];
             type: "pubkey";
           },
           {
             name: "minDepositAmount";
             docs: [
-              "Minimum amount allowed per deposit (in lamports/token units)"
+              "Minimum amount allowed per deposit (in lamports/token units)",
             ];
             type: "u64";
           },
           {
             name: "maxDepositAmount";
             docs: [
-              "Maximum amount allowed per deposit (in lamports/token units)"
+              "Maximum amount allowed per deposit (in lamports/token units)",
             ];
             type: "u64";
           },
           {
             name: "minWithdrawAmount";
             docs: [
-              "Minimum amount allowed per withdrawal (in lamports/token units)"
+              "Minimum amount allowed per withdrawal (in lamports/token units)",
             ];
             type: "u64";
           },
           {
             name: "maxWithdrawAmount";
             docs: [
-              "Maximum amount allowed per withdrawal (in lamports/token units)"
+              "Maximum amount allowed per withdrawal (in lamports/token units)",
             ];
             type: "u64";
           },
@@ -1630,14 +2439,155 @@ export type PrivacyPool = {
             name: "nextTreeIndex";
             docs: ["Suggested tree index for next deposit (round-robin)"];
             type: "u16";
-          }
+          },
+          {
+            name: "minSwapFee";
+            docs: [
+              "Minimum swap fee in destination token units (e.g., 100000 = 0.1 USDC)",
+              "Ensures relayer compensation for swap transactions",
+            ];
+            type: "u64";
+          },
+          {
+            name: "swapFeeBps";
+            docs: [
+              "Swap fee in basis points (0-10_000) of swap output amount",
+              "Used with min_swap_fee: actual fee must be >= max(min_swap_fee, output * swap_fee_bps / 10000)",
+            ];
+            type: "u16";
+          },
         ];
       };
     },
     {
-      name: "transactionProof";
+      name: "swapExecutedEvent";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "sourceMint";
+            type: "pubkey";
+          },
+          {
+            name: "destMint";
+            type: "pubkey";
+          },
+          {
+            name: "sourceTreeId";
+            type: "u16";
+          },
+          {
+            name: "destTreeId";
+            type: "u16";
+          },
+          {
+            name: "nullifiers";
+            type: {
+              array: [
+                {
+                  array: ["u8", 32];
+                },
+                2,
+              ];
+            };
+          },
+          {
+            name: "commitments";
+            type: {
+              array: [
+                {
+                  array: ["u8", 32];
+                },
+                2,
+              ];
+            };
+          },
+          {
+            name: "timestamp";
+            type: "i64";
+          },
+        ];
+      };
+    },
+    {
+      name: "swapExecutor";
       docs: [
-        "Proof for new UTXO transaction circuit (same structure, different VK)"
+        "Ephemeral PDA that holds tokens during swap, created and closed atomically",
+      ];
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "sourceMint";
+            type: "pubkey";
+          },
+          {
+            name: "destMint";
+            type: "pubkey";
+          },
+          {
+            name: "nullifier";
+            type: {
+              array: ["u8", 32];
+            };
+          },
+          {
+            name: "createdSlot";
+            docs: ["Slot when this executor was created (for stale detection)"];
+            type: "u64";
+          },
+          {
+            name: "bump";
+            type: "u8";
+          },
+        ];
+      };
+    },
+    {
+      name: "swapParams";
+      docs: ["Swap parameters committed to in the ZK proof"];
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "minAmountOut";
+            type: "u64";
+          },
+          {
+            name: "deadline";
+            type: "i64";
+          },
+          {
+            name: "sourceMint";
+            type: "pubkey";
+          },
+          {
+            name: "destMint";
+            type: "pubkey";
+          },
+          {
+            name: "swapDataHash";
+            docs: [
+              "SHA-256 hash of the raw swap instruction data (swap_data).",
+              "Binds the exact DEX instruction bytes into the ZK proof so the relayer",
+              "cannot substitute different swap_data (e.g. 0% slippage) after the user",
+              "has generated their proof.  Set to [0u8;32] for CPMM/AMM swaps, which",
+              "already enforce dex_min_out by direct instruction decoding.",
+              "BREAKING: ZK swap circuit must include this field when computing",
+              "swap_params_hash = Poseidon(source_mint, dest_mint, min_amount_out,",
+              "deadline, swap_data_hash).",
+            ];
+            type: {
+              array: ["u8", 32];
+            };
+          },
+        ];
+      };
+    },
+    {
+      name: "swapProof";
+      docs: [
+        "Proof for swap transaction circuit (2-in-2-out cross-pool UTXO model)",
       ];
       type: {
         kind: "struct";
@@ -1659,7 +2609,36 @@ export type PrivacyPool = {
             type: {
               array: ["u8", 64];
             };
-          }
+          },
+        ];
+      };
+    },
+    {
+      name: "transactionProof";
+      docs: [
+        "Proof for new UTXO transaction circuit (same structure, different VK)",
+      ];
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "proofA";
+            type: {
+              array: ["u8", 64];
+            };
+          },
+          {
+            name: "proofB";
+            type: {
+              array: ["u8", 128];
+            };
+          },
+          {
+            name: "proofC";
+            type: {
+              array: ["u8", 64];
+            };
+          },
         ];
       };
     },
@@ -1672,9 +2651,9 @@ export type PrivacyPool = {
             name: "bump";
             docs: ["PDA bump for this vault"];
             type: "u8";
-          }
+          },
         ];
       };
-    }
+    },
   ];
 };

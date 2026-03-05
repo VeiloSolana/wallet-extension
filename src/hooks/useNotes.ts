@@ -91,10 +91,7 @@ export function useNotes({
   // Load Notes
   // -------------------------------------------------------------------------
   const loadNotes = useCallback(async () => {
-    if (!noteManager) {
-      console.log("NoteManager not initialized");
-      return;
-    }
+    if (!noteManager) return;
 
     setIsLoadingNotes(true);
     try {
@@ -130,7 +127,6 @@ export function useNotes({
       });
 
       setTokenBalances(balances);
-      console.log("📊 Token balances calculated:", balances);
 
       // Persist balances to chrome.storage for dApp access
       if (typeof chrome !== "undefined" && chrome.storage) {
@@ -270,9 +266,7 @@ export function useNotes({
           return;
         }
 
-        console.log("Syncing notes from relayer...");
         const notes = await noteManager.getAllNotes();
-        console.log(`Currently have ${notes.length} notes stored locally`);
 
         // Decrypt the wallet private key
         const secretKeyStr = await decrypt(
@@ -303,10 +297,9 @@ export function useNotes({
           veiloPrivateKeyStr,
           veiloPublicKeyStr,
         );
-        console.log(`Synced ${count} new notes`);
         await loadNotes();
       } else {
-        console.log("Cannot sync: Wallet not unlocked or key unavailable");
+        // Wallet not unlocked or key unavailable
       }
     } catch (e) {
       console.error("Sync failed", e);
@@ -322,7 +315,6 @@ export function useNotes({
   // Load notes on authentication
   useEffect(() => {
     if (isAuthenticated && noteManager) {
-      console.log("🔄 Loading notes on authentication...");
       loadNotes();
     }
   }, [isAuthenticated, noteManager, loadNotes]);
@@ -332,7 +324,6 @@ export function useNotes({
     if (!isAuthenticated || !noteManager || !wallet) return;
 
     const intervalId = setInterval(async () => {
-      console.log("🔄 Auto-refreshing notes...");
       await syncNotes();
     }, 15000);
 

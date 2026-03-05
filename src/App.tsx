@@ -54,6 +54,7 @@ import {
 } from "./utils/keyGeneration";
 import { Wallet } from "./utils/wallet";
 import privacyPoolIdl from "../program/idl/privacy_pool.json";
+import type { WalletAdapter } from "../program/program";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { type PrivacyPool } from "../program/types/privacy_pool";
 import "./App.css";
@@ -154,6 +155,7 @@ function App() {
 
         // Store decrypted keys for use in the session
         setPassword(password);
+        setVeiloPublicKey(veiloPublicKey);
 
         // Initialize NoteManager with account context
         const accountNoteManager = new NoteManager(
@@ -198,20 +200,16 @@ function App() {
         setTimeout(async () => {
           try {
             const privKeyHex = Buffer.from(secretKey).toString("hex");
-            console.log("🔄 Starting sync with relayer...");
             try {
-              const syncedCount = await syncNotesFromRelayer(
+              await syncNotesFromRelayer(
                 accountNoteManager,
                 keypair.publicKey.toString(),
                 privKeyHex,
                 veiloPrivateKey,
                 veiloPublicKey,
               );
-              console.log(
-                `✅ Sync completed. ${syncedCount} new notes synced.`,
-              );
             } catch (syncError) {
-              console.error("❌ Sync from relayer failed:", syncError);
+              console.error("Sync from relayer failed:", syncError);
             }
           } catch (e) {
             console.error("Initial sync failed:", e);
@@ -285,13 +283,14 @@ function App() {
   const [password, setPassword] = useState("");
 
   // SDK state
-  // @ts-expect-error - Used by setConnection
   const [connection, setConnection] = useState<Connection | undefined>();
   const [wallet, setWallet] = useState<Wallet | undefined>();
   // @ts-expect-error - Used by setProgram
   const [program, setProgram] = useState<Program<PrivacyPool> | undefined>();
   // isInitialized now comes from useOnboarding hook
   const [noteManager, setNoteManager] = useState<NoteManager | null>(null);
+  // ZK public key for private swap note ownership
+  const [veiloPublicKey, setVeiloPublicKey] = useState<string | null>(null);
 
   // Notes state (from hook)
   // @ts-expect-error - Used by setStoredNotes
@@ -785,7 +784,15 @@ function App() {
 
         {/* Swap Tab Content */}
         {activeTab === "swap" && (
-          <SwapPage keypair={wallet?.payer || null} password={password} />
+          <SwapPage
+            keypair={wallet?.payer || null}
+            password={password}
+            privateBalances={tokenBalances}
+            noteManager={noteManager}
+            walletAdapter={wallet as unknown as WalletAdapter | undefined}
+            solConnection={connection}
+            veiloPublicKey={veiloPublicKey}
+          />
         )}
 
         {/* Preferences Tab Content */}

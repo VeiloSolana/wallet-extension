@@ -36,7 +36,7 @@ export class NoteManager {
 
   private getStorageKey(): string {
     // Create account-specific storage key
-    return `veilo-pk2-n-${this.publicKey}`;
+    return `veilo-main-${this.publicKey}`;
   }
 
   private async encryptNote(note: StoredNote): Promise<string> {

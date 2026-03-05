@@ -17,7 +17,9 @@ export interface NetworkConfig {
 }
 
 const MAINNET_CONFIG: NetworkConfig = {
-  rpcEndpoint: import.meta.env.VITE_MAINNET_RPC_URL || "https://api.mainnet-beta.solana.com",
+  rpcEndpoint:
+    import.meta.env.VITE_MAINNET_RPC_URL ||
+    "https://api.mainnet-beta.solana.com",
   explorerUrl: "https://explorer.solana.com",
   tokens: {
     SOL_MINT: PublicKey.default,
@@ -31,7 +33,8 @@ const MAINNET_CONFIG: NetworkConfig = {
 };
 
 const DEVNET_CONFIG: NetworkConfig = {
-  rpcEndpoint: import.meta.env.VITE_DEVNET_RPC_URL || "https://api.devnet.solana.com",
+  rpcEndpoint:
+    import.meta.env.VITE_DEVNET_RPC_URL || "https://api.devnet.solana.com",
   explorerUrl: "https://explorer.solana.com",
   tokens: {
     SOL_MINT: PublicKey.default,
@@ -60,7 +63,7 @@ export function getSelectedNetwork(): NetworkType {
   if (stored === "mainnet" || stored === "devnet") {
     return stored;
   }
-  return "devnet"; // Default to devnet for safety
+  return "mainnet"; // Default to mainnet
 }
 
 export function setSelectedNetwork(network: NetworkType): void {

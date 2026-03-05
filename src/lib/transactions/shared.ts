@@ -63,7 +63,7 @@ export async function generateTransactionProof(inputs: {
   inputBlindings: [Uint8Array, Uint8Array];
   inputMerklePaths: [
     { pathElements: bigint[]; pathIndices: number[] },
-    { pathElements: bigint[]; pathIndices: number[] }
+    { pathElements: bigint[]; pathIndices: number[] },
   ];
 
   outputAmounts: [bigint, bigint];
@@ -79,7 +79,7 @@ export async function generateTransactionProof(inputs: {
     publicAmount: (() => {
       if (inputs.publicAmount < 0n) {
         const FR_MODULUS = BigInt(
-          "0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001"
+          "0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001",
         );
         return (FR_MODULUS + inputs.publicAmount).toString();
       }
@@ -90,10 +90,10 @@ export async function generateTransactionProof(inputs: {
 
     // Public inputs (arrays)
     inputNullifier: inputs.inputNullifiers.map((n) =>
-      bytesToBigIntBE(n).toString()
+      bytesToBigIntBE(n).toString(),
     ),
     outputCommitment: inputs.outputCommitments.map((c) =>
-      bytesToBigIntBE(c).toString()
+      bytesToBigIntBE(c).toString(),
     ),
 
     // Private inputs - input UTXOs (arrays)
@@ -101,27 +101,22 @@ export async function generateTransactionProof(inputs: {
     inPubkey: inputs.inputPublicKeys.map((pk) => pk.toString()),
     inBlinding: inputs.inputBlindings.map((b) => bytesToBigIntBE(b).toString()),
     inPathIndex: inputs.inputMerklePaths.map((p) =>
-      p.pathIndices.reduce((acc, bit, i) => acc + (bit << i), 0)
+      p.pathIndices.reduce((acc, bit, i) => acc + (bit << i), 0),
     ),
     inPathElements: inputs.inputMerklePaths.map((p) =>
-      p.pathElements.map((e) => e.toString())
+      p.pathElements.map((e) => e.toString()),
     ),
     inPrivateKey: inputs.inputPrivateKeys.map((pk) =>
-      bytesToBigIntBE(pk).toString()
+      bytesToBigIntBE(pk).toString(),
     ),
 
     // Private inputs - output UTXOs (arrays)
     outAmount: inputs.outputAmounts.map((a) => a.toString()),
     outPubkey: inputs.outputOwners.map((o) => o.toString()),
     outBlinding: inputs.outputBlindings.map((b) =>
-      bytesToBigIntBE(b).toString()
+      bytesToBigIntBE(b).toString(),
     ),
   };
-
-  console.log(
-    "Generating proof with inputs:",
-    JSON.stringify(circuitInputs, null, 2)
-  );
 
   // Generate proof
   let proof, publicSignals;
@@ -129,30 +124,17 @@ export async function generateTransactionProof(inputs: {
     ({ proof, publicSignals } = await groth16.fullProve(
       circuitInputs,
       WASM_PATH,
-      ZKEY_PATH
+      ZKEY_PATH,
     ));
   } catch (e: any) {
-    console.error("\n❌ Proof generation failed!");
-    console.error("Error:", e.message);
-    console.error("\n💡 Your circuit might expect different signal names.");
-    console.error("Common patterns:");
-    console.error("  1. Array syntax: inputNullifier[0], inputNullifier[1]");
-    console.error("  2. Flat signals: inputNullifier0, inputNullifier1");
-    console.error("  3. Different names: nullifier0, nullifier1");
-    console.error(
-      "\nPlease check your circuit's signal declarations in transaction.circom\n"
-    );
+    console.error("Proof generation failed:", e.message);
     throw e;
   }
-
-  console.log("✓ Proof generated successfully");
-  console.log("Public signals:", publicSignals);
 
   // Verify proof off-chain
   const vKeyResponse = await fetch(VK_PATH);
   const vKey = await vKeyResponse.json();
   const valid = await groth16.verify(vKey, publicSignals, proof);
-  console.log("Proof valid off-chain?", valid);
 
   if (!valid) {
     throw new Error("Generated proof is invalid!");
@@ -169,13 +151,13 @@ import { getTokenMints } from "../network";
 // For network-aware mints, use getTokenMints() instead
 export const SOL_MINT = PublicKey.default;
 export const USDC_MINT = new PublicKey(
-  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 ); // USDC on mainnet
 export const USDT_MINT = new PublicKey(
-  "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+  "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
 ); // USDT on mainnet
 export const VEILO_MINT = new PublicKey(
-  "A4jyQhHNRW5kFAdGN8ZnXB8HHW5kXJU4snGddS5UpdSq"
+  "A4jyQhHNRW5kFAdGN8ZnXB8HHW5kXJU4snGddS5UpdSq",
 ); // VEILO token
 
 // Network-aware token getter
@@ -213,7 +195,7 @@ export function computeNullifier(
   poseidon: any,
   commitment: Uint8Array,
   leafIndex: number,
-  privateKey: Uint8Array
+  privateKey: Uint8Array,
 ): Uint8Array {
   const commitmentField = poseidon.F.e(bytesToBigIntBE(commitment));
   const indexField = poseidon.F.e(BigInt(leafIndex));
@@ -231,7 +213,7 @@ export function computeNullifier(
 // Helper: Reduce value modulo BN254 Fr field
 function reduceToField(bytes: Uint8Array): bigint {
   const FR_MODULUS = BigInt(
-    "0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001"
+    "0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001",
   );
   const value = BigInt("0x" + Buffer.from(bytes).toString("hex"));
   return value % FR_MODULUS;
@@ -244,13 +226,13 @@ export function computeCommitment(
   amount: bigint,
   ownerPubkey: bigint, // Already derived from private key
   blinding: Uint8Array,
-  mintAddress: PublicKey
+  mintAddress: PublicKey,
 ): Uint8Array {
   const amountField = poseidon.F.e(amount.toString());
   const ownerField = poseidon.F.e(ownerPubkey.toString());
   const blindingField = poseidon.F.e(bytesToBigIntBE(blinding));
   const mintField = poseidon.F.e(
-    reduceToField(mintAddress.toBytes()).toString()
+    reduceToField(mintAddress.toBytes()).toString(),
   );
 
   // Poseidon hash with 4 inputs (amount, pubkey, blinding, mint)
@@ -280,10 +262,10 @@ export function computeExtDataHash(
     relayer: PublicKey;
     fee: BN;
     refund: BN;
-  }
+  },
 ): Uint8Array {
   const recipientField = poseidon.F.e(
-    reduceToField(extData.recipient.toBytes())
+    reduceToField(extData.recipient.toBytes()),
   );
   const relayerField = poseidon.F.e(reduceToField(extData.relayer.toBytes()));
   const feeField = poseidon.F.e(extData.fee.toString());

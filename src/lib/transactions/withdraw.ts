@@ -11,22 +11,12 @@ export const handleWithdraw = async (
   mintAddress: PublicKey,
   decimals: number,
 ) => {
-  console.log(
-    `Withdrawing ${amount} SOL to ${recipient} from ${notes.length} notes`,
-  );
-
   // Filter unspent notes
   const unspentNotes = notes.filter((n) => !n.spent);
 
   if (unspentNotes.length === 0) {
     throw new Error("No unspent notes available");
   }
-
-  console.log(
-    "Withdrawal initiated with",
-    unspentNotes.length,
-    "unspent notes",
-  );
 
   // Convert amount to smallest unit (using token's decimals)
   const withdrawAmountSmallestUnit = BigInt(
@@ -43,16 +33,6 @@ export const handleWithdraw = async (
     throw new Error(selectionResult.message);
   }
 
-  console.log(`✓ ${selectionResult.message}`);
-  console.log(
-    `Selected ${selectionResult.selectedNotes.length} note(s) for withdrawal`,
-  );
-  console.log(
-    `Change: ${
-      Number(selectionResult.changeAmount) / Math.pow(10, decimals)
-    } tokens`,
-  );
-
   // Prepare notes for API - remove merklePath as it contains BigInt values
   // The relayer will rebuild the merkle tree anyway
   const notesForApi = selectionResult.selectedNotes.map((note) => {
@@ -61,7 +41,6 @@ export const handleWithdraw = async (
   });
 
   // Send withdrawal request to relayer
-  console.log("Sending withdrawal request to relayer...");
   const result = await submitWithdraw({
     notes: notesForApi,
     recipient,
@@ -73,12 +52,6 @@ export const handleWithdraw = async (
   if (!result.success || !result.data) {
     throw new Error(result.message || "Withdrawal failed");
   }
-
-  console.log("✅ Withdrawal successful!");
-  console.log(
-    `Withdrew ${result.data.withdrawAmount} SOL to ${result.data.withdrawRecipient}`,
-  );
-  console.log(`Change: ${result.data.changeAmount} SOL`);
 
   return {
     success: true,

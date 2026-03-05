@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Keypair } from "@solana/web3.js";
+import { Keypair, Connection } from "@solana/web3.js";
 import type { SwapToken, SwapQuote, SwapResult } from "../lib/swap";
 import {
   getSwapService,
@@ -8,9 +8,22 @@ import {
   fromRawAmount,
   getTokenDecimals,
 } from "../lib/swap";
+import { executePrivateSwap } from "../lib/swap/privateSwap";
+import type { WalletAdapter } from "../../program/program";
+import type { NoteManager } from "../lib/noteManager";
 
 interface UseSwapParams {
   keypair: Keypair | null;
+  /** When true, execute swaps through the privacy pool's transact_swap instruction */
+  isPrivateSwap?: boolean;
+  /** Required for private swaps: NoteManager instance */
+  noteManager?: NoteManager | null;
+  /** Required for private swaps: WalletAdapter for signing */
+  walletAdapter?: WalletAdapter | null;
+  /** Required for private swaps: Solana connection */
+  connection?: Connection | null;
+  /** Required for private swaps: User's ZK public key (note owner) */
+  zkPublicKey?: bigint | null;
 }
 
 interface UseSwapReturn {
@@ -50,13 +63,20 @@ interface UseSwapReturn {
   supportedTokens: SwapToken[];
 }
 
-export function useSwap({ keypair }: UseSwapParams): UseSwapReturn {
+export function useSwap({
+  keypair,
+  isPrivateSwap = false,
+  noteManager,
+  walletAdapter,
+  connection,
+  zkPublicKey,
+}: UseSwapParams): UseSwapReturn {
   // Token state - default to SOL -> USDC
   const [inputToken, setInputToken] = useState<SwapToken>(
-    SUPPORTED_TOKENS.find((t) => t.symbol === "SOL") || SUPPORTED_TOKENS[0]
+    SUPPORTED_TOKENS.find((t) => t.symbol === "SOL") || SUPPORTED_TOKENS[0],
   );
   const [outputToken, setOutputToken] = useState<SwapToken>(
-    SUPPORTED_TOKENS.find((t) => t.symbol === "USDC") || SUPPORTED_TOKENS[1]
+    SUPPORTED_TOKENS.find((t) => t.symbol === "USDC") || SUPPORTED_TOKENS[1],
   );
 
   // Amount state
@@ -69,7 +89,9 @@ export function useSwap({ keypair }: UseSwapParams): UseSwapReturn {
   const [quoteError, setQuoteError] = useState<string | null>(null);
 
   // Slippage state
-  const [slippageBps, setSlippageBps] = useState(SWAP_CONFIG.defaultSlippageBps);
+  const [slippageBps, setSlippageBps] = useState(
+    SWAP_CONFIG.defaultSlippageBps,
+  );
 
   // Execution state
   const [isExecuting, setIsExecuting] = useState(false);
@@ -140,7 +162,7 @@ export function useSwap({ keypair }: UseSwapParams): UseSwapReturn {
         setIsLoadingQuote(false);
       }
     },
-    [inputToken, outputToken, slippageBps, keypair, swapService]
+    [inputToken, outputToken, slippageBps, keypair, swapService],
   );
 
   // Debounced input amount setter
@@ -158,7 +180,7 @@ export function useSwap({ keypair }: UseSwapParams): UseSwapReturn {
         fetchQuote(amount);
       }, 500);
     },
-    [fetchQuote]
+    [fetchQuote],
   );
 
   // Refresh quote manually
@@ -211,16 +233,45 @@ export function useSwap({ keypair }: UseSwapParams): UseSwapReturn {
     setSwapResult(null);
 
     try {
-      const result = await swapService.executeSwap(
-        {
-          inputMint: inputToken.mintAddress,
-          outputMint: outputToken.mintAddress,
-          amount: inputAmount,
+      let result: SwapResult;
+
+      if (isPrivateSwap) {
+        // Private swap through privacy pool's transact_swap instruction
+        if (!noteManager || !walletAdapter || !connection || !zkPublicKey) {
+          throw new Error(
+            "Private swap requires noteManager, wallet, connection, and ZK public key",
+          );
+        }
+
+        const inputDecimals = getTokenDecimals(inputToken.mintAddress);
+        const swapAmountRaw = BigInt(
+          Math.round(parseFloat(inputAmount) * Math.pow(10, inputDecimals)),
+        );
+
+        result = await executePrivateSwap({
+          connection,
+          wallet: walletAdapter,
+          noteManager,
+          publicKey: zkPublicKey,
+          inputSymbol: inputToken.symbol,
+          outputSymbol: outputToken.symbol,
+          swapAmountRaw,
+          quote,
           slippageBps,
-          userPublicKey: keypair.publicKey.toString(),
-        },
-        keypair
-      );
+        });
+      } else {
+        // Standard Jupiter swap for dApp wallets
+        result = await swapService.executeSwap(
+          {
+            inputMint: inputToken.mintAddress,
+            outputMint: outputToken.mintAddress,
+            amount: inputAmount,
+            slippageBps,
+            userPublicKey: keypair.publicKey.toString(),
+          },
+          keypair,
+        );
+      }
 
       setSwapResult(result);
 
@@ -255,6 +306,11 @@ export function useSwap({ keypair }: UseSwapParams): UseSwapReturn {
     outputToken,
     slippageBps,
     swapService,
+    isPrivateSwap,
+    noteManager,
+    walletAdapter,
+    connection,
+    zkPublicKey,
   ]);
 
   // Clear swap result

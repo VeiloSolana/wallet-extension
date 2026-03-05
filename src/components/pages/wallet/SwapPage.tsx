@@ -15,13 +15,43 @@ import {
 } from "../../../utils/dappWalletStorage";
 import { decrypt } from "../../../utils/encryption";
 import { getRpcEndpoint } from "../../../lib/network";
+import type { TokenBalances } from "../../../hooks/useNotes";
+import type { WalletAdapter } from "../../../../program/program";
+import type { NoteManager } from "../../../lib/noteManager";
 
 interface SwapPageProps {
   keypair: Keypair | null;
   password: string;
+  privateBalances?: TokenBalances;
+  /** NoteManager for private swaps (master wallet) */
+  noteManager?: NoteManager | null;
+  /** WalletAdapter for signing private swap transactions */
+  walletAdapter?: WalletAdapter | null;
+  /** Solana connection for private swaps */
+  solConnection?: Connection | null;
+  /** User's ZK public key (for destination note ownership) */
+  veiloPublicKey?: string | null;
 }
 
-export const SwapPage = ({ keypair, password }: SwapPageProps) => {
+// Map token symbol to private balance key
+const getPrivateBalance = (
+  balances: TokenBalances | undefined,
+  symbol: string,
+): number => {
+  if (!balances) return 0;
+  const key = symbol.toLowerCase() as keyof TokenBalances;
+  return balances[key] ?? 0;
+};
+
+export const SwapPage = ({
+  keypair,
+  password,
+  privateBalances,
+  noteManager,
+  walletAdapter,
+  solConnection,
+  veiloPublicKey,
+}: SwapPageProps) => {
   const [showSlippageSettings, setShowSlippageSettings] = useState(false);
   const [customSlippage, setCustomSlippage] = useState("");
 
@@ -133,6 +163,9 @@ export const SwapPage = ({ keypair, password }: SwapPageProps) => {
     password,
   ]);
 
+  // Derive ZK public key as bigint for private swap
+  const zkPublicKey = veiloPublicKey ? BigInt(veiloPublicKey) : null;
+
   const {
     inputToken,
     outputToken,
@@ -154,7 +187,14 @@ export const SwapPage = ({ keypair, password }: SwapPageProps) => {
     clearSwapResult,
     exchangeRate,
     supportedTokens,
-  } = useSwap({ keypair: activeKeypair });
+  } = useSwap({
+    keypair: activeKeypair,
+    isPrivateSwap: selectedWalletType === "master",
+    noteManager: selectedWalletType === "master" ? noteManager : undefined,
+    walletAdapter: selectedWalletType === "master" ? walletAdapter : undefined,
+    connection: selectedWalletType === "master" ? solConnection : undefined,
+    zkPublicKey: selectedWalletType === "master" ? zkPublicKey : undefined,
+  });
 
   const handleSwap = async () => {
     const result = await executeSwap();
@@ -321,7 +361,7 @@ export const SwapPage = ({ keypair, password }: SwapPageProps) => {
                 <option value="master" className="bg-black">
                   Master Wallet ({keypair.publicKey.toBase58().slice(0, 4)}...
                   {keypair.publicKey.toBase58().slice(-4)}) -{" "}
-                  {(walletBalances["master"] || 0).toFixed(4)} SOL
+                  {(privateBalances?.sol ?? 0).toFixed(4)} SOL (Private)
                 </option>
               )}
               {dappWallets.map((wallet) => (
@@ -420,18 +460,21 @@ export const SwapPage = ({ keypair, password }: SwapPageProps) => {
             </div>
             <div className="text-[10px] font-mono text-zinc-500 text-right">
               Balance:{" "}
-              {inputToken.symbol === "SOL"
-                ? (
-                    (activeKeypair
-                      ? walletBalances[
-                          selectedWalletType === "master"
-                            ? "master"
-                            : selectedDappWalletId || ""
-                        ]
-                      : 0) || 0
-                  ).toFixed(4)
-                : "0.00"}{" "}
+              {selectedWalletType === "master"
+                ? getPrivateBalance(privateBalances, inputToken.symbol).toFixed(
+                    4,
+                  )
+                : inputToken.symbol === "SOL"
+                  ? (
+                      (activeKeypair
+                        ? walletBalances[selectedDappWalletId || ""]
+                        : 0) || 0
+                    ).toFixed(4)
+                  : "0.00"}{" "}
               {inputToken.symbol}
+              {selectedWalletType === "master" && (
+                <span className="text-[#00FF00]/60 ml-1">(Private)</span>
+              )}
             </div>
           </div>
         </div>
