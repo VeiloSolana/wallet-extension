@@ -266,7 +266,7 @@ export function useNotes({
           return;
         }
 
-        const notes = await noteManager.getAllNotes();
+        await noteManager.getAllNotes();
 
         // Decrypt the wallet private key
         const secretKeyStr = await decrypt(
@@ -290,7 +290,7 @@ export function useNotes({
           password,
         );
 
-        const count = await syncNotesFromRelayer(
+        await syncNotesFromRelayer(
           noteManager,
           walletInstance.payer.publicKey.toString(),
           privKeyHex,
