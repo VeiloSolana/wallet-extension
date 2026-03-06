@@ -79,14 +79,17 @@ export async function executePrivateSwap(
 
   try {
     // 1. Resolve mints
-    const sourceMint = symbolToOnChainMint(inputSymbol);
-    const destMint = symbolToOnChainMint(outputSymbol);
+    // Pool mints match what the on-chain program uses (PublicKey.default for SOL)
+    // Jupiter mints use WSOL for SOL (the actual SPL token)
+    const sourcePoolMint =
+      inputSymbol === "SOL" ? PublicKey.default : symbolToOnChainMint(inputSymbol);
+    const destPoolMint =
+      outputSymbol === "SOL" ? PublicKey.default : symbolToOnChainMint(outputSymbol);
+    const sourceJupiterMint = symbolToOnChainMint(inputSymbol);
+    const destJupiterMint = symbolToOnChainMint(outputSymbol);
 
     // The note manager stores SOL notes under PublicKey.default
-    const sourceNoteMint =
-      inputSymbol === "SOL"
-        ? PublicKey.default.toBase58()
-        : sourceMint.toBase58();
+    const sourceNoteMint = sourcePoolMint.toBase58();
 
     // 2. Select notes from source pool
     const unspentNotes =
@@ -120,10 +123,13 @@ export async function executePrivateSwap(
     const minAmountOut = quote.minimumReceived;
 
     // 4. Submit to relayer
+    // Send pool mints (for tree lookup + ZK proofs) and Jupiter mints (for DEX routing)
     const result = await submitPrivateSwap({
       notes: notesForRelayer,
-      sourceMintAddress: sourceMint.toBase58(),
-      destMintAddress: destMint.toBase58(),
+      sourceMintAddress: sourcePoolMint.toBase58(),
+      destMintAddress: destPoolMint.toBase58(),
+      sourceJupiterMint: sourceJupiterMint.toBase58(),
+      destJupiterMint: destJupiterMint.toBase58(),
       swapAmountRaw: swapAmountRaw.toString(),
       minAmountOut,
       slippageBps,
@@ -146,12 +152,8 @@ export async function executePrivateSwap(
     }
 
     // 6. Return result
-    const inputDecimals = getTokenDecimals(
-      inputSymbol === "SOL"
-        ? PublicKey.default.toBase58()
-        : sourceMint.toBase58(),
-    );
-    const outputDecimals = getTokenDecimals(destMint.toBase58());
+    const inputDecimals = getTokenDecimals(sourcePoolMint.toBase58());
+    const outputDecimals = getTokenDecimals(destPoolMint.toBase58());
 
     return {
       success: true,

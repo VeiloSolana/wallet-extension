@@ -236,6 +236,11 @@ export function useSwap({
       let result: SwapResult;
 
       if (isPrivateSwap) {
+        console.log("Executing private swap with params:", {
+          wallet: walletAdapter,
+          noteManager,
+          publicKey: zkPublicKey,
+        });
         // Private swap through privacy pool's transact_swap instruction
         if (!noteManager || !walletAdapter || !connection || !zkPublicKey) {
           throw new Error(

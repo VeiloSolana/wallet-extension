@@ -437,6 +437,8 @@ export interface PrivateSwapRequest {
   notes: Note[];
   sourceMintAddress: string;
   destMintAddress: string;
+  sourceJupiterMint?: string;
+  destJupiterMint?: string;
   swapAmountRaw: string;
   minAmountOut: string;
   slippageBps: number;
