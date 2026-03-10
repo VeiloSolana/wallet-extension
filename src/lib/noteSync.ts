@@ -82,6 +82,17 @@ export async function syncNotesFromRelayer(
                   existing.id,
                   encryptedNote.spentTx || "",
                 );
+              } else if (
+                relayerSpent &&
+                existing.spent &&
+                !existing.spentTxSignature &&
+                encryptedNote.spentTx
+              ) {
+                // Backfill spentTxSignature for notes saved before this field was stored
+                await noteManager.markAsSpent(
+                  existing.id,
+                  encryptedNote.spentTx,
+                );
               }
               return;
             }
@@ -136,6 +147,8 @@ export async function syncNotesFromRelayer(
               timestamp: encryptedNote.timestamp,
               txSignature: encryptedNote.txSignature,
               spent: encryptedNote.spent ?? false,
+              spentTxSignature: encryptedNote.spentTx || undefined,
+              spentAt: encryptedNote.spentAt,
               mintAddress: decrypted.mintAddress || "",
               treeId: decrypted.treeId,
               onchainId: encryptedNote.onchainId,

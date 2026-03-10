@@ -154,7 +154,12 @@ export function useNotes({
           // Emit TWO entries:
           return [
             { ...base, spent: false, groupKey: n.txSignature || n.onchainId }, // original receive
-            { ...base, spent: true, groupKey: n.spentTxSignature }, // spend side
+            {
+              ...base,
+              spent: true,
+              timestamp: n.spentAt || base.timestamp,
+              groupKey: n.spentTxSignature,
+            }, // spend side
           ];
         }
 
